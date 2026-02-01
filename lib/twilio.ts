@@ -3,18 +3,29 @@
 
 import twilio from 'twilio'
 
-const accountSid = process.env.TWILIO_ACCOUNT_SID!
-const authToken = process.env.TWILIO_AUTH_TOKEN!
-const twilioPhone = process.env.TWILIO_PHONE_NUMBER!
-
-const client = twilio(accountSid, authToken)
+// Ленивая инициализация (чтобы не падал билд без ключей)
+function getClient() {
+  const accountSid = process.env.TWILIO_ACCOUNT_SID
+  const authToken = process.env.TWILIO_AUTH_TOKEN
+  
+  if (!accountSid || !authToken) {
+    throw new Error('Twilio credentials not configured')
+  }
+  
+  return twilio(accountSid, authToken)
+}
 
 // ============================================
 // Отправка SMS
 // ============================================
 export async function sendSMS(to: string, body: string): Promise<boolean> {
   try {
-    const message = await client.messages.create({
+    const twilioPhone = process.env.TWILIO_PHONE_NUMBER
+    if (!twilioPhone) {
+      throw new Error('TWILIO_PHONE_NUMBER not configured')
+    }
+
+    const message = await getClient().messages.create({
       body,
       from: twilioPhone,
       to,
@@ -43,9 +54,9 @@ export function formatBusinessResponse(
   
   businesses.forEach((biz, index) => {
     response += `${index + 1}. ${biz.name}\n`
-    response += `   📞 ${biz.phone}\n`
+    response += `   Tel: ${biz.phone}\n`
     if (biz.area) {
-      response += `   📍 ${biz.area}\n`
+      response += `   Area: ${biz.area}\n`
     }
     response += '\n'
   })
@@ -59,7 +70,7 @@ export function formatBusinessResponse(
 // Сообщения системы
 // ============================================
 export const MESSAGES = {
-  WELCOME: `Welcome to Connect2Kehilla! 🕎
+  WELCOME: `Welcome to Connect2Kehilla!
 Text us what you need + your ZIP code.
 Example: "plumber 11211" or "electrician Monsey"
 
@@ -68,13 +79,13 @@ Reply HELP for more info.`,
   HELP: `Connect2Kehilla - SMS Business Directory
 
 HOW TO USE:
-• Text: [service] [ZIP/area]
-• Example: "plumber 11211"
-• Example: "kosher restaurant Monsey"
+- Text: [service] [ZIP/area]
+- Example: "plumber 11211"
+- Example: "kosher restaurant Monsey"
 
 COMMANDS:
-• HELP - This message
-• STOP - Unsubscribe
+- HELP - This message
+- STOP - Unsubscribe
 
 Questions? Contact support@connect2kehilla.com`,
 
@@ -82,14 +93,14 @@ Questions? Contact support@connect2kehilla.com`,
 You will no longer receive messages.
 Text START to resubscribe.`,
 
-  SHABBAT: `Shabbat Shalom! 🕯️
+  SHABBAT: `Shabbat Shalom!
 We observe Shabbat and will process your request after Havdalah.
 Your message has been saved.
 Gut Voch! Have a wonderful week!`,
 
   NEED_MORE_INFO: `Please provide more details:
-• What service do you need?
-• What's your ZIP code or neighborhood?
+- What service do you need?
+- What's your ZIP code or neighborhood?
 
 Example: "plumber 11211"`,
 
@@ -105,5 +116,6 @@ export function validateTwilioRequest(
   url: string,
   params: Record<string, string>
 ): boolean {
+  const authToken = process.env.TWILIO_AUTH_TOKEN || ''
   return twilio.validateRequest(authToken, signature, url, params)
 }
