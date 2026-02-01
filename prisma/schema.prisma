@@ -1,0 +1,162 @@
+// Prisma Schema for Connect2Kehilla
+// Database: PostgreSQL (Vercel Postgres / Supabase)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// БИЗНЕСЫ (Businesses)
+// ============================================
+model Business {
+  id            String   @id @default(cuid())
+  name          String
+  phone         String
+  categoryRaw   String?  // Оригинальная категория из справочника
+  categories    String[] // AI-присвоенные теги: ["plumber", "emergency", "24h"]
+  
+  // Локация
+  zipCode       String?
+  area          String?  // "Williamsburg", "Monsey", "Borough Park"
+  city          String?
+  state         String   @default("NY")
+  
+  // Статус и монетизация
+  status        BusinessStatus @default(FREE)
+  trialEndsAt   DateTime?
+  
+  // Статистика
+  leadCount     Int      @default(0)  // Сколько раз контакт был выдан
+  lastLeadAt    DateTime?
+  
+  // Мета
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  isActive      Boolean  @default(true)
+  
+  // Связи
+  leads         Lead[]
+  
+  @@index([zipCode])
+  @@index([categories])
+  @@index([status])
+  @@index([area])
+}
+
+enum BusinessStatus {
+  FREE      // Бесплатный (триал или навсегда)
+  TRIAL     // Пробный период
+  PAID      // Оплаченная подписка
+  SUSPENDED // Приостановлен
+}
+
+// ============================================
+// ПОЛЬЗОВАТЕЛИ (анонимизированные)
+// ============================================
+model User {
+  id            String   @id @default(cuid())
+  phoneHash     String   @unique // SHA-256 хэш номера телефона
+  
+  // Предпочтения
+  defaultZip    String?
+  defaultArea   String?
+  
+  // Статус
+  isBlocked     Boolean  @default(false) // STOP команда
+  createdAt     DateTime @default(now())
+  lastActiveAt  DateTime @default(now())
+  
+  // Связи
+  queries       Query[]
+  leads         Lead[]
+  
+  @@index([phoneHash])
+}
+
+// ============================================
+// ЗАПРОСЫ (Query Log)
+// ============================================
+model Query {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  
+  // Входящее сообщение
+  rawMessage    String   // Оригинальный текст SMS
+  
+  // AI парсинг
+  parsedCategory String?
+  parsedZip      String?
+  parsedArea     String?
+  parsedIntent   QueryIntent @default(SEARCH)
+  
+  // Результат
+  responseText   String?
+  businessCount  Int      @default(0)
+  
+  // Мета
+  createdAt      DateTime @default(now())
+  processedAt    DateTime?
+  isShabbat      Boolean  @default(false) // Был ли запрос в Шаббат
+  
+  // Связи
+  leads          Lead[]
+  
+  @@index([userId])
+  @@index([createdAt])
+}
+
+enum QueryIntent {
+  SEARCH    // Поиск бизнеса
+  HELP      // Запрос помощи
+  STOP      // Отписка
+  INFO      // Информация о сервисе
+  UNKNOWN   // Не распознано
+}
+
+// ============================================
+// ЛИДЫ (выданные контакты)
+// ============================================
+model Lead {
+  id            String   @id @default(cuid())
+  
+  queryId       String
+  query         Query    @relation(fields: [queryId], references: [id])
+  
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  
+  businessId    String
+  business      Business @relation(fields: [businessId], references: [id])
+  
+  // Позиция в выдаче (1, 2, 3)
+  position      Int
+  
+  createdAt     DateTime @default(now())
+  
+  @@index([businessId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// ============================================
+// НАСТРОЙКИ ШАББАТА
+// ============================================
+model ShabbatSchedule {
+  id            String   @id @default(cuid())
+  zipCode       String
+  timezone      String   @default("America/New_York")
+  
+  // Время текущей недели (обновляется автоматически)
+  candleLighting DateTime  // Зажигание свечей (пятница)
+  havdalah       DateTime  // Исход Шаббата (суббота)
+  
+  updatedAt      DateTime @updatedAt
+  
+  @@unique([zipCode])
+}
