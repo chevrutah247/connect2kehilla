@@ -25,6 +25,13 @@ model Business {
   area          String?  // "Williamsburg", "Monsey", "Borough Park"
   city          String?
   state         String   @default("NY")
+
+  // Контактные данные
+  address       String?
+  email         String?
+  website       String?
+  fax           String?
+  description   String?
   
   // Статус и монетизация
   status        BusinessStatus @default(FREE)
@@ -160,3 +167,7 @@ model ShabbatSchedule {
   
   @@unique([zipCode])
 }
+
+// Добавляем в модель Business дополнительные поля
+
+// Добавляем в модель Business дополнительные поля
