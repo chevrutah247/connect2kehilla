@@ -13,16 +13,52 @@ export default function Home() {
           SMS Business Directory for the Jewish Community
         </p>
         
-        {/* Phone Number Display */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 mb-12 inline-block">
-          <p className="text-gray-500 mb-2">Text us at:</p>
-          <p className="text-4xl font-bold text-blue-600">
-            (XXX) XXX-XXXX
+        {/* ===== A2P COMPLIANT CTA BLOCK ===== */}
+        <div className="bg-white rounded-2xl shadow-xl p-8 mb-12 border-2 border-blue-200">
+          <p className="text-gray-600 mb-3 text-lg">
+            Find local businesses instantly — just send a text!
           </p>
-          <p className="text-sm text-gray-400 mt-2">
-            Standard messaging rates apply
-          </p>
+          
+          {/* Phone Number - Prominent Display */}
+          <div className="bg-blue-50 rounded-xl p-6 mb-6">
+            <p className="text-gray-500 mb-2 text-sm uppercase tracking-wide">Text us at:</p>
+            <a 
+              href="sms:+18458686364" 
+              className="text-4xl md:text-5xl font-bold text-blue-600 hover:text-blue-700 transition"
+            >
+              (845) 868-6364
+            </a>
+          </div>
+
+          {/* Example */}
+          <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left max-w-md mx-auto">
+            <p className="text-sm text-gray-500 mb-1">Example message:</p>
+            <p className="font-mono text-lg text-gray-800">"plumber 11211"</p>
+            <p className="text-sm text-gray-500 mt-2">→ Get plumbers near Williamsburg</p>
+          </div>
+
+          {/* Required Disclosures for A2P Compliance */}
+          <div className="border-t border-gray-200 pt-4 mt-4">
+            <p className="text-sm text-gray-600 mb-2">
+              <strong>By texting this number, you consent to receive SMS replies</strong> 
+              {" "}with business contact information.
+            </p>
+            <p className="text-sm text-gray-500 mb-2">
+              Msg &amp; Data rates may apply. Message frequency varies.
+            </p>
+            <p className="text-sm text-gray-500 mb-3">
+              Reply <span className="font-semibold">STOP</span> to opt out at any time. 
+              Reply <span className="font-semibold">HELP</span> for assistance.
+            </p>
+            <p className="text-xs text-gray-400">
+              View our{" "}
+              <a href="/privacy" className="underline hover:text-gray-600">Privacy Policy</a>
+              {" "}and{" "}
+              <a href="/terms" className="underline hover:text-gray-600">Terms of Service</a>
+            </p>
+          </div>
         </div>
+        {/* ===== END A2P COMPLIANT CTA BLOCK ===== */}
 
         {/* How It Works */}
         <div className="grid md:grid-cols-3 gap-8 text-left mb-16">
@@ -33,7 +69,7 @@ export default function Home() {
               Text what you need + your ZIP code or neighborhood
             </p>
             <p className="text-sm text-gray-400 mt-2 italic">
-              Example: "plumber 11211"
+              Example: "electrician 10952"
             </p>
           </div>
           
@@ -41,7 +77,7 @@ export default function Home() {
             <div className="text-3xl mb-4">🔍</div>
             <h3 className="font-bold text-lg mb-2">2. We Search</h3>
             <p className="text-gray-600">
-              Our AI finds the best matches from our community directory
+              Our system finds the best matches from our community directory
             </p>
           </div>
           
@@ -49,7 +85,7 @@ export default function Home() {
             <div className="text-3xl mb-4">✅</div>
             <h3 className="font-bold text-lg mb-2">3. Get Contacts</h3>
             <p className="text-gray-600">
-              Receive up to 3 business contacts instantly via SMS
+              Receive business contacts instantly via SMS
             </p>
           </div>
         </div>
@@ -81,13 +117,14 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="bg-gray-100 py-8 text-center text-gray-500 text-sm">
-        <p>© 2024 Connect2Kehilla. All rights reserved.</p>
-        <p className="mt-2">
-          <a href="/privacy" className="hover:text-gray-700">Privacy</a>
-          {' • '}
-          <a href="/terms" className="hover:text-gray-700">Terms</a>
-          {' • '}
-          Text HELP for support
+        <p>© 2026 Connect2Kehilla. All rights reserved.</p>
+        <div className="mt-4 space-x-4">
+          <a href="/privacy" className="hover:text-gray-700 underline">Privacy Policy</a>
+          <span>•</span>
+          <a href="/terms" className="hover:text-gray-700 underline">Terms of Service</a>
+        </div>
+        <p className="mt-4 text-gray-400">
+          SMS: (845) 868-6364 • Reply STOP to unsubscribe • Reply HELP for support
         </p>
       </footer>
     </main>
