@@ -124,6 +124,9 @@ export default function Home() {
         <p className="mb-1">
           446 Kingston Avenue, B5, Brooklyn, NY 11225
         </p>
+        <p className="mb-1">
+          Phone: <a href="tel:+17707558013" className="hover:text-gray-700 underline">(770) 755-8013</a>
+        </p>
         <p className="mb-4">
           <a href="mailto:medinat.hesed@gmail.com" className="hover:text-gray-700 underline">
             medinat.hesed@gmail.com
