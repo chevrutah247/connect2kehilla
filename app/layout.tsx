@@ -68,7 +68,7 @@ export default function RootLayout({
               description: 'SMS-based business directory for the Jewish community.',
               contactPoint: {
                 '@type': 'ContactPoint',
-                telephone: '+1-845-868-6364',
+                telephone: '+1-888-516-3399',
                 contactType: 'customer service',
                 availableLanguage: 'English',
               },

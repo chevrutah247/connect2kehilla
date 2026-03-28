@@ -17,7 +17,7 @@ export default function TermsPage() {
             <h2 className="text-2xl font-semibold text-gray-800 mb-3">Service Description</h2>
             <p className="text-gray-600">
               Connect2Kehilla provides an SMS-based business directory service. By texting
-              (845) 868-6364, you can search for local businesses in the Jewish community
+              (888) 516-3399, you can search for local businesses in the Jewish community
               and receive contact information via text message.
             </p>
           </section>
@@ -72,7 +72,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-2xl font-semibold text-gray-800 mb-3">Contact</h2>
             <p className="text-gray-600">
-              For questions about these terms, text HELP to (845) 868-6364 or email
+              For questions about these terms, text HELP to (888) 516-3399 or email
               connect2kehilla@gmail.com.
             </p>
           </section>

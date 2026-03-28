@@ -16,7 +16,7 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-2xl font-semibold text-gray-800 mb-3">Information We Collect</h2>
             <p className="text-gray-600">
-              When you text our service at (845) 868-6364, we collect your phone number
+              When you text our service at (888) 516-3399, we collect your phone number
               and the content of your text message (search query and location). This information
               is used solely to process your business directory search and deliver results.
             </p>
@@ -58,7 +58,7 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-2xl font-semibold text-gray-800 mb-3">Contact Us</h2>
             <p className="text-gray-600">
-              For privacy-related inquiries, text HELP to (845) 868-6364 or email us at
+              For privacy-related inquiries, text HELP to (888) 516-3399 or email us at
               connect2kehilla@gmail.com.
             </p>
           </section>

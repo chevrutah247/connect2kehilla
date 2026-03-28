@@ -59,11 +59,11 @@ export default function BusinessPage() {
             Text your business name, category, and contact info to get started.
           </p>
           <a
-            href="sms:+18458686364?body=I%20want%20to%20list%20my%20business"
+            href="sms:+18885163399?body=I%20want%20to%20list%20my%20business"
             aria-label="Send SMS to list your business"
             className="inline-block bg-white text-blue-900 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-blue-50 focus:bg-blue-50 transition"
           >
-            Text (845) 868-6364
+            Text (888) 516-3399
           </a>
           <p className="text-blue-200 text-sm mt-4">
             Or email us at connect2kehilla@gmail.com
