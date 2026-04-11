@@ -135,6 +135,58 @@ export async function searchBusinessesExpanded(params: SearchParams): Promise<Se
 }
 
 // ============================================
+// Fuzzy поиск (допуск ошибок, частичное совпадение)
+// ============================================
+export async function searchBusinessesFuzzy(params: SearchParams): Promise<SearchResult[]> {
+  const { category, businessName, zipCode, area, limit = 3 } = params
+
+  const where: any = { isActive: true }
+
+  // Location filter (if provided)
+  if (zipCode) {
+    where.zipCode = zipCode
+  } else if (area) {
+    where.area = { contains: area, mode: 'insensitive' }
+  }
+
+  // Try partial category match (any tag that CONTAINS the search term)
+  if (category) {
+    // Search where category name appears anywhere in name or categoryRaw
+    where.OR = [
+      { categoryRaw: { contains: category, mode: 'insensitive' } },
+      { name: { contains: category, mode: 'insensitive' } },
+    ]
+  }
+
+  if (businessName) {
+    // Split name into words and search for any word match
+    const words = businessName.split(/\s+/).filter(w => w.length > 2)
+    if (words.length > 0) {
+      where.OR = words.map(word => ({
+        name: { contains: word, mode: 'insensitive' }
+      }))
+    }
+  }
+
+  return prisma.business.findMany({
+    where,
+    take: limit,
+    orderBy: [
+      { status: 'desc' },
+      { leadCount: 'asc' }
+    ],
+    select: {
+      id: true,
+      name: true,
+      phone: true,
+      area: true,
+      categories: true,
+      status: true,
+    }
+  })
+}
+
+// ============================================
 // Записать выдачу лидов
 // ============================================
 export async function recordLeads(

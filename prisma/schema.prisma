@@ -17,10 +17,12 @@ datasource db {
 model Business {
   id            String   @id @default(cuid())
   name          String
+  nameYiddish   String?  // שם ביידיש
+  nameHebrew    String?  // שם בעברית
   phone         String
   categoryRaw   String?  // Оригинальная категория из справочника
   categories    String[] // AI-присвоенные теги: ["plumber", "emergency", "24h"]
-  
+
   // Локация
   zipCode       String?
   area          String?  // "Williamsburg", "Monsey", "Borough Park"
@@ -72,7 +74,8 @@ model User {
   // Предпочтения
   defaultZip    String?
   defaultArea   String?
-  
+  preferredLang String   @default("en") // en, yi (yiddish), he (hebrew)
+
   // Статус
   isBlocked     Boolean  @default(false) // STOP команда
   createdAt     DateTime @default(now())

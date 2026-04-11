@@ -6,7 +6,8 @@ import { sendSMS, formatBusinessResponse, MESSAGES, validateTwilioRequest } from
 import { parseQuery } from '@/lib/openai'
 import { isShabbatWithBuffer } from '@/lib/shabbat'
 import { getOrCreateUser, isUserBlocked, blockUser, unblockUser, getUserDefaultZip, setUserDefaultZip } from '@/lib/users'
-import { searchBusinesses, searchBusinessesExpanded, recordLeads } from '@/lib/businesses'
+import { searchBusinesses, searchBusinessesExpanded, searchBusinessesFuzzy, recordLeads } from '@/lib/businesses'
+import { normalizeCategory, normalizeArea, detectLanguage } from '@/lib/fuzzy'
 import { getAllStores, getStoreByIndex, getStoresByArea, getStoresByZip, getAreaByZip, fetchStoreSpecials, formatSpecialsForSMS, formatStoreListForSMS, Store } from '@/lib/specials'
 import prisma from '@/lib/db'
 
@@ -250,17 +251,39 @@ async function handleSearch(
     return MESSAGES.NEED_MORE_INFO
   }
 
+  // Fuzzy normalize category and area (typo tolerance)
+  let category = parsed.category
+  if (category) {
+    const normalized = normalizeCategory(category)
+    category = normalized.category
+  }
+  if (area) {
+    const normalizedArea = normalizeArea(area)
+    if (normalizedArea) area = normalizedArea
+  }
+
   // Ищем бизнесы
   let businesses = await searchBusinesses({
-    category: parsed.category,
+    category,
     zipCode,
     area,
     businessName: parsed.businessName,
     limit: 3,
   })
 
-  // Если не нашли - расширяем поиск
-  if (businesses.length === 0 && parsed.category) {
+  // Если не нашли — fuzzy поиск по названию/категории
+  if (businesses.length === 0 && (category || parsed.businessName)) {
+    businesses = await searchBusinessesFuzzy({
+      category,
+      businessName: parsed.businessName,
+      zipCode,
+      area,
+      limit: 3,
+    })
+  }
+
+  // Если не нашли - расширяем поиск (любая локация)
+  if (businesses.length === 0 && category) {
     businesses = await searchBusinessesExpanded({
       category: parsed.category,
       limit: 3,
