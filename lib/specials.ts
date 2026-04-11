@@ -72,9 +72,11 @@ export function formatStoreListForSMS(storeList?: Store[], areaLabel?: string): 
   return `${title}\n${lines.join('\n')}\n\nReply 1-${stores.length} to see specials`;
 }
 
-export async function fetchStoreSpecials(store: Store): Promise<Special[]> {
-  if (!store.apiBase) return [];
+// ── Specials Cache (fetched once, served all day) ──
+const specialsCache = new Map<string, { specials: Special[]; fetchedAt: number }>();
+const CACHE_TTL = 6 * 60 * 60 * 1000; // 6 hours
 
+async function fetchFromAPI(store: Store): Promise<Special[]> {
   try {
     const res = await fetch(`${store.apiBase}/AjaxFilter/JsonProductsList?pageNumber=1`, {
       method: 'POST',
@@ -101,6 +103,39 @@ export async function fetchStoreSpecials(store: Store): Promise<Special[]> {
   } catch {
     return [];
   }
+}
+
+export async function fetchStoreSpecials(store: Store): Promise<Special[]> {
+  if (!store.apiBase) return [];
+
+  // Check cache first
+  const cached = specialsCache.get(store.id);
+  if (cached && Date.now() - cached.fetchedAt < CACHE_TTL) {
+    return cached.specials;
+  }
+
+  // Fetch fresh and cache
+  const specials = await fetchFromAPI(store);
+  if (specials.length > 0) {
+    specialsCache.set(store.id, { specials, fetchedAt: Date.now() });
+  }
+  return specials;
+}
+
+// Pre-fetch all MCG stores (call from cron or on first request)
+export async function prefetchAllSpecials(): Promise<Record<string, number>> {
+  const results: Record<string, number> = {};
+  const mcgStores = STORES.filter(s => s.apiBase);
+
+  await Promise.all(mcgStores.map(async (store) => {
+    const specials = await fetchFromAPI(store);
+    if (specials.length > 0) {
+      specialsCache.set(store.id, { specials, fetchedAt: Date.now() });
+    }
+    results[store.name] = specials.length;
+  }));
+
+  return results;
 }
 
 export function formatSpecialsForSMS(store: Store, specials: Special[]): string {
