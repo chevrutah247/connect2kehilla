@@ -5,9 +5,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { sendSMS, formatBusinessResponse, MESSAGES, validateTwilioRequest } from '@/lib/twilio'
 import { parseQuery } from '@/lib/openai'
 import { isShabbatWithBuffer } from '@/lib/shabbat'
-import { getOrCreateUser, isUserBlocked, blockUser, unblockUser, getUserDefaultZip, setUserDefaultZip, hashPhone } from '@/lib/users'
+import { getOrCreateUser, isUserBlocked, blockUser, unblockUser, getUserDefaultZip, setUserDefaultZip } from '@/lib/users'
 import { searchBusinesses, searchBusinessesExpanded, recordLeads } from '@/lib/businesses'
-import { getSession, setSession, clearSession } from '@/lib/session'
 import { getAllStores, getStoreByIndex, fetchStoreSpecials, formatSpecialsForSMS, formatStoreListForSMS } from '@/lib/specials'
 import prisma from '@/lib/db'
 
@@ -95,24 +94,31 @@ export async function POST(request: NextRequest) {
 
     // Получаем или создаём пользователя
     const user = await getOrCreateUser(from)
-    const phoneHash = hashPhone(from)
     const trimmed = body.trim()
 
-    // ── Check for active session (multi-step: specials store selection) ──
-    const session = getSession(phoneHash)
-    if (session && session.intent === 'specials_pick') {
-      const num = parseInt(trimmed)
-      if (num >= 1 && num <= getAllStores().length) {
+    // ── Check for active specials session (DB-based for serverless) ──
+    const num = parseInt(trimmed)
+    if (num >= 1 && num <= getAllStores().length) {
+      // Check if user's last query (within 10 min) was a specials list
+      const recentSpecials = await prisma.query.findFirst({
+        where: {
+          userId: user.id,
+          rawMessage: { startsWith: '__SPECIALS_LIST__' },
+          createdAt: { gte: new Date(Date.now() - 10 * 60 * 1000) },
+        },
+        orderBy: { createdAt: 'desc' },
+      })
+      if (recentSpecials) {
         const store = getStoreByIndex(num - 1)
         if (store) {
-          clearSession(phoneHash)
           const specials = await fetchStoreSpecials(store)
           const responseText = formatSpecialsForSMS(store, specials)
           await prisma.query.create({
             data: {
               userId: user.id,
               rawMessage: body,
-              parsedIntent: 'SPECIALS' as any,
+              parsedCategory: 'specials',
+              parsedIntent: 'SEARCH',
               responseText,
               processedAt: new Date(),
             }
@@ -120,14 +126,6 @@ export async function POST(request: NextRequest) {
           return createTwiMLResponse(responseText)
         }
       }
-      // If "BACK" or "SPECIALS" — show list again
-      if (/^(back|specials|menu)/i.test(trimmed)) {
-        setSession(phoneHash, 'specials_pick')
-        const responseText = formatStoreListForSMS()
-        return createTwiMLResponse(responseText)
-      }
-      // Invalid number — clear session, fall through to normal parsing
-      clearSession(phoneHash)
     }
 
     // Парсим сообщение через AI
@@ -152,9 +150,19 @@ export async function POST(request: NextRequest) {
         break
 
       case 'specials':
-        setSession(phoneHash, 'specials_pick')
         responseText = formatStoreListForSMS()
-        break
+        // Mark this query so we recognize number replies as store selections
+        await prisma.query.create({
+          data: {
+            userId: user.id,
+            rawMessage: '__SPECIALS_LIST__' + body,
+            parsedCategory: 'specials',
+            parsedIntent: 'SEARCH',
+            responseText,
+            processedAt: new Date(),
+          }
+        })
+        return createTwiMLResponse(responseText)
 
       case 'search':
         responseText = await handleSearch(user.id, from, body, parsed)
