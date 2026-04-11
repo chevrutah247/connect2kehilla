@@ -16,7 +16,7 @@ function getClient() {
 // Типы
 // ============================================
 export interface ParsedQuery {
-  intent: 'search' | 'help' | 'stop' | 'info' | 'unknown'
+  intent: 'search' | 'help' | 'stop' | 'info' | 'specials' | 'unknown'
   category: string | null
   zipCode: string | null
   area: string | null
@@ -53,6 +53,10 @@ COMMON CATEGORIES:
 - locksmith, exterminator, cleaner
 - tutor, photographer, musician
 
+SPECIALS/DEALS:
+- "specials", "deals", "sales", "specials williamsburg", "what's on sale" → intent: specials
+- If user says "specials" with an area name, still set intent: specials AND set area field
+
 COMMANDS:
 - "HELP", "?" → intent: help
 - "STOP", "UNSUBSCRIBE", "CANCEL" → intent: stop
@@ -60,7 +64,7 @@ COMMANDS:
 
 Respond ONLY with valid JSON matching this schema:
 {
-  "intent": "search" | "help" | "stop" | "info" | "unknown",
+  "intent": "search" | "help" | "stop" | "info" | "specials" | "unknown",
   "category": string | null,
   "zipCode": string | null,
   "area": string | null,

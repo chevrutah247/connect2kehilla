@@ -5,8 +5,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { sendSMS, formatBusinessResponse, MESSAGES, validateTwilioRequest } from '@/lib/twilio'
 import { parseQuery } from '@/lib/openai'
 import { isShabbatWithBuffer } from '@/lib/shabbat'
-import { getOrCreateUser, isUserBlocked, blockUser, unblockUser, getUserDefaultZip, setUserDefaultZip } from '@/lib/users'
+import { getOrCreateUser, isUserBlocked, blockUser, unblockUser, getUserDefaultZip, setUserDefaultZip, hashPhone } from '@/lib/users'
 import { searchBusinesses, searchBusinessesExpanded, recordLeads } from '@/lib/businesses'
+import { getSession, setSession, clearSession } from '@/lib/session'
+import { getAllStores, getStoreByIndex, fetchStoreSpecials, formatSpecialsForSMS, formatStoreListForSMS } from '@/lib/specials'
 import prisma from '@/lib/db'
 
 // ============================================
@@ -93,6 +95,40 @@ export async function POST(request: NextRequest) {
 
     // Получаем или создаём пользователя
     const user = await getOrCreateUser(from)
+    const phoneHash = hashPhone(from)
+    const trimmed = body.trim()
+
+    // ── Check for active session (multi-step: specials store selection) ──
+    const session = getSession(phoneHash)
+    if (session && session.intent === 'specials_pick') {
+      const num = parseInt(trimmed)
+      if (num >= 1 && num <= getAllStores().length) {
+        const store = getStoreByIndex(num - 1)
+        if (store) {
+          clearSession(phoneHash)
+          const specials = await fetchStoreSpecials(store)
+          const responseText = formatSpecialsForSMS(store, specials)
+          await prisma.query.create({
+            data: {
+              userId: user.id,
+              rawMessage: body,
+              parsedIntent: 'SPECIALS' as any,
+              responseText,
+              processedAt: new Date(),
+            }
+          })
+          return createTwiMLResponse(responseText)
+        }
+      }
+      // If "BACK" or "SPECIALS" — show list again
+      if (/^(back|specials|menu)/i.test(trimmed)) {
+        setSession(phoneHash, 'specials_pick')
+        const responseText = formatStoreListForSMS()
+        return createTwiMLResponse(responseText)
+      }
+      // Invalid number — clear session, fall through to normal parsing
+      clearSession(phoneHash)
+    }
 
     // Парсим сообщение через AI
     const parsed = await parseQuery(body)
@@ -113,6 +149,11 @@ export async function POST(request: NextRequest) {
 
       case 'info':
         responseText = MESSAGES.WELCOME
+        break
+
+      case 'specials':
+        setSession(phoneHash, 'specials_pick')
+        responseText = formatStoreListForSMS()
         break
 
       case 'search':

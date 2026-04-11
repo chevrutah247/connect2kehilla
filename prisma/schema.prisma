@@ -6,8 +6,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ============================================
@@ -122,6 +123,7 @@ enum QueryIntent {
   HELP      // Запрос помощи
   STOP      // Отписка
   INFO      // Информация о сервисе
+  SPECIALS  // Запрос спешиалс магазинов
   UNKNOWN   // Не распознано
 }
 
