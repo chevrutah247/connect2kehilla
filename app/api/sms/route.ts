@@ -7,7 +7,7 @@ import { parseQuery } from '@/lib/openai'
 import { isShabbatWithBuffer } from '@/lib/shabbat'
 import { getOrCreateUser, isUserBlocked, blockUser, unblockUser, getUserDefaultZip, setUserDefaultZip } from '@/lib/users'
 import { searchBusinesses, searchBusinessesExpanded, recordLeads } from '@/lib/businesses'
-import { getAllStores, getStoreByIndex, fetchStoreSpecials, formatSpecialsForSMS, formatStoreListForSMS } from '@/lib/specials'
+import { getAllStores, getStoreByIndex, getStoresByArea, getStoresByZip, getAreaByZip, fetchStoreSpecials, formatSpecialsForSMS, formatStoreListForSMS, Store } from '@/lib/specials'
 import prisma from '@/lib/db'
 
 // ============================================
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
 
     // ── Check for active specials session (DB-based for serverless) ──
     const num = parseInt(trimmed)
-    if (num >= 1 && num <= getAllStores().length) {
+    if (num >= 1 && num <= 20) {
       // Check if user's last query (within 10 min) was a specials list
       const recentSpecials = await prisma.query.findFirst({
         where: {
@@ -109,7 +109,9 @@ export async function POST(request: NextRequest) {
         orderBy: { createdAt: 'desc' },
       })
       if (recentSpecials) {
-        const store = getStoreByIndex(num - 1)
+        // Reconstruct the same store list that was shown
+        const storeList = getSpecialsStoreList(recentSpecials.parsedArea)
+        const store = getStoreByIndex(num - 1, storeList)
         if (store) {
           const specials = await fetchStoreSpecials(store)
           const responseText = formatSpecialsForSMS(store, specials)
@@ -149,20 +151,27 @@ export async function POST(request: NextRequest) {
         responseText = MESSAGES.WELCOME
         break
 
-      case 'specials':
-        responseText = formatStoreListForSMS()
+      case 'specials': {
+        // Filter stores by area or ZIP if provided
+        const area = parsed.area || (parsed.zipCode ? getAreaByZip(parsed.zipCode) : null)
+        const storeList = getSpecialsStoreList(area)
+        const areaLabel = area || undefined
+        responseText = formatStoreListForSMS(storeList, areaLabel)
         // Mark this query so we recognize number replies as store selections
         await prisma.query.create({
           data: {
             userId: user.id,
             rawMessage: '__SPECIALS_LIST__' + body,
             parsedCategory: 'specials',
+            parsedArea: area,
+            parsedZip: parsed.zipCode,
             parsedIntent: 'SEARCH',
             responseText,
             processedAt: new Date(),
           }
         })
         return createTwiMLResponse(responseText)
+      }
 
       case 'search':
         responseText = await handleSearch(user.id, from, body, parsed)
@@ -290,6 +299,17 @@ async function handleSearch(
     businesses,
     parsed.category || parsed.businessName || 'results'
   )
+}
+
+// ============================================
+// Get store list filtered by area (or all stores)
+// ============================================
+function getSpecialsStoreList(area: string | null | undefined): Store[] {
+  if (area) {
+    const filtered = getStoresByArea(area)
+    if (filtered.length > 0) return filtered
+  }
+  return getAllStores()
 }
 
 // ============================================

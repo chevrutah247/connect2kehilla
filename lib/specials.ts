@@ -5,6 +5,8 @@ export interface Store {
   name: string;
   apiBase: string | null; // null = no API access
   webUrl: string;
+  area: string;
+  zips: string[]; // ZIP codes for this area
 }
 
 export interface Special {
@@ -14,34 +16,60 @@ export interface Special {
   category: string;
 }
 
-// All stores from user's list
+// All stores with area/ZIP mapping
 const STORES: Store[] = [
-  { id: 'rosemary', name: 'Rosemary Kosher', apiBase: 'https://rosemarykosher.com/api', webUrl: 'https://rosemarykosher.com/Rosemary' },
-  { id: 'koshertown', name: 'KosherTown', apiBase: 'https://koshertown.com/api', webUrl: 'https://koshertown.com/brooklyn' },
-  { id: 'empire', name: 'Empire Kosher', apiBase: 'https://empirekoshersupermarket.com/api', webUrl: 'https://empirekoshersupermarket.com/empire' },
-  { id: 'kosherfamily', name: 'Kosher Family', apiBase: 'https://kosherfamily.com/api', webUrl: 'https://kosherfamily.com/Brooklyn-Crown-Heights' },
-  { id: 'breadberry', name: 'Breadberry', apiBase: 'https://breadberry.com/api', webUrl: 'https://breadberry.com/Brooklyn' },
-  { id: 'pomppeople', name: 'Pom People', apiBase: null, webUrl: 'https://thepompeopleonline.com' },
-  { id: 'southside', name: 'Southside Kosher', apiBase: null, webUrl: 'https://www.southsidekosher.com' },
-  { id: 'gottlieb', name: "Gottlieb's Restaurant", apiBase: null, webUrl: 'https://gottliebrestaurant.com/order' },
-  { id: 'kosherdepot', name: 'The Kosher Depot', apiBase: null, webUrl: 'http://www.thekosherdepot.com' },
+  // Williamsburg
+  { id: 'rosemary', name: 'Rosemary Kosher', apiBase: 'https://rosemarykosher.com/api', webUrl: 'https://rosemarykosher.com/Rosemary', area: 'Williamsburg', zips: ['11205', '11206', '11211', '11249'] },
+  { id: 'pomppeople', name: 'Pom People', apiBase: null, webUrl: 'https://thepompeopleonline.com', area: 'Williamsburg', zips: ['11205', '11206', '11211', '11249'] },
+  { id: 'southside', name: 'Southside Kosher', apiBase: null, webUrl: 'https://www.southsidekosher.com', area: 'Williamsburg', zips: ['11205', '11206', '11211', '11249'] },
+  { id: 'gottlieb', name: "Gottlieb's Restaurant", apiBase: null, webUrl: 'https://gottliebrestaurant.com/order', area: 'Williamsburg', zips: ['11205', '11206', '11211', '11249'] },
+  { id: 'kosherdepot', name: 'The Kosher Depot', apiBase: null, webUrl: 'http://www.thekosherdepot.com', area: 'Williamsburg', zips: ['11205', '11206', '11211', '11249'] },
+  // Crown Heights
+  { id: 'koshertown', name: 'KosherTown', apiBase: 'https://koshertown.com/api', webUrl: 'https://koshertown.com/brooklyn', area: 'Crown Heights', zips: ['11213', '11225', '11238'] },
+  { id: 'empire', name: 'Empire Kosher', apiBase: 'https://empirekoshersupermarket.com/api', webUrl: 'https://empirekoshersupermarket.com/empire', area: 'Crown Heights', zips: ['11213', '11225', '11238'] },
+  { id: 'kosherfamily', name: 'Kosher Family', apiBase: 'https://kosherfamily.com/api', webUrl: 'https://kosherfamily.com/Brooklyn-Crown-Heights', area: 'Crown Heights', zips: ['11213', '11225', '11238'] },
+  // Borough Park
+  { id: 'breadberry', name: 'Breadberry', apiBase: 'https://breadberry.com/api', webUrl: 'https://breadberry.com/Brooklyn', area: 'Borough Park', zips: ['11204', '11219', '11218', '11230'] },
 ];
+
+// ZIP → area name mapping (for quick lookup)
+const ZIP_TO_AREA: Record<string, string> = {};
+for (const store of STORES) {
+  for (const zip of store.zips) {
+    if (!ZIP_TO_AREA[zip]) ZIP_TO_AREA[zip] = store.area;
+  }
+}
+
+export function getAreaByZip(zip: string): string | null {
+  return ZIP_TO_AREA[zip] || null;
+}
 
 export function getAllStores(): Store[] {
   return STORES;
 }
 
-export function getStoreByIndex(index: number): Store | null {
-  if (index < 0 || index >= STORES.length) return null;
-  return STORES[index];
+export function getStoresByArea(area: string): Store[] {
+  return STORES.filter(s => s.area.toLowerCase() === area.toLowerCase());
 }
 
-export function formatStoreListForSMS(): string {
-  const lines = STORES.map((s, i) => {
+export function getStoresByZip(zip: string): Store[] {
+  return STORES.filter(s => s.zips.includes(zip));
+}
+
+export function getStoreByIndex(index: number, storeList?: Store[]): Store | null {
+  const list = storeList || STORES;
+  if (index < 0 || index >= list.length) return null;
+  return list[index];
+}
+
+export function formatStoreListForSMS(storeList?: Store[], areaLabel?: string): string {
+  const stores = storeList || STORES;
+  const title = areaLabel ? `🏷 ${areaLabel} Stores:` : '🏷 Kosher Store Specials:';
+  const lines = stores.map((s, i) => {
     const tag = s.apiBase ? '' : ' (website only)';
     return `${i + 1}. ${s.name}${tag}`;
   });
-  return `🏷 Kosher Store Specials:\n${lines.join('\n')}\n\nReply 1-${STORES.length} to see specials`;
+  return `${title}\n${lines.join('\n')}\n\nReply 1-${stores.length} to see specials`;
 }
 
 export async function fetchStoreSpecials(store: Store): Promise<Special[]> {
