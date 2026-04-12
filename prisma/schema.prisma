@@ -17,8 +17,7 @@ datasource db {
 model Business {
   id            String   @id @default(cuid())
   name          String
-  nameYiddish   String?  // שם ביידיש
-  nameHebrew    String?  // שם בעברית
+  // nameYiddish/nameHebrew — columns exist in DB, re-add when multilingual is implemented
   phone         String
   categoryRaw   String?  // Оригинальная категория из справочника
   categories    String[] // AI-присвоенные теги: ["plumber", "emergency", "24h"]
