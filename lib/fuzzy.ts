@@ -25,6 +25,7 @@ const CATEGORY_ALIASES: Record<string, string> = {
   'shtreimel': 'shtreimlech', 'shtreimal': 'shtreimlech',
   'mover': 'movers', 'moving': 'movers',
   'painter': 'paint_stores', 'painting': 'paint_stores',
+  'bank': 'banks', 'banking': 'banks',
   'handiman': 'handyman', 'handy man': 'handyman',
   'tutoring': 'tutor', 'teacher': 'tutor',
   'cleaning': 'cleaning_service', 'cleaner': 'cleaning_service',

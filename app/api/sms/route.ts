@@ -274,7 +274,15 @@ async function handleSearch(
   // Если не нашли - расширяем поиск (любая локация)
   if (businesses.length === 0 && category) {
     businesses = await searchBusinessesExpanded({
-      category: parsed.category,
+      category,
+      limit: 3,
+    })
+  }
+
+  // Последний шанс — поиск по оригинальному тексту как имя бизнеса
+  if (businesses.length === 0 && parsed.category && !parsed.businessName) {
+    businesses = await searchBusinesses({
+      businessName: parsed.category,
       limit: 3,
     })
   }
