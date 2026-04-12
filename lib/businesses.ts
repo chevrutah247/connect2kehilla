@@ -80,7 +80,7 @@ export async function searchBusinesses(params: SearchParams): Promise<SearchResu
   }
 
   // Выполняем поиск с приоритетом PAID
-  const businesses = await prisma.business.findMany({
+  let businesses = await prisma.business.findMany({
     where,
     take: limit,
     orderBy: [
@@ -96,6 +96,30 @@ export async function searchBusinesses(params: SearchParams): Promise<SearchResu
       status: true,
     }
   })
+
+  // If ZIP search gave 0 results, retry with area match (many businesses have null zipCode)
+  if (businesses.length === 0 && zipCode && category) {
+    const ZIP_TO_AREA: Record<string, string> = {
+      '11211': 'Williamsburg', '11249': 'Williamsburg', '11206': 'Williamsburg', '11205': 'Williamsburg',
+      '11219': 'Borough Park', '11204': 'Borough Park', '11218': 'Borough Park',
+      '11230': 'Flatbush', '11210': 'Flatbush',
+      '11213': 'Crown Heights', '11225': 'Crown Heights',
+      '10952': 'Monsey', '08701': 'Lakewood',
+    }
+    const areaFromZip = ZIP_TO_AREA[zipCode]
+    if (areaFromZip) {
+      businesses = await prisma.business.findMany({
+        where: {
+          isActive: true,
+          categories: { has: category.toLowerCase() },
+          area: { contains: areaFromZip, mode: 'insensitive' },
+        },
+        take: limit,
+        orderBy: [{ status: 'desc' }, { leadCount: 'asc' }],
+        select: { id: true, name: true, phone: true, area: true, categories: true, status: true },
+      })
+    }
+  }
 
   return businesses
 }
