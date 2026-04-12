@@ -16,7 +16,7 @@ function getClient() {
 // Типы
 // ============================================
 export interface ParsedQuery {
-  intent: 'search' | 'help' | 'stop' | 'info' | 'specials' | 'unknown'
+  intent: 'search' | 'help' | 'stop' | 'info' | 'specials' | 'add_business' | 'unknown'
   category: string | null
   zipCode: string | null
   area: string | null
@@ -57,6 +57,9 @@ SPECIALS/DEALS:
 - "specials", "deals", "sales", "specials williamsburg", "what's on sale" → intent: specials
 - If user says "specials" with an area name, still set intent: specials AND set area field
 
+ADD BUSINESS:
+- "add business", "add my business", "list my business", "register", "advertise", "I want to add", "add service", "add store" → intent: add_business
+
 COMMANDS:
 - "HELP", "?" → intent: help
 - "STOP", "UNSUBSCRIBE", "CANCEL" → intent: stop
@@ -64,7 +67,7 @@ COMMANDS:
 
 Respond ONLY with valid JSON matching this schema:
 {
-  "intent": "search" | "help" | "stop" | "info" | "specials" | "unknown",
+  "intent": "search" | "help" | "stop" | "info" | "specials" | "add_business" | "unknown",
   "category": string | null,
   "zipCode": string | null,
   "area": string | null,

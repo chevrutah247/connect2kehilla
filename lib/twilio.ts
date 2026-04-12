@@ -104,6 +104,23 @@ Gut Voch! Have a wonderful week!`,
 
 Example: "plumber 11211"`,
 
+  ADD_BUSINESS: `📋 Add Your Business to Connect2Kehilla!
+
+Send the following info via SMS or email:
+
+1️⃣ Business name
+2️⃣ Category (plumber, restaurant, etc.)
+3️⃣ Phone number
+4️⃣ Address
+5️⃣ Email
+6️⃣ Hours of operation
+7️⃣ Do you offer specials/discounts?
+
+📧 Email to: list@connect2kehilla.com
+📞 Or call: (888) 516-3399
+
+We'll add your business within 24 hours!`,
+
   ERROR: `Sorry, something went wrong. Please try again.
 If the problem persists, text HELP for support.`,
 }

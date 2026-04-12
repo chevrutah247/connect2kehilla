@@ -152,6 +152,10 @@ export async function POST(request: NextRequest) {
         responseText = MESSAGES.WELCOME
         break
 
+      case 'add_business':
+        responseText = MESSAGES.ADD_BUSINESS
+        break
+
       case 'specials': {
         // Filter stores by area or ZIP if provided
         const area = parsed.area || (parsed.zipCode ? getAreaByZip(parsed.zipCode) : null)
