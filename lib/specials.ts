@@ -1,9 +1,13 @@
-// Store Specials — MCG (My Cloud Grocer) API integration
+// Store Specials — MCG (My Cloud Grocer) API + scraped data
+
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
 export interface Store {
   id: string;
   name: string;
   apiBase: string | null; // null = no API access
+  scrapeUrl?: string;     // URL to scrape via browser (for non-API stores)
   webUrl: string;
   area: string;
   zips: string[]; // ZIP codes for this area
@@ -24,8 +28,8 @@ const STORES: Store[] = [
   { id: 'southside', name: 'Southside Kosher', apiBase: null, webUrl: 'https://www.southsidekosher.com', area: 'Williamsburg', zips: ['11205', '11206', '11211', '11249'] },
   { id: 'gottlieb', name: "Gottlieb's Restaurant", apiBase: null, webUrl: 'https://gottliebrestaurant.com/order', area: 'Williamsburg', zips: ['11205', '11206', '11211', '11249'] },
   { id: 'kosherdepot', name: 'The Kosher Depot', apiBase: null, webUrl: 'http://www.thekosherdepot.com', area: 'Williamsburg', zips: ['11205', '11206', '11211', '11249'] },
-  { id: 'chestnut', name: 'Chestnut Supermarket', apiBase: null, webUrl: 'https://chestnutsupermarket.com/sale', area: 'Williamsburg', zips: ['11205', '11206', '11211', '11249'] },
-  { id: 'hatzlacha', name: 'Hatzlacha Kosher', apiBase: null, webUrl: 'https://www.hatzlachakosher.com/specials', area: 'Williamsburg', zips: ['11205', '11206', '11211', '11249'] },
+  { id: 'chestnut', name: 'Chestnut Supermarket', apiBase: null, scrapeUrl: 'https://chestnutsupermarket.com/sale', webUrl: 'https://chestnutsupermarket.com/sale', area: 'Williamsburg', zips: ['11205', '11206', '11211', '11249'] },
+  { id: 'hatzlacha', name: 'Hatzlacha Kosher', apiBase: null, scrapeUrl: 'https://www.hatzlachakosher.com/specials', webUrl: 'https://www.hatzlachakosher.com/specials', area: 'Williamsburg', zips: ['11205', '11206', '11211', '11249'] },
   // Crown Heights
   { id: 'koshertown', name: 'KosherTown', apiBase: 'https://koshertown.com/api', webUrl: 'https://koshertown.com/brooklyn', area: 'Crown Heights', zips: ['11213', '11225', '11238'] },
   { id: 'empire', name: 'Empire Kosher', apiBase: 'https://empirekoshersupermarket.com/api', webUrl: 'https://empirekoshersupermarket.com/empire', area: 'Crown Heights', zips: ['11213', '11225', '11238'] },
@@ -68,10 +72,39 @@ export function formatStoreListForSMS(storeList?: Store[], areaLabel?: string): 
   const stores = storeList || STORES;
   const title = areaLabel ? `🏷 ${areaLabel} Stores:` : '🏷 Kosher Store Specials:';
   const lines = stores.map((s, i) => {
-    const tag = s.apiBase ? '' : ' (website only)';
+    const hasData = s.apiBase || (s.scrapeUrl && getScrapedSpecials(s.id));
+    const tag = hasData ? '' : ' (website only)';
     return `${i + 1}. ${s.name}${tag}`;
   });
   return `${title}\n${lines.join('\n')}\n\nReply 1-${stores.length} to see specials`;
+}
+
+// ── Scraped specials (from JSON file, updated weekly via browser) ──
+const SCRAPED_MAX_AGE = 8 * 24 * 60 * 60 * 1000; // 8 days
+let scrapedCache: Record<string, { specials: Special[]; scrapedAt: string }> | null = null;
+
+export function loadScrapedSpecials(): Record<string, { specials: Special[]; scrapedAt: string }> {
+  if (scrapedCache) return scrapedCache;
+  try {
+    const raw = readFileSync(join(process.cwd(), 'data', 'scraped-specials.json'), 'utf-8');
+    scrapedCache = JSON.parse(raw);
+    return scrapedCache!;
+  } catch {
+    return {};
+  }
+}
+
+export function getScrapedSpecials(storeId: string): Special[] | null {
+  const scraped = loadScrapedSpecials();
+  const entry = scraped[storeId];
+  if (!entry || !entry.specials?.length) return null;
+  if (Date.now() - new Date(entry.scrapedAt).getTime() > SCRAPED_MAX_AGE) return null;
+  return entry.specials;
+}
+
+// Force reload from disk (call after scraping new data)
+export function invalidateScrapedCache(): void {
+  scrapedCache = null;
 }
 
 // ── Specials Cache (fetched once, served all day) ──
@@ -108,7 +141,13 @@ async function fetchFromAPI(store: Store): Promise<Special[]> {
 }
 
 export async function fetchStoreSpecials(store: Store): Promise<Special[]> {
-  if (!store.apiBase) return [];
+  // For non-API stores, try scraped data
+  if (!store.apiBase) {
+    if (store.scrapeUrl) {
+      return getScrapedSpecials(store.id) || [];
+    }
+    return [];
+  }
 
   // Check cache first
   const cached = specialsCache.get(store.id);
@@ -142,7 +181,7 @@ export async function prefetchAllSpecials(): Promise<Record<string, number>> {
 
 export function formatSpecialsForSMS(store: Store, specials: Special[]): string {
   if (specials.length === 0) {
-    if (!store.apiBase) {
+    if (!store.apiBase && store.webUrl) {
       return `🏷 ${store.name}\nVisit their website for specials:\n${store.webUrl}\n\nReply SPECIALS for store list`;
     }
     return `🏷 ${store.name}\nNo specials available right now.\n\nReply SPECIALS for store list`;
