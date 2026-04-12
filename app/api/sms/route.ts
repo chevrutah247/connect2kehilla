@@ -240,6 +240,8 @@ async function handleSearch(
     return MESSAGES.NEED_MORE_INFO
   }
 
+  console.log(`🔍 SEARCH DEBUG: category=${parsed.category}, businessName=${parsed.businessName}, zip=${zipCode}, area=${area}`)
+
   // Fuzzy normalize category and area (typo tolerance)
   let category = parsed.category
   if (category) {
@@ -250,6 +252,8 @@ async function handleSearch(
     const normalizedArea = normalizeArea(area)
     if (normalizedArea) area = normalizedArea
   }
+
+  console.log(`🔍 AFTER FUZZY: category=${category}, area=${area}`)
 
   // Ищем бизнесы
   let businesses = await searchBusinesses({
