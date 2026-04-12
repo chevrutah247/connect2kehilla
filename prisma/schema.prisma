@@ -74,7 +74,7 @@ model User {
   // Предпочтения
   defaultZip    String?
   defaultArea   String?
-  preferredLang String   @default("en") // en, yi (yiddish), he (hebrew)
+  // preferredLang — column exists in DB, will re-add to schema when multilingual SMS is implemented
 
   // Статус
   isBlocked     Boolean  @default(false)
