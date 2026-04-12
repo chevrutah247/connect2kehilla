@@ -215,25 +215,10 @@ async function handleSearch(
   parsed: Awaited<ReturnType<typeof parseQuery>>
 ): Promise<string> {
   
-  // Проверяем Шаббат
-  const zipForShabbat = parsed.zipCode || await getUserDefaultZip(phone)
-  const isShabbat = await isShabbatWithBuffer(zipForShabbat ?? undefined)
-  
-  if (isShabbat) {
-    // Сохраняем запрос для обработки после Шаббата
-    await prisma.query.create({
-      data: {
-        userId,
-        rawMessage,
-        parsedCategory: parsed.category,
-        parsedZip: parsed.zipCode,
-        parsedArea: parsed.area,
-        parsedIntent: 'SEARCH',
-        isShabbat: true,
-      }
-    })
-    return MESSAGES.SHABBAT
-  }
+  // Shabbat mode disabled — service runs 24/7
+  // TODO: re-enable when needed
+  // const zipForShabbat = parsed.zipCode || await getUserDefaultZip(phone)
+  // const isShabbat = await isShabbatWithBuffer(zipForShabbat ?? undefined)
 
   // Если нет локации - пробуем взять дефолтную
   let zipCode = parsed.zipCode

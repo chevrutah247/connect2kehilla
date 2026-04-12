@@ -65,18 +65,29 @@ Example: "plumber 11211" or "electrician Monsey"
 
 Reply HELP for more info.`,
 
-  HELP: `Connect2Kehilla - SMS Business Directory
+  HELP: `📞 Connect2Kehilla — Your Community Directory
 
-HOW TO USE:
-• Text: [service] [ZIP/area]
-• Example: "plumber 11211"
-• Example: "kosher restaurant Monsey"
+🔍 FIND A SERVICE:
+Text what you need + area
+• "plumber Williamsburg"
+• "electrician 11211"
+• "dentist Monsey"
 
-COMMANDS:
-• HELP - This message
-• STOP - Unsubscribe
+🏷 STORE SPECIALS:
+• "specials" — see all stores
+• "specials Crown Heights"
 
-Questions? Contact support@connect2kehilla.com`,
+📋 ADD YOUR BUSINESS:
+• Call (888) 516-3399
+• Or visit connect2kehilla.com
+
+📌 COMMANDS:
+• SPECIALS — grocery deals
+• HELP — this menu
+• STOP — unsubscribe
+• START — resubscribe
+
+Msg & data rates may apply.`,
 
   STOP: `You have been unsubscribed from Connect2Kehilla. 
 You will no longer receive messages.
