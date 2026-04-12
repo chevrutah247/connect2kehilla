@@ -253,9 +253,9 @@ async function handleSearch(
     if (normalizedArea) area = normalizedArea
   }
 
-  console.log(`🔍 AFTER FUZZY: category=${category}, area=${area}`)
+  console.log(`🔍 AFTER FUZZY: category=${category}, area=${area}, zip=${zipCode}, businessName=${parsed.businessName}`)
 
-  // Ищем бизнесы
+  // Step 1: Search with location filter
   let businesses = await searchBusinesses({
     category,
     zipCode,
@@ -264,29 +264,40 @@ async function handleSearch(
     limit: 3,
   })
 
-  // Если не нашли — fuzzy поиск по названию/категории
+  // Step 2: If not found — retry WITHOUT location (ZIP/area often missing in DB)
+  if (businesses.length === 0) {
+    console.log('🔍 Step 2: retry without location filter')
+    businesses = await searchBusinesses({
+      category,
+      businessName: parsed.businessName,
+      limit: 3,
+    })
+  }
+
+  // Step 3: Fuzzy search
   if (businesses.length === 0 && (category || parsed.businessName)) {
+    console.log('🔍 Step 3: fuzzy search')
     businesses = await searchBusinessesFuzzy({
       category,
       businessName: parsed.businessName,
-      zipCode,
-      area,
       limit: 3,
     })
   }
 
-  // Если не нашли - расширяем поиск (любая локация)
-  if (businesses.length === 0 && category) {
-    businesses = await searchBusinessesExpanded({
-      category,
-      limit: 3,
-    })
-  }
-
-  // Последний шанс — поиск по оригинальному тексту как имя бизнеса
+  // Step 4: Treat category as business name
   if (businesses.length === 0 && parsed.category && !parsed.businessName) {
+    console.log('🔍 Step 4: try category as business name')
     businesses = await searchBusinesses({
       businessName: parsed.category,
+      limit: 3,
+    })
+  }
+
+  // Step 5: Try raw message as business name
+  if (businesses.length === 0) {
+    console.log('🔍 Step 5: try raw message as business name')
+    businesses = await searchBusinesses({
+      businessName: rawMessage.replace(/\d{5}/g, '').trim(),
       limit: 3,
     })
   }
