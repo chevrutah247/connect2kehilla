@@ -28,29 +28,29 @@ model Business {
   area          String?  // "Williamsburg", "Monsey", "Borough Park"
   city          String?
   state         String   @default("NY")
-  
+
   // Дополнительная информация
   address       String?  // Полный адрес: "651 Dahill Rd"
   email         String?
   website       String?
   fax           String?
-  
+
   // Статус и монетизация
   status        BusinessStatus @default(FREE)
   trialEndsAt   DateTime?
-  
+
   // Статистика
   leadCount     Int      @default(0)  // Сколько раз контакт был выдан
   lastLeadAt    DateTime?
-  
+
   // Мета
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   isActive      Boolean  @default(true)
-  
+
   // Связи
   leads         Lead[]
-  
+
   @@index([zipCode])
   @@index([categories])
   @@index([status])
@@ -58,10 +58,10 @@ model Business {
 }
 
 enum BusinessStatus {
-  FREE      // Бесплатный (триал или навсегда)
-  TRIAL     // Пробный период
-  PAID      // Оплаченная подписка
-  SUSPENDED // Приостановлен
+  FREE
+  TRIAL
+  PAID
+  SUSPENDED
 }
 
 // ============================================
@@ -69,22 +69,22 @@ enum BusinessStatus {
 // ============================================
 model User {
   id            String   @id @default(cuid())
-  phoneHash     String   @unique // SHA-256 хэш номера телефона
-  
+  phoneHash     String   @unique
+
   // Предпочтения
   defaultZip    String?
   defaultArea   String?
   preferredLang String   @default("en") // en, yi (yiddish), he (hebrew)
 
   // Статус
-  isBlocked     Boolean  @default(false) // STOP команда
+  isBlocked     Boolean  @default(false)
   createdAt     DateTime @default(now())
   lastActiveAt  DateTime @default(now())
-  
+
   // Связи
   queries       Query[]
   leads         Lead[]
-  
+
   @@index([phoneHash])
 }
 
@@ -92,42 +92,36 @@ model User {
 // ЗАПРОСЫ (Query Log)
 // ============================================
 model Query {
-  id            String   @id @default(cuid())
-  userId        String
-  user          User     @relation(fields: [userId], references: [id])
-  
-  // Входящее сообщение
-  rawMessage    String   // Оригинальный текст SMS
-  
-  // AI парсинг
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+
+  rawMessage     String
   parsedCategory String?
   parsedZip      String?
   parsedArea     String?
   parsedIntent   QueryIntent @default(SEARCH)
-  
-  // Результат
+
   responseText   String?
   businessCount  Int      @default(0)
-  
-  // Мета
+
   createdAt      DateTime @default(now())
   processedAt    DateTime?
-  isShabbat      Boolean  @default(false) // Был ли запрос в Шаббат
-  
-  // Связи
+  isShabbat      Boolean  @default(false)
+
   leads          Lead[]
-  
+
   @@index([userId])
   @@index([createdAt])
 }
 
 enum QueryIntent {
-  SEARCH    // Поиск бизнеса
-  HELP      // Запрос помощи
-  STOP      // Отписка
-  INFO      // Информация о сервисе
-  SPECIALS  // Запрос спешиалс магазинов
-  UNKNOWN   // Не распознано
+  SEARCH
+  HELP
+  STOP
+  INFO
+  SPECIALS
+  UNKNOWN
 }
 
 // ============================================
@@ -135,21 +129,15 @@ enum QueryIntent {
 // ============================================
 model Lead {
   id            String   @id @default(cuid())
-  
   queryId       String
   query         Query    @relation(fields: [queryId], references: [id])
-  
   userId        String
   user          User     @relation(fields: [userId], references: [id])
-  
   businessId    String
   business      Business @relation(fields: [businessId], references: [id])
-  
-  // Позиция в выдаче (1, 2, 3)
   position      Int
-  
   createdAt     DateTime @default(now())
-  
+
   @@index([businessId])
   @@index([userId])
   @@index([createdAt])
@@ -159,15 +147,10 @@ model Lead {
 // НАСТРОЙКИ ШАББАТА
 // ============================================
 model ShabbatSchedule {
-  id            String   @id @default(cuid())
-  zipCode       String
-  timezone      String   @default("America/New_York")
-  
-  // Время текущей недели (обновляется автоматически)
-  candleLighting DateTime  // Зажигание свечей (пятница)
-  havdalah       DateTime  // Исход Шаббата (суббота)
-  
+  id             String   @id @default(cuid())
+  zipCode        String   @unique
+  timezone       String   @default("America/New_York")
+  candleLighting DateTime
+  havdalah       DateTime
   updatedAt      DateTime @updatedAt
-  
-  @@unique([zipCode])
 }
