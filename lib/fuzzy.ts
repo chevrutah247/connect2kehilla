@@ -101,10 +101,10 @@ const AREA_ALIASES: Record<string, string> = {
   'passaik': 'Passaic', 'pasaic': 'Passaic',
 
   // Hebrew/Yiddish → area
-  'וויליאמסבורג': 'Williamsburg', 'וויליאמסבורג': 'Williamsburg',
+  'וויליאמסבורג': 'Williamsburg',
   'בארא פארק': 'Borough Park', 'בורו פארק': 'Borough Park',
   'קראון הייטס': 'Crown Heights', 'קראון הייס': 'Crown Heights',
-  'פלעטבוש': 'Flatbush', 'פלעטבוש': 'Flatbush',
+  'פלעטבוש': 'Flatbush',
 }
 
 // City aliases — maps typos, abbreviations, Hebrew/Yiddish to canonical city name
@@ -136,10 +136,9 @@ const CITY_ALIASES: Record<string, string> = {
   'מונרו': 'Monroe', 'ניו סקווער': 'New Square',
   'ספרינג וואלי': 'Spring Valley',
 
-  // ── Yiddish (אידיש) ──
-  'ברוקלין': 'Brooklyn', 'מאנסי': 'Monsey',
+  // ── Yiddish (אידיש) — only unique keys not already in Hebrew section ──
   'לעיקוואוד': 'Lakewood', 'ניו יארק': 'New York',
-  'מאנרא': 'Monroe', 'ניו סקווער': 'New Square',
+  'מאנרא': 'Monroe',
   'סקווירא': 'New Square', 'קרית יואל': 'Monroe',
 }
 
