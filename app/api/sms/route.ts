@@ -182,9 +182,17 @@ export async function POST(request: NextRequest) {
         responseText = await handleSearch(user.id, from, body, parsed)
         break
 
-      default:
-        // Если AI не понял - просим уточнить
-        responseText = MESSAGES.NEED_MORE_INFO
+      default: {
+        // Если AI не понял — попробуем keyword matching на сыром сообщении
+        const keywordFallback = matchKeywordToCategory(body)
+        if (keywordFallback) {
+          // Found a keyword match — treat as search
+          const fixedParsed = { ...parsed, intent: 'search' as const, category: keywordFallback }
+          responseText = await handleSearch(user.id, from, body, fixedParsed)
+        } else {
+          responseText = MESSAGES.NEED_MORE_INFO
+        }
+      }
     }
 
     // Сохраняем запрос в базу
