@@ -130,6 +130,14 @@ function buildEmailHTML(params: {
 // ── Main webhook handler ──
 export async function POST(request: NextRequest) {
   try {
+    // Verify webhook secret
+    const authHeader = request.headers.get('authorization')
+    const { searchParams } = new URL(request.url)
+    const secret = searchParams.get('secret') || authHeader?.replace('Bearer ', '')
+    if (secret !== process.env.VAPI_WEBHOOK_SECRET && secret !== process.env.CRON_SECRET) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const body = await request.json()
 
     // Vapi sends different message types — we only care about end-of-call

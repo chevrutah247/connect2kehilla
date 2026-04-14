@@ -1,0 +1,18 @@
+User-Agent: *
+Allow: /
+Disallow: /api/
+Disallow: /data/
+
+User-Agent: GPTBot
+Disallow: /
+
+User-Agent: CCBot
+Disallow: /
+
+User-Agent: anthropic-ai
+Disallow: /
+
+User-Agent: Google-Extended
+Disallow: /
+
+Sitemap: https://www.connect2kehilla.com/sitemap.xml

@@ -7,7 +7,7 @@ import { parseQuery } from '@/lib/openai'
 import { isShabbatWithBuffer } from '@/lib/shabbat'
 import { getOrCreateUser, isUserBlocked, blockUser, unblockUser, getUserDefaultZip, setUserDefaultZip } from '@/lib/users'
 import { searchBusinesses, searchBusinessesExpanded, searchBusinessesFuzzy, recordLeads } from '@/lib/businesses'
-import { normalizeCategory, normalizeArea, detectLanguage } from '@/lib/fuzzy'
+import { normalizeCategory, normalizeArea, normalizeCity, detectLanguage, matchKeywordToCategory } from '@/lib/fuzzy'
 import { getAllStores, getStoreByIndex, getStoresByArea, getStoresByZip, getAreaByZip, fetchStoreSpecials, formatSpecialsForSMS, formatStoreListForSMS, Store } from '@/lib/specials'
 import prisma from '@/lib/db'
 
@@ -224,6 +224,30 @@ async function handleSearch(
   // const zipForShabbat = parsed.zipCode || await getUserDefaultZip(phone)
   // const isShabbat = await isShabbatWithBuffer(zipForShabbat ?? undefined)
 
+  // ── Direct business name match: skip ZIP requirement if unique match ──
+  if (parsed.businessName && !parsed.category) {
+    const directMatches = await searchBusinesses({
+      businessName: parsed.businessName,
+      limit: 3,
+    })
+    if (directMatches.length >= 1 && directMatches.length <= 3) {
+      // Found exact business — no need for ZIP
+      const query = await prisma.query.create({
+        data: {
+          userId, rawMessage,
+          parsedCategory: parsed.category,
+          parsedZip: parsed.zipCode,
+          parsedArea: parsed.area,
+          parsedIntent: 'SEARCH',
+          businessCount: directMatches.length,
+          processedAt: new Date(),
+        }
+      })
+      await recordLeads(query.id, userId, directMatches.map(b => b.id))
+      return formatBusinessResponse(directMatches, parsed.businessName)
+    }
+  }
+
   // Если нет локации - пробуем взять дефолтную
   let zipCode = parsed.zipCode
   let area = parsed.area
@@ -245,8 +269,19 @@ async function handleSearch(
   // Fuzzy normalize category and area (typo tolerance)
   let category = parsed.category
   if (category) {
-    const normalized = normalizeCategory(category)
-    category = normalized.category
+    // First try keyword-to-category (e.g. "shower door" → glass_mirror)
+    const keywordCat = matchKeywordToCategory(category)
+    if (keywordCat) {
+      category = keywordCat
+    } else {
+      const normalized = normalizeCategory(category)
+      category = normalized.category
+    }
+  }
+  // Also try keyword match on raw message if no category found
+  if (!category && rawMessage) {
+    const keywordCat = matchKeywordToCategory(rawMessage)
+    if (keywordCat) category = keywordCat
   }
   if (area) {
     const normalizedArea = normalizeArea(area)

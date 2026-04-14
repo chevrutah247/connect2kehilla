@@ -1,1 +1,13 @@
-{}
+{
+  "chestnut": {
+    "specials": [
+      { "name": "Stern's Pastry-To-Go Sprinkle Cookies (12 oz)", "price": "$7.49", "oldPrice": "$8.99", "category": "Package Single Pastries" },
+      { "name": "Perfection 9\" Plastic Plates (100 ct)", "price": "$3.99", "oldPrice": "$5.99", "category": "Basic Disposables" }
+    ],
+    "scrapedAt": "2026-04-12T18:00:00.000Z"
+  },
+  "hatzlacha": {
+    "specials": [],
+    "scrapedAt": ""
+  }
+}

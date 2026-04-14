@@ -70,6 +70,38 @@ export default function TermsPage() {
           </section>
 
           <section>
+            <h2 className="text-2xl font-semibold text-gray-800 mb-3">Prohibited Activities</h2>
+            <p className="text-gray-600">
+              You agree not to engage in any of the following prohibited activities:
+            </p>
+            <ul className="list-disc pl-6 text-gray-600 space-y-2 mt-2">
+              <li>Scraping, crawling, or using automated means to access, collect, or download data from our service, website, or APIs</li>
+              <li>Data mining, harvesting, or extracting business listings or any other content from our platform</li>
+              <li>Reproducing, duplicating, copying, selling, or exploiting any portion of our directory data without express written permission</li>
+              <li>Using bots, scripts, or other automated tools to interact with our service</li>
+              <li>Attempting to gain unauthorized access to our systems, databases, or APIs</li>
+              <li>Reverse engineering, decompiling, or disassembling any part of our service</li>
+              <li>Interfering with or disrupting the integrity or performance of our service</li>
+            </ul>
+            <p className="text-gray-600 mt-3">
+              Violation of these terms may result in immediate termination of access
+              and may subject the violator to civil and criminal penalties under applicable law,
+              including but not limited to the Computer Fraud and Abuse Act (CFAA).
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-semibold text-gray-800 mb-3">Intellectual Property</h2>
+            <p className="text-gray-600">
+              All content, data, and materials available through Connect2Kehilla, including
+              but not limited to business listings, categorization, and directory compilation,
+              are the proprietary property of Connect2Kehilla and are protected by copyright,
+              trademark, and other intellectual property laws. Unauthorized use, reproduction,
+              or distribution of our content is strictly prohibited.
+            </p>
+          </section>
+
+          <section>
             <h2 className="text-2xl font-semibold text-gray-800 mb-3">Contact</h2>
             <p className="text-gray-600">
               For questions about these terms, text HELP to (888) 516-3399 or email
