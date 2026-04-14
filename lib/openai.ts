@@ -20,6 +20,7 @@ export interface ParsedQuery {
   category: string | null
   zipCode: string | null
   area: string | null
+  city: string | null
   businessName: string | null
   confidence: number
   needsMoreInfo: boolean
@@ -30,47 +31,71 @@ export interface ParsedQuery {
 // Системный промпт для парсера
 // ============================================
 const PARSER_SYSTEM_PROMPT = `You are a query parser for a Jewish community business directory SMS service.
+Users text in English, Hebrew (עברית), or Yiddish (אידיש). Extract structured info from their messages.
 
-Your job is to extract structured information from SMS messages.
-
-KNOWN AREAS (New York / New Jersey region):
-- Williamsburg (ZIP: 11211, 11249)
-- Borough Park (ZIP: 11219)
-- Flatbush (ZIP: 11230, 11210)
-- Crown Heights (ZIP: 11213, 11225)
-- Monsey (ZIP: 10952)
-- Lakewood (ZIP: 08701)
+KNOWN AREAS & CITIES:
+- Williamsburg (ZIP: 11211, 11249, 11206, 11205) — וויליאמסבורג
+- Borough Park (ZIP: 11219, 11204, 11218) — בארא פארק
+- Crown Heights (ZIP: 11213, 11225, 11203) — קראון הייטס
+- Flatbush (ZIP: 11230, 11210) — פלעטבוש
+- Monsey (ZIP: 10952) — מאנסי
+- Monroe / Kiryas Joel (ZIP: 10950) — מאנרא / קרית יואל
+- New Square (ZIP: 10977) — ניו סקווער / סקווירא
+- Spring Valley (ZIP: 10977)
+- Lakewood (ZIP: 08701) — לייקווד
 - Five Towns (ZIP: 11516, 11559)
 - Teaneck (ZIP: 07666)
 - Passaic (ZIP: 07055)
+- Staten Island (ZIP: 10314)
+- Suffern (ZIP: 10901)
 
 COMMON CATEGORIES:
-- plumber, electrician, handyman, contractor
-- doctor, dentist, pediatrician, therapist
-- lawyer, accountant, insurance
-- restaurant, catering, bakery, grocery
-- car service, mechanic, tow truck
-- locksmith, exterminator, cleaner
-- tutor, photographer, musician
+- plumber, electrician, handyman, contractor, construction
+- doctor, dentist, pediatrician, therapist, pharmacy
+- lawyer, accountant, insurance, real estate
+- restaurant, catering, bakery, grocery, meat, fish
+- car service, mechanic, tow truck, auto collision
+- locksmith, exterminator, cleaner, mover
+- tutor, photographer, musician, printing
+- glass, mirror, shower door, window
+- wigs, jewelry, clothing, shoes
+- sofer, mezuzah, tefillin, judaica
+
+HEBREW/YIDDISH CATEGORIES (map to English):
+- רופא/דאקטער → doctor, שיניים/צוינדאקטער → dentist
+- עורך דין/אדוואקאט → lawyer, חשמלאי/עלעקטריקער → electrician
+- שרברב/שפאכטלער → plumber, מנעולן/שלאסער → locksmith
+- מסעדה → restaurant, בית מרקחת/אפטייק → pharmacy
+- פאות/שייטל → wigs, תכשיטים/גאלדשמיד → jewelry
+- נגר/טישלער → furniture, פליישער → meat
+
+IMPORTANT RULES:
+1. If user writes a specific business name (e.g. "Lemofet Glass", "Kehot"), set businessName, NOT category
+2. If query has a product/service keyword (shower door, table top, mirror), set category to the SERVICE not the product
+3. Always extract ZIP code if present (5 digits)
+4. Always extract area/city if mentioned (in any language)
+5. If user types just a ZIP code, set intent: search with only zipCode
+6. Hebrew/Yiddish text → translate to English category/area names in output
+7. If unsure between businessName and category, prefer businessName for proper nouns
 
 SPECIALS/DEALS:
-- "specials", "deals", "sales", "specials williamsburg", "what's on sale" → intent: specials
-- If user says "specials" with an area name, still set intent: specials AND set area field
+- "specials", "deals", "sales", "what's on sale" → intent: specials
 
 ADD BUSINESS:
-- "add business", "add my business", "list my business", "register", "advertise", "I want to add", "add service", "add store" → intent: add_business
+- "add business", "list my business", "register", "advertise" → intent: add_business
 
 COMMANDS:
 - "HELP", "?" → intent: help
 - "STOP", "UNSUBSCRIBE", "CANCEL" → intent: stop
 - "INFO", "ABOUT" → intent: info
 
-Respond ONLY with valid JSON matching this schema:
+Respond ONLY with valid JSON:
 {
   "intent": "search" | "help" | "stop" | "info" | "specials" | "add_business" | "unknown",
   "category": string | null,
   "zipCode": string | null,
   "area": string | null,
+  "city": string | null,
   "businessName": string | null,
   "confidence": number (0-1),
   "needsMoreInfo": boolean,
@@ -116,6 +141,7 @@ function getDefaultParsedQuery(): ParsedQuery {
     category: null,
     zipCode: null,
     area: null,
+    city: null,
     businessName: null,
     confidence: 0,
     needsMoreInfo: true,
