@@ -1,0 +1,661 @@
+[
+  {
+    "id": "sterling-street-shul",
+    "name": "Sterling Street Shul",
+    "aliases": ["sterling", "sterling shul", "sterling minyan"],
+    "address": "450 Sterling Street, Side entrance",
+    "zipCode": "11225",
+    "area": "Crown Heights",
+    "contact": "Levi Wilhelm",
+    "phone": "+13473854912",
+    "email": "minyansterling@gmail.com",
+    "website": "sterlingminyan.wixsite.com/home",
+    "amenities": [],
+    "schedule": {
+      "shacharis": [],
+      "mincha": [
+        { "days": "Sunday-Friday", "time": "04:15 PM" }
+      ],
+      "maariv": [
+        { "days": "Sunday-Thursday", "time": "09:00 PM" }
+      ]
+    }
+  },
+  {
+    "id": "tzeirei-anash",
+    "name": "Tzeirei Anash",
+    "aliases": ["tzeirei", "tzeirei anash"],
+    "address": "Basement of 456 Crown St.",
+    "zipCode": "11225",
+    "area": "Crown Heights",
+    "contact": "Avremel Kugel",
+    "phone": null,
+    "email": "info@tzeireianash.org",
+    "website": "tzeireianash.org",
+    "amenities": [],
+    "schedule": {
+      "shacharis": [
+        { "days": "Monday-Friday", "time": "07:30 AM" },
+        { "days": "Sunday", "time": "10:00 AM" }
+      ],
+      "mincha": [],
+      "maariv": []
+    }
+  },
+  {
+    "id": "anshei-lubavitch",
+    "name": "Anshei Lubavitch",
+    "aliases": ["anshei", "anshei lubavitch", "geshemshul", "geshem shul", "albany shul"],
+    "address": "578 Albany Ave.",
+    "zipCode": "11203",
+    "area": "Crown Heights",
+    "contact": "Yossi Gurelik",
+    "phone": null,
+    "email": "shmuelrosenstein@gmail.com",
+    "website": "geshemshul.com",
+    "amenities": ["open_24h", "coffee"],
+    "schedule": {
+      "shacharis": [
+        { "days": "Sunday", "time": "07:30 AM" },
+        { "days": "Sunday", "time": "08:30 AM" },
+        { "days": "Sunday", "time": "10:15 AM" },
+        { "days": "Monday-Friday", "time": "07:15 AM" },
+        { "days": "Monday-Friday", "time": "08:15 AM" },
+        { "days": "Monday-Friday", "time": "09:15 AM" },
+        { "days": "Monday-Friday", "time": "09:50 AM" }
+      ],
+      "mincha": [
+        { "days": "Sunday-Thursday", "time": "15 min before Shekiah" }
+      ],
+      "maariv": [
+        { "days": "Sunday-Thursday", "time": "B'zman" },
+        { "days": "Sunday-Thursday", "time": "08:00 PM" },
+        { "days": "Sunday-Thursday", "time": "09:00 PM" }
+      ],
+      "shiurim": [
+        { "days": "Sunday", "time": "09:15 AM", "topic": "Chassidus" },
+        { "days": "Sunday", "time": "11:15 AM", "topic": "Shiur Halacha with hot breakfast" },
+        { "days": "Sunday", "time": "08:00 PM", "topic": "Halacha Shiur" },
+        { "days": "Monday-Friday", "time": "06:30 AM", "topic": "Chassidus" },
+        { "days": "Monday-Friday", "time": "07:15 AM", "topic": "Chassidus" },
+        { "days": "Monday-Friday", "time": "08:15 AM", "topic": "Chassidus" },
+        { "days": "Thursday", "time": "10:00 PM", "topic": "Ma'amar Shiur" }
+      ]
+    }
+  },
+  {
+    "id": "beis-hillel",
+    "name": "Beis Hillel",
+    "aliases": ["beis hillel", "tiferes menachem", "carrol street shul"],
+    "address": "1614 Carrol Street, top floor",
+    "zipCode": "11213",
+    "area": "Crown Heights",
+    "contact": "Moshe Katzman",
+    "phone": "+19177159260",
+    "email": null,
+    "website": "tiferesmenachem.org",
+    "amenities": [],
+    "schedule": {
+      "shacharis": [],
+      "mincha": [],
+      "maariv": []
+    }
+  },
+  {
+    "id": "fishers-kollel",
+    "name": "Fisher's Kollel",
+    "aliases": ["fishers", "fishers kollel", "fisher kollel", "montgomery kollel"],
+    "address": "770 Montgomery Street",
+    "zipCode": "11213",
+    "area": "Crown Heights",
+    "contact": "Michol Lerner",
+    "phone": "+17185684570",
+    "email": null,
+    "website": null,
+    "amenities": [],
+    "schedule": {
+      "shacharis": [
+        { "days": "Daily", "time": "08:00 AM" }
+      ],
+      "mincha": [],
+      "maariv": []
+    }
+  },
+  {
+    "id": "kollel-menachem",
+    "name": "Kollel Menachem",
+    "aliases": ["kollel menachem", "union street kollel"],
+    "address": "1483 Union Street",
+    "zipCode": "11213",
+    "area": "Crown Heights",
+    "contact": "Rabbi Heller",
+    "phone": null,
+    "email": "kollelmenachem1483@gmail.com",
+    "website": null,
+    "amenities": ["coffee", "chavrusas", "mezonos", "seltzer"],
+    "schedule": {
+      "shacharis": [
+        { "days": "Daily", "time": "07:30 AM" }
+      ],
+      "mincha": [],
+      "maariv": []
+    }
+  },
+  {
+    "id": "beis-yisroel-yitzchak",
+    "name": "Beis Yisroel Yitzchak",
+    "aliases": ["beis yisroel", "troy ave shul"],
+    "address": "790 Troy Ave.",
+    "zipCode": "11203",
+    "area": "Crown Heights",
+    "contact": "Shaya Zalmanov",
+    "phone": "+16463576174",
+    "email": "geulahsz@gmail.com",
+    "website": null,
+    "amenities": [],
+    "schedule": {
+      "shacharis": [],
+      "mincha": [],
+      "maariv": []
+    }
+  },
+  {
+    "id": "merkas-avreichim",
+    "name": "Merkas Avreichim",
+    "aliases": ["merkas", "merkas avreichim", "albany minyan"],
+    "address": "466 Albany Ave.",
+    "zipCode": "11203",
+    "area": "Crown Heights",
+    "contact": "Rabbi Shmuel Pevzner",
+    "phone": "+19174491919",
+    "email": null,
+    "website": null,
+    "amenities": [],
+    "schedule": {
+      "shacharis": [],
+      "mincha": [],
+      "maariv": [
+        { "days": "Sunday-Thursday", "time": "09:30 PM" }
+      ]
+    }
+  },
+  {
+    "id": "beis-binyomin",
+    "name": "Beis Binyomin",
+    "aliases": ["beis binyomin", "beis binyamin", "montgomery shul"],
+    "address": "680 Montgomery St.",
+    "zipCode": "11213",
+    "area": "Crown Heights",
+    "contact": "Naftali Berkowitz",
+    "phone": null,
+    "email": "berkowitz6@msn.com",
+    "website": null,
+    "amenities": [],
+    "schedule": {
+      "shacharis": [
+        { "days": "Sunday", "time": "08:30 AM" },
+        { "days": "Sunday", "time": "09:30 AM" },
+        { "days": "Monday-Friday", "time": "07:15 AM" },
+        { "days": "Monday-Friday", "time": "08:30 AM" }
+      ],
+      "mincha": [
+        { "days": "Sunday-Thursday", "time": "B'zman" }
+      ],
+      "maariv": [
+        { "days": "Sunday-Thursday", "time": "B'zman" }
+      ]
+    }
+  },
+  {
+    "id": "itchkes-shtiebel",
+    "name": "Itchkes Shtiebel / Ahavas Moshe",
+    "aliases": ["itchkes", "ahavas moshe", "maple street shul", "maple shul"],
+    "address": "612 Maple Street",
+    "zipCode": "11225",
+    "area": "Crown Heights",
+    "contact": "Chaim Fogelman",
+    "phone": null,
+    "email": null,
+    "website": null,
+    "amenities": ["kiddush", "coffee", "kids_program", "library"],
+    "schedule": {
+      "shacharis": [],
+      "mincha": [],
+      "maariv": []
+    }
+  },
+  {
+    "id": "friendship-circle-shul",
+    "name": "The Friendship Circle Shul",
+    "aliases": ["friendship circle", "friendship shul", "rutland shul"],
+    "address": "674 Rutland Road",
+    "zipCode": "11203",
+    "area": "Crown Heights",
+    "contact": "Berel Majesky",
+    "phone": null,
+    "email": "berel@fcbrooklyn.com",
+    "website": null,
+    "amenities": [],
+    "schedule": {
+      "shacharis": [
+        { "days": "Sunday-Friday", "time": "09:00 AM" }
+      ],
+      "mincha": [],
+      "maariv": []
+    }
+  },
+  {
+    "id": "the-94-shul",
+    "name": "The 94 Shul",
+    "aliases": ["94 shul", "94", "east new york shul"],
+    "address": "630 East New York Ave.",
+    "zipCode": "11203",
+    "area": "Crown Heights",
+    "contact": "Sadya Liberow",
+    "phone": null,
+    "email": "nundaledshul@gmail.com",
+    "website": null,
+    "amenities": ["coffee", "kids_program", "kiddush"],
+    "schedule": {
+      "shacharis": [],
+      "mincha": [],
+      "maariv": []
+    }
+  },
+  {
+    "id": "aliya",
+    "name": "Aliya",
+    "aliases": ["aliya", "aliya institute"],
+    "address": "525/527 East New York",
+    "zipCode": "11203",
+    "area": "Crown Heights",
+    "contact": "Moshe Feiglin",
+    "phone": null,
+    "email": "rabbi@aliyainstitute.com",
+    "website": "aliyainstitute.com",
+    "amenities": [],
+    "schedule": {
+      "shacharis": [
+        { "days": "Monday-Friday", "time": "07:45 AM" }
+      ],
+      "mincha": [],
+      "maariv": []
+    }
+  },
+  {
+    "id": "anshei-moshe",
+    "name": "Anshei Moshe",
+    "aliases": ["anshei moshe", "lincoln place shul"],
+    "address": "1334 Lincoln Place",
+    "zipCode": "11213",
+    "area": "Crown Heights",
+    "contact": "Rabbi Mendel Yusewitz",
+    "phone": "+13479676327",
+    "email": "ansheimoshe@gmail.com",
+    "website": "ansheimoshe.com",
+    "amenities": [],
+    "schedule": {
+      "shacharis": [],
+      "mincha": [],
+      "maariv": [
+        { "days": "Tuesday", "time": "09:45 PM" }
+      ]
+    }
+  },
+  {
+    "id": "besht-center",
+    "name": "The Besht Center",
+    "aliases": ["besht", "besht center", "empire shul"],
+    "address": "563 Empire Blvd, ground floor",
+    "zipCode": "11225",
+    "area": "Crown Heights",
+    "contact": null,
+    "phone": "+15628333351",
+    "email": "info@beshtcenter.org",
+    "website": "beshtcenter.org",
+    "amenities": [],
+    "schedule": {
+      "shacharis": [],
+      "mincha": [],
+      "maariv": [
+        { "days": "Tuesday", "time": "10:00 PM" }
+      ]
+    }
+  },
+  {
+    "id": "beis-menachem-mendel",
+    "name": "Beis Menachem Mendel",
+    "aliases": ["beis menachem", "lefferts shul"],
+    "address": "770 Lefferts Ave.",
+    "zipCode": "11203",
+    "area": "Crown Heights",
+    "contact": "Rabbi Twersky",
+    "phone": null,
+    "email": null,
+    "website": null,
+    "amenities": [],
+    "schedule": {
+      "shacharis": [
+        { "days": "Sunday", "time": "10:00 AM" }
+      ],
+      "mincha": [],
+      "maariv": [
+        { "days": "Sunday-Thursday", "time": "09:00 PM" }
+      ]
+    }
+  },
+  {
+    "id": "the-shul",
+    "name": "The Shul",
+    "aliases": ["the shul", "schenectady shul"],
+    "address": "395 Schenectady Ave.",
+    "zipCode": "11213",
+    "area": "Crown Heights",
+    "contact": "Cohen",
+    "phone": null,
+    "email": null,
+    "website": null,
+    "amenities": [],
+    "schedule": {
+      "shacharis": [],
+      "mincha": [],
+      "maariv": []
+    }
+  },
+  {
+    "id": "anshei-rubishov",
+    "name": "Anshei Rubishov",
+    "aliases": ["rubishov", "anshei rubishov", "crown street shul"],
+    "address": "691 Crown St.",
+    "zipCode": "11213",
+    "area": "Crown Heights",
+    "contact": "Yonah Gilertner",
+    "phone": "+13475122806",
+    "email": "chazakusa@hotmail.com",
+    "website": null,
+    "amenities": [],
+    "schedule": {
+      "shacharis": [
+        { "days": "Sunday", "time": "09:00 AM" },
+        { "days": "Monday-Friday", "time": "07:30 AM" }
+      ],
+      "mincha": [],
+      "maariv": []
+    }
+  },
+  {
+    "id": "nossons-shul",
+    "name": "Nosson's Shul",
+    "aliases": ["nossons", "nossons shul", "nosson shul", "brooklyn ave shul"],
+    "address": "579 Brooklyn Ave.",
+    "zipCode": "11225",
+    "area": "Crown Heights",
+    "contact": "Chaim Yisroel Willhelm",
+    "phone": null,
+    "email": "info@nossonsshul.com",
+    "website": "nossonsshul.com",
+    "amenities": [],
+    "schedule": {
+      "shacharis": [
+        { "days": "Sunday", "time": "09:00 AM" },
+        { "days": "Monday-Friday", "time": "07:15 AM" }
+      ],
+      "mincha": [
+        { "days": "Sunday", "time": "B'zman" },
+        { "days": "Monday-Friday", "time": "02:00 PM" }
+      ],
+      "maariv": [
+        { "days": "Sunday", "time": "B'zman" },
+        { "days": "Monday-Friday", "time": "09:00 PM" }
+      ]
+    }
+  },
+  {
+    "id": "match-shul",
+    "name": "M@tch Shul",
+    "aliases": ["match", "match shul", "albany shabbos shul"],
+    "address": "543 Albany Ave.",
+    "zipCode": "11203",
+    "area": "Crown Heights",
+    "contact": "Yanky Raskin",
+    "phone": null,
+    "email": "matchshul@gmail.com",
+    "website": "matchshul.com",
+    "amenities": [],
+    "schedule": {
+      "shacharis": [],
+      "mincha": [],
+      "maariv": [],
+      "note": "Only open Shabbos"
+    }
+  },
+  {
+    "id": "eliyahu-nachum",
+    "name": "Eliyahu Nachum",
+    "aliases": ["eliyahu nachum", "lefferts shacharis"],
+    "address": "672 Lefferts Ave.",
+    "zipCode": "11203",
+    "area": "Crown Heights",
+    "contact": "Rabbi Rimler",
+    "phone": "+19178347068",
+    "email": null,
+    "website": null,
+    "amenities": [],
+    "schedule": {
+      "shacharis": [
+        { "days": "Sunday-Friday", "time": "07:00 AM" },
+        { "days": "Sunday-Friday", "time": "07:30 AM" },
+        { "days": "Sunday-Friday", "time": "08:10 AM" }
+      ],
+      "mincha": [],
+      "maariv": []
+    }
+  },
+  {
+    "id": "the-shull",
+    "name": "The Shull",
+    "aliases": ["the shull", "albany ave shul"],
+    "address": "481 Albany Ave.",
+    "zipCode": "11203",
+    "area": "Crown Heights",
+    "contact": "Levke Kaplan",
+    "phone": null,
+    "email": null,
+    "website": null,
+    "amenities": [],
+    "schedule": {
+      "shacharis": [
+        { "days": "Daily", "time": "06:45 AM" }
+      ],
+      "mincha": [],
+      "maariv": []
+    }
+  },
+  {
+    "id": "yeshiva-reiness",
+    "name": "Yeshiva Reiness",
+    "aliases": ["reiness", "ohelei torah shul"],
+    "address": "417 Troy Ave.",
+    "zipCode": "11213",
+    "area": "Crown Heights",
+    "contact": "Rabbi Kirshenbaum",
+    "phone": null,
+    "email": null,
+    "website": null,
+    "amenities": [],
+    "schedule": {
+      "shacharis": [],
+      "mincha": [],
+      "maariv": [],
+      "note": "Shul inside Ohelei Torah Mesivta Yeshiva building"
+    }
+  },
+  {
+    "id": "ner-menachem",
+    "name": "Ner Menachem Chayim Vechesed",
+    "aliases": ["ner menachem", "empire blvd shul"],
+    "address": "560 Empire Blvd",
+    "zipCode": "11225",
+    "area": "Crown Heights",
+    "contact": "Rabbi Nimni",
+    "phone": null,
+    "email": null,
+    "website": null,
+    "amenities": [],
+    "schedule": {
+      "shacharis": [
+        { "days": "Daily", "time": "06:45 AM" }
+      ],
+      "mincha": [
+        { "days": "Daily", "time": "01:40 PM" },
+        { "days": "Daily", "time": "06:20 PM" }
+      ],
+      "maariv": [
+        { "days": "Daily", "time": "09:05 PM" }
+      ]
+    }
+  },
+  {
+    "id": "bnei-shlomo-zalman",
+    "name": "Bnei Shlomo Zalman / Frankel Shul",
+    "aliases": ["frankel", "frankel shul", "bnei shlomo zalman", "president street shul"],
+    "address": "1699 President St",
+    "zipCode": "11213",
+    "area": "Crown Heights",
+    "contact": "Rabbi Wolwovsky",
+    "phone": null,
+    "email": "frankelsshul@gmail.com",
+    "website": null,
+    "amenities": [],
+    "schedule": {
+      "shacharis": [
+        { "days": "Sunday", "time": "08:00 AM" },
+        { "days": "Monday-Friday", "time": "07:00 AM" }
+      ],
+      "mincha": [],
+      "maariv": [
+        { "days": "Sunday-Thursday", "time": "09:00 PM" }
+      ]
+    }
+  },
+  {
+    "id": "ohel-nosson",
+    "name": "Ohel Nosson",
+    "aliases": ["ohel nosson", "crown street minyan"],
+    "address": "580 Crown Street",
+    "zipCode": "11213",
+    "area": "Crown Heights",
+    "contact": "Yoni Raskin",
+    "phone": null,
+    "email": "oihelnosson@gmail.com",
+    "website": "ohelnosson.org",
+    "amenities": [],
+    "schedule": {
+      "shacharis": [
+        { "days": "Sunday", "time": "08:15 AM" },
+        { "days": "Sunday", "time": "10:00 AM" }
+      ],
+      "mincha": [],
+      "maariv": []
+    }
+  },
+  {
+    "id": "kehal-beis-rivkah",
+    "name": "Kehal Beis Rivkah",
+    "aliases": ["beis rivkah", "kehal beis rivkah"],
+    "address": "310 Crown St.",
+    "zipCode": "11213",
+    "area": "Crown Heights",
+    "contact": "Moshe Bogomilsky",
+    "phone": null,
+    "email": "bogomilsky@aol.com",
+    "website": null,
+    "amenities": [],
+    "schedule": {
+      "shacharis": [],
+      "mincha": [
+        { "days": "Daily", "time": "B'zman" }
+      ],
+      "maariv": [
+        { "days": "Daily", "time": "B'zman" }
+      ]
+    }
+  },
+  {
+    "id": "heichal-limud",
+    "name": "Heichal Limud Anshei Moshe",
+    "aliases": ["heichal limud", "kollel erev"],
+    "address": "1334 Lincoln Place",
+    "zipCode": "11213",
+    "area": "Crown Heights",
+    "contact": "Rabbi Mendel Yuzewitz",
+    "phone": null,
+    "email": "Ansheimoshe@gmail.com",
+    "website": "ansheimoshe.com",
+    "amenities": ["library", "coffee", "food", "shiurim"],
+    "schedule": {
+      "shacharis": [],
+      "mincha": [],
+      "maariv": [
+        { "days": "Tuesday", "time": "09:45 PM", "note": "After Kollel Erev 9:00 PM" },
+        { "days": "Thursday", "time": "09:45 PM", "note": "After Kollel Erev 9:00 PM" }
+      ]
+    }
+  },
+  {
+    "id": "yagdil-torah",
+    "name": "Yagdil Torah Tiferes Yitzchok",
+    "aliases": ["yagdil torah", "yagdil", "empire beis midrash"],
+    "address": "574 Empire Blvd.",
+    "zipCode": "11225",
+    "area": "Crown Heights",
+    "contact": "Levi Browd",
+    "phone": null,
+    "email": "yagdilt@gmail.com",
+    "website": "yagdilt.org",
+    "amenities": ["coffee", "chavrusas"],
+    "schedule": {
+      "shacharis": [],
+      "mincha": [],
+      "maariv": [],
+      "note": "Beis Midrash for Limud Hatorah"
+    }
+  },
+  {
+    "id": "770",
+    "name": "770",
+    "aliases": ["770", "seven seventy", "770 eastern parkway", "lubavitch headquarters", "chabad headquarters"],
+    "address": "770 Eastern Parkway",
+    "zipCode": "11213",
+    "area": "Crown Heights",
+    "contact": null,
+    "phone": null,
+    "email": null,
+    "website": "lubavitch.com",
+    "amenities": ["open_24h", "coffee", "chavrusas"],
+    "schedule": {
+      "shacharis": [],
+      "mincha": [],
+      "maariv": [],
+      "note": "Chabad Lubavitch World Headquarters — multiple daily minyanim"
+    }
+  },
+  {
+    "id": "heights-shteebel",
+    "name": "Heights Shteebel",
+    "aliases": ["heights shteebel", "heights shteeble", "carroll street shteebel"],
+    "address": "1340 Carroll Street (Alley Entrance)",
+    "zipCode": "11213",
+    "area": "Crown Heights",
+    "contact": "Chaim Pil",
+    "phone": "+14154124515",
+    "email": "noahisnowlol@gmail.com",
+    "website": null,
+    "amenities": [],
+    "schedule": {
+      "shacharis": [],
+      "mincha": [],
+      "maariv": []
+    }
+  }
+]

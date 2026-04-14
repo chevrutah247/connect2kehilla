@@ -9,6 +9,7 @@ import { getOrCreateUser, isUserBlocked, blockUser, unblockUser, getUserDefaultZ
 import { searchBusinesses, searchBusinessesExpanded, searchBusinessesFuzzy, recordLeads } from '@/lib/businesses'
 import { normalizeCategory, normalizeArea, normalizeCity, detectLanguage, matchKeywordToCategory } from '@/lib/fuzzy'
 import { getAllStores, getStoreByIndex, getStoresByArea, getStoresByZip, getAreaByZip, fetchStoreSpecials, formatSpecialsForSMS, formatStoreListForSMS, Store } from '@/lib/specials'
+import { detectTefillah, searchShulsByZip, searchShulsByArea, searchShulByName, formatMinyanForSMS, formatShulForSMS } from '@/lib/minyanim'
 import prisma from '@/lib/db'
 
 // ============================================
@@ -129,6 +130,57 @@ export async function POST(request: NextRequest) {
           return createTwiMLResponse(responseText)
         }
       }
+    }
+
+    // ── Minyan / Shul search (before AI parser — fast keyword detection) ──
+    const minyanKeywords = ['mincha', 'minchah', 'shacharis', 'shachrit', 'shachris', 'maariv', 'mariv', 'arvit', 'davening', 'minyan', 'shul', 'שחרית', 'מנחה', 'מעריב', 'שול', 'מנין']
+    const bodyLower = body.toLowerCase().trim()
+    const isMinyanQuery = minyanKeywords.some(kw => bodyLower.includes(kw))
+
+    if (isMinyanQuery) {
+      const tefillah = detectTefillah(body)
+
+      // Check if searching by shul name
+      const shulByName = searchShulByName(body.replace(/\d{5}/g, '').replace(/mincha|shacharis|maariv|minyan|davening/gi, '').trim())
+      if (shulByName) {
+        const responseText = formatShulForSMS(shulByName)
+        await prisma.query.create({
+          data: { userId: user.id, rawMessage: body, parsedCategory: 'minyan', parsedIntent: 'SEARCH', responseText, businessCount: 1, processedAt: new Date() }
+        })
+        return createTwiMLResponse(responseText)
+      }
+
+      // Extract ZIP from message
+      const zipMatch = body.match(/\b\d{5}\b/)
+      let shuls = zipMatch ? searchShulsByZip(zipMatch[0]) : []
+
+      // Try area if no ZIP
+      if (shuls.length === 0) {
+        const areaWords = body.replace(/mincha|shacharis|maariv|minyan|davening|shul|שחרית|מנחה|מעריב|שול|מנין/gi, '').trim()
+        if (areaWords) {
+          const normalizedArea = normalizeArea(areaWords) || normalizeCity(areaWords)
+          if (normalizedArea) {
+            shuls = searchShulsByArea(normalizedArea)
+          }
+        }
+      }
+
+      // Default to Crown Heights if no location specified
+      if (shuls.length === 0 && !zipMatch) {
+        const defaultZip = await getUserDefaultZip(from)
+        if (defaultZip) {
+          shuls = searchShulsByZip(defaultZip)
+        }
+        if (shuls.length === 0) {
+          shuls = searchShulsByArea('Crown Heights')
+        }
+      }
+
+      const responseText = formatMinyanForSMS(shuls, tefillah)
+      await prisma.query.create({
+        data: { userId: user.id, rawMessage: body, parsedCategory: 'minyan', parsedZip: zipMatch?.[0], parsedIntent: 'SEARCH', responseText, businessCount: shuls.length, processedAt: new Date() }
+      })
+      return createTwiMLResponse(responseText)
     }
 
     // Парсим сообщение через AI
