@@ -267,17 +267,10 @@ async function handleSearch(
     }
   }
 
-  // Если всё ещё нет локации и категории - просим уточнить
-  if (!parsed.category && !parsed.businessName) {
-    return MESSAGES.NEED_MORE_INFO
-  }
-
-  console.log(`🔍 SEARCH DEBUG: category=${parsed.category}, businessName=${parsed.businessName}, zip=${zipCode}, area=${area}`)
-
-  // Fuzzy normalize category and area (typo tolerance)
+  // ── Keyword matching on raw message BEFORE any checks ──
+  // e.g. "shower door 11205" → category = glass_mirror
   let category = parsed.category
   if (category) {
-    // First try keyword-to-category (e.g. "shower door" → glass_mirror)
     const keywordCat = matchKeywordToCategory(category)
     if (keywordCat) {
       category = keywordCat
@@ -286,11 +279,21 @@ async function handleSearch(
       category = normalized.category
     }
   }
-  // Also try keyword match on raw message if no category found
-  if (!category && rawMessage) {
+  if (!category) {
     const keywordCat = matchKeywordToCategory(rawMessage)
     if (keywordCat) category = keywordCat
   }
+  if (!category && parsed.businessName) {
+    const keywordCat = matchKeywordToCategory(parsed.businessName)
+    if (keywordCat) category = keywordCat
+  }
+
+  // Если всё ещё нет категории и имени бизнеса - просим уточнить
+  if (!category && !parsed.category && !parsed.businessName) {
+    return MESSAGES.NEED_MORE_INFO
+  }
+
+  console.log(`🔍 SEARCH DEBUG: category=${category}, businessName=${parsed.businessName}, zip=${zipCode}, area=${area}`)
   if (area) {
     const normalizedArea = normalizeArea(area)
     if (normalizedArea) area = normalizedArea
