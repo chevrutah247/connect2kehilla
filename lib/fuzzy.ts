@@ -38,6 +38,15 @@ const CATEGORY_ALIASES: Record<string, string> = {
   'travel agent': 'travel', 'flights': 'travel',
   'printing': 'printing', 'printer': 'printing', 'print shop': 'printing',
 
+  // Organizations / Institutions
+  'kollel': 'kollel', 'beis medrash': 'beis_medrash', 'beis midrash': 'beis_medrash',
+  'bais medrash': 'beis_medrash', 'beit midrash': 'beis_medrash',
+  'headquarters': 'headquarters', 'hq': 'headquarters',
+  'publishing': 'publishing', 'publisher': 'publishing',
+  'media': 'media', 'fund': 'fund', 'campaign': 'campaign',
+  'institute': 'institute', 'library': 'library',
+  'development': 'development', 'nonprofit': 'nonprofit', 'non profit': 'nonprofit',
+
   // Yiddish transliterations (Latin script)
   'shlasser': 'locksmith', 'doktor': 'doctor', 'advokat': 'lawyer',
   'apteik': 'pharmacies', 'bakery': 'bakeries', 'bekery': 'bakeries',
