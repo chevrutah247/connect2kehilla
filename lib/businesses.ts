@@ -76,19 +76,23 @@ export async function searchBusinesses(params: SearchParams): Promise<SearchResu
       select: { id: true, name: true, phone: true, area: true, categories: true, status: true },
     })
     if (sponsored) {
-      // Get other results and put sponsored first
-      const others = await prisma.business.findMany({
-        where: {
-          isActive: true,
-          id: { not: sponsored.id },
-          ...(category ? { categories: { has: category.toLowerCase() } } : {}),
-          ...(zipCode ? { zipCode } : area ? { area: { contains: area, mode: 'insensitive' } } : {}),
-        },
-        take: limit - 1,
-        orderBy: [{ status: 'desc' }, { leadCount: 'asc' }],
-        select: { id: true, name: true, phone: true, area: true, categories: true, status: true },
-      })
-      return [sponsored, ...others]
+      // Only show other businesses if we have a category filter (avoid random results)
+      if (category) {
+        const others = await prisma.business.findMany({
+          where: {
+            isActive: true,
+            id: { not: sponsored.id },
+            categories: { has: category.toLowerCase() },
+            ...(zipCode ? { zipCode } : area ? { area: { contains: area, mode: 'insensitive' } } : {}),
+          },
+          take: limit - 1,
+          orderBy: [{ status: 'desc' }, { leadCount: 'asc' }],
+          select: { id: true, name: true, phone: true, area: true, categories: true, status: true },
+        })
+        return [sponsored, ...others]
+      }
+      // No category → return only sponsored (don't mix in random businesses)
+      return [sponsored]
     }
   }
 
