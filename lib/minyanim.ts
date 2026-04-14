@@ -70,12 +70,10 @@ const TEFILLAH_ALIASES: Record<string, Tefillah> = {
   'shacharit': 'shacharis', 'morning': 'shacharis', 'morning prayer': 'shacharis',
   'mincha': 'mincha', 'minchah': 'mincha', 'afternoon': 'mincha',
   'afternoon prayer': 'mincha',
-  'maariv': 'maariv', 'maariv': 'maariv', 'arvit': 'maariv',
+  'maariv': 'maariv', 'arvit': 'maariv',
   'evening': 'maariv', 'evening prayer': 'maariv', 'night': 'maariv',
-  // Hebrew
+  // Hebrew/Yiddish
   'שחרית': 'shacharis', 'מנחה': 'mincha', 'מעריב': 'maariv', 'ערבית': 'maariv',
-  // Yiddish
-  'שחרית': 'shacharis', 'מנחה': 'mincha', 'מעריב': 'maariv',
   // Common misspellings
   'shachrus': 'shacharis', 'shachros': 'shacharis',
   'minche': 'mincha', 'mincheh': 'mincha',
