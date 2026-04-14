@@ -66,28 +66,35 @@ Example: "plumber 11211" or "electrician Monsey"
 
 Reply HELP for more info.`,
 
-  HELP: `📞 Connect2Kehilla — Your Community Directory
+  HELP: `📞 Connect2Kehilla — Community Directory
 
-🔍 FIND A SERVICE:
-Text what you need + area
-• "plumber Williamsburg"
-• "electrician 11211"
-• "dentist Monsey"
+🔍 FIND A BUSINESS:
+• "plumber 11211"
+• "electrician Monsey"
+• "shower door Williamsburg"
+• "Lemofet Glass"
+
+🕍 MINYAN / SHUL TIMES:
+• "mincha 11225"
+• "shacharis Crown Heights"
+• "maariv"
+• "770" or "Nosson's Shul"
 
 🏷 STORE SPECIALS:
-• "specials" — see all stores
+• "specials"
 • "specials Crown Heights"
 
-📋 ADD YOUR BUSINESS:
+📋 LIST YOUR BUSINESS:
 • Call (888) 516-3399
-• Or visit connect2kehilla.com
+• Email: list@connect2kehilla.com
 
 📌 COMMANDS:
-• SPECIALS — grocery deals
 • HELP — this menu
+• SPECIALS — grocery deals
 • STOP — unsubscribe
 • START — resubscribe
 
+🌐 connect2kehilla.com
 Msg & data rates may apply.`,
 
   STOP: `You have been unsubscribed from Connect2Kehilla. 
