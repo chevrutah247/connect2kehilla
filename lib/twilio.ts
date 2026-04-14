@@ -50,8 +50,9 @@ export function formatBusinessResponse(
     response += '\n'
   })
   
+  response += '💡 Please tell them Connect2Kehilla sent you!\n\n'
   response += 'Reply HELP for assistance or STOP to unsubscribe.'
-  
+
   return response
 }
 

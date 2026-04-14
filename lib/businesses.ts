@@ -5,6 +5,43 @@ import prisma from './db'
 import { BusinessStatus } from '@prisma/client'
 
 // ============================================
+// Sponsored listings — always show first for specific keywords
+// ============================================
+interface SponsoredListing {
+  businessName: string    // exact name match in DB
+  keywords: string[]      // search terms that trigger this listing
+}
+
+const SPONSORED_LISTINGS: SponsoredListing[] = [
+  {
+    businessName: 'Lemofet Glass',
+    keywords: [
+      'plexi glass', 'plexiglass', 'shower door', 'shower doors',
+      'table top', 'tabletop', 'custom glass', 'antique mirror',
+      'bronze mirror', 'gray mirror', 'grey mirror', 'starphire glass',
+      'starfire glass', 'shower panel', 'shower panels',
+      'glass', 'mirror', 'glazer', 'glazier', 'glass_mirror',
+    ],
+  },
+]
+
+/**
+ * Check if a search term matches a sponsored listing
+ * Returns the sponsored business name or null
+ */
+export function getSponsoredBusiness(searchTerm: string): string | null {
+  const lower = (searchTerm || '').toLowerCase().trim()
+  for (const listing of SPONSORED_LISTINGS) {
+    for (const keyword of listing.keywords) {
+      if (lower.includes(keyword) || keyword.includes(lower)) {
+        return listing.businessName
+      }
+    }
+  }
+  return null
+}
+
+// ============================================
 // Типы
 // ============================================
 interface SearchParams {
@@ -29,6 +66,31 @@ interface SearchResult {
 // ============================================
 export async function searchBusinesses(params: SearchParams): Promise<SearchResult[]> {
   const { category, zipCode, area, businessName, limit = 3 } = params
+
+  // ── Check for sponsored listing ──
+  const searchTerm = category || businessName || ''
+  const sponsoredName = getSponsoredBusiness(searchTerm)
+  if (sponsoredName) {
+    const sponsored = await prisma.business.findFirst({
+      where: { isActive: true, name: { contains: sponsoredName, mode: 'insensitive' } },
+      select: { id: true, name: true, phone: true, area: true, categories: true, status: true },
+    })
+    if (sponsored) {
+      // Get other results and put sponsored first
+      const others = await prisma.business.findMany({
+        where: {
+          isActive: true,
+          id: { not: sponsored.id },
+          ...(category ? { categories: { has: category.toLowerCase() } } : {}),
+          ...(zipCode ? { zipCode } : area ? { area: { contains: area, mode: 'insensitive' } } : {}),
+        },
+        take: limit - 1,
+        orderBy: [{ status: 'desc' }, { leadCount: 'asc' }],
+        select: { id: true, name: true, phone: true, area: true, categories: true, status: true },
+      })
+      return [sponsored, ...others]
+    }
+  }
 
   // Если ищут по имени бизнеса
   if (businessName) {
