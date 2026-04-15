@@ -2,16 +2,116 @@
 // Landing page for Connect2Kehilla — Kosher Phone SMS Directory
 'use client'
 
+import { useEffect, useState } from 'react'
+
+// SMS conversation that plays on the phone mockup
+const SMS_CONVERSATION = [
+  { type: 'sent', text: 'plumber 11205', delay: 1000 },
+  { type: 'received', text: 'Found 3 plumber:\n\n1. Goldstein Plumbing\n   📞 718-555-1234\n   📍 Williamsburg', delay: 2000 },
+  { type: 'sent', text: 'specials', delay: 4000 },
+  { type: 'received', text: '🏷 Kosher Store Specials:\n1. Rosemary Kosher\n2. KosherTown\n3. Empire Kosher\n\nReply 1-3 for deals', delay: 2500 },
+  { type: 'sent', text: '1', delay: 2000 },
+  { type: 'received', text: '🏷 Rosemary Kosher Specials:\n• Coca Cola 2L $1.99\n• Bamba $0.99\n• Grape Juice $4.99', delay: 2500 },
+  { type: 'sent', text: 'rent a car', delay: 3000 },
+  { type: 'received', text: 'Found 3 car rentals:\n\n1. Rent Smart Car\n   📞 718-948-0101\n2. Swefy Rent A Car\n   📞 718-963-1200', delay: 2000 },
+]
+
+function PhoneMockup() {
+  const [messages, setMessages] = useState<typeof SMS_CONVERSATION>([])
+  const [currentIdx, setCurrentIdx] = useState(0)
+
+  useEffect(() => {
+    if (currentIdx >= SMS_CONVERSATION.length) {
+      // Reset after pause
+      const t = setTimeout(() => { setMessages([]); setCurrentIdx(0) }, 5000)
+      return () => clearTimeout(t)
+    }
+    const msg = SMS_CONVERSATION[currentIdx]
+    const t = setTimeout(() => {
+      setMessages(prev => [...prev, msg])
+      setCurrentIdx(prev => prev + 1)
+    }, msg.delay)
+    return () => clearTimeout(t)
+  }, [currentIdx])
+
+  return (
+    <div className="relative mx-auto" style={{ width: '240px' }}>
+      {/* Flip phone — top screen part */}
+      <div className="rounded-t-[28px] bg-gray-800 border-2 border-gray-600 shadow-2xl overflow-hidden" style={{ borderBottom: 'none' }}>
+        {/* Hinge line */}
+        <div className="h-1 bg-gray-600" />
+        {/* Small screen area */}
+        <div className="mx-3 mt-2 mb-1 rounded-lg bg-black overflow-hidden" style={{ height: '320px' }}>
+          {/* Status bar */}
+          <div className="flex justify-between items-center px-2 py-1 text-white text-[9px] bg-gray-900">
+            <span>📶</span>
+            <span className="font-bold text-emerald-400">Connect2Kehilla</span>
+            <span>🔋</span>
+          </div>
+          {/* Header */}
+          <div className="bg-emerald-700 px-2 py-1 text-center">
+            <p className="text-white font-bold text-[11px]">(888) 516-3399</p>
+          </div>
+          {/* Messages */}
+          <div className="px-1.5 py-1 space-y-1 overflow-hidden" style={{ height: '270px' }}>
+            {messages.slice(-6).map((msg, i) => (
+              <div key={i} className={`flex ${msg.type === 'sent' ? 'justify-end' : 'justify-start'}`}
+                   style={{ animation: 'slide-up 0.3s ease-out' }}>
+                <div className={`max-w-[88%] px-2 py-1 rounded-lg text-[10px] leading-tight whitespace-pre-line ${
+                  msg.type === 'sent'
+                    ? 'bg-emerald-600 text-white rounded-br-none'
+                    : 'bg-gray-800 text-gray-200 rounded-bl-none border border-gray-700'
+                }`}>
+                  {msg.text}
+                </div>
+              </div>
+            ))}
+            {currentIdx < SMS_CONVERSATION.length && messages.length > 0 && (
+              <div className="flex justify-start">
+                <div className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1 text-gray-400 text-[10px]">
+                  <span className="animate-pulse">●●●</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="h-2" />
+      </div>
+
+      {/* Hinge */}
+      <div className="h-3 bg-gray-700 border-x-2 border-gray-600 flex items-center justify-center">
+        <div className="w-16 h-1 bg-gray-500 rounded-full" />
+      </div>
+
+      {/* Keypad */}
+      <div className="rounded-b-[28px] bg-gray-800 border-2 border-gray-600 border-t-0 px-4 py-3 shadow-2xl">
+        {/* D-pad */}
+        <div className="flex justify-center mb-2">
+          <div className="w-14 h-14 rounded-full bg-gray-700 border-2 border-gray-600 flex items-center justify-center">
+            <div className="w-3 h-3 rounded-full bg-gray-500" />
+          </div>
+        </div>
+        {/* Number keys */}
+        <div className="grid grid-cols-3 gap-1.5">
+          {['1','2 ABC','3 DEF','4 GHI','5 JKL','6 MNO','7 PQRS','8 TUV','9 WXYZ','* +','0','#'].map((key, i) => (
+            <div key={i} className="bg-gray-700 hover:bg-gray-600 rounded-lg py-1.5 text-center cursor-default transition">
+              <span className="text-white text-xs font-bold">{key.split(' ')[0]}</span>
+              {key.split(' ')[1] && <span className="text-gray-400 text-[7px] block">{key.split(' ')[1]}</span>}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function Home() {
   return (
     <main id="main-content" className="min-h-screen bg-white">
       <style>{`
-        @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
         @keyframes pulse-green { 0%,100%{box-shadow:0 0 0 0 rgba(5,150,105,0.4)} 70%{box-shadow:0 0 0 15px rgba(5,150,105,0)} }
-        @keyframes slide-up { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
-        .float { animation: float 3s ease-in-out infinite; }
+        @keyframes slide-up { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
         .pulse-btn { animation: pulse-green 2s infinite; }
-        .slide-up { animation: slide-up 0.6s ease-out; }
       `}</style>
 
       {/* ═══ HERO — Dark gradient with phone image ═══ */}
@@ -52,28 +152,9 @@ export default function Home() {
               <p className="text-blue-400 text-sm mt-4">🌐 English • עברית • אידיש</p>
             </div>
 
-            {/* Right — Phone image */}
-            <div className="flex justify-center float">
-              <div className="relative">
-                <img
-                  src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&h=600&fit=crop"
-                  alt="Kosher Phone"
-                  className="rounded-3xl shadow-2xl"
-                  style={{ maxHeight: '420px', objectFit: 'cover', border: '3px solid rgba(5,150,105,0.3)' }}
-                  onError={(e: any) => { e.target.style.display = 'none' }}
-                />
-                {/* SMS bubble overlay */}
-                <div className="absolute -left-4 top-16 bg-white rounded-2xl rounded-bl-none shadow-xl p-3 max-w-[200px]" style={{ animation: 'slide-up 1s ease-out 0.5s both' }}>
-                  <p className="text-xs text-gray-500">You texted:</p>
-                  <p className="font-bold text-gray-800 text-sm">plumber 11205</p>
-                </div>
-                <div className="absolute -right-4 top-40 bg-emerald-50 border border-emerald-200 rounded-2xl rounded-br-none shadow-xl p-3 max-w-[220px]" style={{ animation: 'slide-up 1s ease-out 1s both' }}>
-                  <p className="text-xs text-emerald-600">Connect2Kehilla:</p>
-                  <p className="text-sm text-gray-800">Found 3 plumber:</p>
-                  <p className="text-xs text-gray-600">1. Goldstein Plumbing 📞</p>
-                  <p className="text-xs text-gray-600">2. Quick Fix Plumber 📞</p>
-                </div>
-              </div>
+            {/* Right — Animated Kosher Phone */}
+            <div className="flex justify-center">
+              <PhoneMockup />
             </div>
           </div>
         </div>

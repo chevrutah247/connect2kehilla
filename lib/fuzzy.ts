@@ -26,6 +26,8 @@ const CATEGORY_ALIASES: Record<string, string> = {
   'mover': 'movers', 'moving': 'movers',
   'painter': 'paint_stores', 'painting': 'paint_stores',
   'bank': 'banks', 'banking': 'banks',
+  'shower door': 'glass_and_mirror', 'shower doors': 'glass_and_mirror', 'glass door': 'glass_and_mirror',
+  'glass': 'glass_and_mirror', 'mirror': 'glass_and_mirror', 'glazer': 'glass_and_mirror', 'glazier': 'glass_and_mirror',
   'handiman': 'handyman', 'handy man': 'handyman',
   'tutoring': 'tutor', 'teacher': 'tutor',
   'cleaning': 'cleaning_service', 'cleaner': 'cleaning_service',
