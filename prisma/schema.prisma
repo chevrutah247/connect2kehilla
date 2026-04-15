@@ -1,5 +1,5 @@
 // Prisma Schema for Connect2Kehilla
-// Database: PostgreSQL (Vercel Postgres / Supabase)
+// Database: PostgreSQL (Neon via Vercel)
 
 generator client {
   provider = "prisma-client-js"
@@ -17,19 +17,24 @@ datasource db {
 model Business {
   id            String   @id @default(cuid())
   name          String
-  // nameYiddish/nameHebrew — columns exist in DB, re-add when multilingual is implemented
   phone         String
-  categoryRaw   String?  // Оригинальная категория из справочника
-  categories    String[] // AI-присвоенные теги: ["plumber", "emergency", "24h"]
+  categoryRaw   String?
+  categories    String[]
+
+  // Тип листинга
+  listingType   ListingType @default(BUSINESS)
+  description   String?
+  hoursOfWork   String?
+  priceFrom     String?  // "from $50/hr"
 
   // Локация
   zipCode       String?
-  area          String?  // "Williamsburg", "Monsey", "Borough Park"
+  area          String?
   city          String?
   state         String   @default("NY")
 
-  // Дополнительная информация
-  address       String?  // Полный адрес: "651 Dahill Rd"
+  // Контакты
+  address       String?
   email         String?
   website       String?
   fax           String?
@@ -39,7 +44,7 @@ model Business {
   trialEndsAt   DateTime?
 
   // Статистика
-  leadCount     Int      @default(0)  // Сколько раз контакт был выдан
+  leadCount     Int      @default(0)
   lastLeadAt    DateTime?
 
   // Мета
@@ -49,6 +54,7 @@ model Business {
 
   // Связи
   leads         Lead[]
+  listings      Listing[]
 
   @@index([zipCode])
   @@index([categories])
@@ -56,11 +62,92 @@ model Business {
   @@index([area])
 }
 
+enum ListingType {
+  BUSINESS  // store, restaurant, office
+  SERVICE   // individual: plumber, tutor, driver
+}
+
 enum BusinessStatus {
   FREE
-  TRIAL
-  PAID
+  STANDARD    // $30/8 days
+  PREMIUM     // $50/8 days
+  SPECIALS    // $40/8 days
+  AD_BOOST    // $7.99/8 days
   SUSPENDED
+}
+
+// ============================================
+// ПЛАТНЫЕ ЛИСТИНГИ (Paid Listings)
+// ============================================
+model Listing {
+  id              String      @id @default(cuid())
+  businessId      String
+  business        Business    @relation(fields: [businessId], references: [id])
+  plan            ListingPlan
+  price           Float
+  paidAt          DateTime    @default(now())
+  expiresAt       DateTime    // paidAt + 8 days
+  isActive        Boolean     @default(true)
+  squarePaymentId String?
+  createdAt       DateTime    @default(now())
+
+  @@index([businessId])
+  @@index([expiresAt])
+  @@index([isActive])
+}
+
+enum ListingPlan {
+  STANDARD
+  PREMIUM
+  SPECIALS
+  AD_BOOST
+}
+
+// ============================================
+// ВАКАНСИИ (Jobs)
+// ============================================
+model Job {
+  id          String      @id @default(cuid())
+  title       String
+  description String
+  category    String
+  area        String?
+  zipCode     String?
+  phone       String
+  salary      String?
+  type        JobType
+  plan        ListingPlan @default(STANDARD)
+  paidAt      DateTime    @default(now())
+  expiresAt   DateTime
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+
+  @@index([area])
+  @@index([category])
+  @@index([expiresAt])
+  @@index([type])
+}
+
+enum JobType {
+  SEEKING   // looking for work
+  OFFERING  // hiring
+}
+
+// ============================================
+// ПОДПИСКИ НА ВАКАНСИИ (Job Subscriptions)
+// ============================================
+model JobSubscription {
+  id          String   @id @default(cuid())
+  phoneHash   String
+  zipCode     String?
+  area        String?
+  category    String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@index([phoneHash])
+  @@index([area])
+  @@index([zipCode])
 }
 
 // ============================================
@@ -69,18 +156,11 @@ enum BusinessStatus {
 model User {
   id            String   @id @default(cuid())
   phoneHash     String   @unique
-
-  // Предпочтения
   defaultZip    String?
   defaultArea   String?
-  // preferredLang — column exists in DB, will re-add to schema when multilingual SMS is implemented
-
-  // Статус
   isBlocked     Boolean  @default(false)
   createdAt     DateTime @default(now())
   lastActiveAt  DateTime @default(now())
-
-  // Связи
   queries       Query[]
   leads         Lead[]
 
@@ -91,23 +171,19 @@ model User {
 // ЗАПРОСЫ (Query Log)
 // ============================================
 model Query {
-  id             String   @id @default(cuid())
+  id             String      @id @default(cuid())
   userId         String
-  user           User     @relation(fields: [userId], references: [id])
-
+  user           User        @relation(fields: [userId], references: [id])
   rawMessage     String
   parsedCategory String?
   parsedZip      String?
   parsedArea     String?
   parsedIntent   QueryIntent @default(SEARCH)
-
   responseText   String?
-  businessCount  Int      @default(0)
-
-  createdAt      DateTime @default(now())
+  businessCount  Int         @default(0)
+  createdAt      DateTime    @default(now())
   processedAt    DateTime?
-  isShabbat      Boolean  @default(false)
-
+  isShabbat      Boolean     @default(false)
   leads          Lead[]
 
   @@index([userId])
@@ -120,6 +196,7 @@ enum QueryIntent {
   STOP
   INFO
   SPECIALS
+  JOBS
   UNKNOWN
 }
 

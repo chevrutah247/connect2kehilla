@@ -145,7 +145,7 @@ export async function searchBusinesses(params: SearchParams): Promise<SearchResu
     }
   }
 
-  // Выполняем поиск с приоритетом PAID
+  // Search with priority: PREMIUM > STANDARD > AD_BOOST > FREE
   let businesses = await prisma.business.findMany({
     where,
     take: limit,
