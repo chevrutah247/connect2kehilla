@@ -119,17 +119,14 @@ export default function Home() {
       {/* Footer */}
       <footer className="bg-gray-100 py-8 text-center text-gray-500 text-sm">
         <p className="font-semibold text-gray-600 mb-2">
-          Operated by Medinat Hesed LLC
+          Connect2Kehilla — Kosher Phone SMS Directory
         </p>
         <p className="mb-1">
-          446 Kingston Avenue, B5, Brooklyn, NY 11225
-        </p>
-        <p className="mb-1">
-          Phone: <a href="tel:+17707558013" className="hover:text-gray-700 underline">(770) 755-8013</a>
+          Phone: <a href="tel:+18885163399" className="hover:text-gray-700 underline">(888) 516-3399</a>
         </p>
         <p className="mb-4">
-          <a href="mailto:medinat.hesed@gmail.com" className="hover:text-gray-700 underline">
-            medinat.hesed@gmail.com
+          <a href="mailto:info@connect2kehilla.com" className="hover:text-gray-700 underline">
+            info@connect2kehilla.com
           </a>
         </p>
         <p>© 2026 Connect2Kehilla. All rights reserved.</p>
