@@ -35,8 +35,7 @@ const CATEGORY_ALIASES: Record<string, string> = {
   'apartment': 'real_estate', 'apt': 'real_estate', 'housing': 'real_estate',
   'jewlery': 'jewelry', 'jeweler': 'jewelry',
   'optician': 'optical', 'eye doctor': 'optical', 'glasses': 'optical',
-  'glazer': 'glass_mirror', 'glazier': 'glass_mirror', 'glass': 'glass_mirror',
-  'glass shop': 'glass_mirror', 'glass store': 'glass_mirror',
+  'glass shop': 'glass_and_mirror', 'glass store': 'glass_and_mirror',
   'travel agent': 'travel', 'flights': 'travel',
   'printing': 'printing', 'printer': 'printing', 'print shop': 'printing',
 
