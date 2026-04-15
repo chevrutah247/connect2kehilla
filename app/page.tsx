@@ -1,5 +1,6 @@
 // app/page.tsx
 // Landing page for Connect2Kehilla — Kosher Phone SMS Directory
+'use client'
 
 export default function Home() {
   return (
