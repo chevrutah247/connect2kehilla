@@ -97,6 +97,15 @@ export async function POST(request: NextRequest) {
     // Получаем или создаём пользователя
     const user = await getOrCreateUser(from)
     const trimmed = body.trim()
+    const upperTrimmed = trimmed.toUpperCase()
+
+    // ── Fast HELP/? intercept — before AI parser, before Twilio can swallow it ──
+    if (upperTrimmed === 'HELP' || upperTrimmed === '?' || upperTrimmed === 'MENU') {
+      await prisma.query.create({
+        data: { userId: user.id, rawMessage: body, parsedIntent: 'HELP', responseText: MESSAGES.HELP, processedAt: new Date() }
+      })
+      return createTwiMLResponse(MESSAGES.HELP)
+    }
 
     // ── Check for active specials session (DB-based for serverless) ──
     const num = parseInt(trimmed)

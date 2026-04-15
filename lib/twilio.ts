@@ -66,7 +66,8 @@ Example: "plumber 11211" or "electrician Monsey"
 
 Reply HELP for more info.`,
 
-  HELP: `📞 Connect2Kehilla — Community Directory
+  HELP: `📱 Connect2Kehilla — Kosher Phone SMS Directory
+The community directory that works WITHOUT internet!
 
 🔍 FIND A BUSINESS:
 • "plumber 11211"
@@ -77,25 +78,24 @@ Reply HELP for more info.`,
 🕍 MINYAN / SHUL TIMES:
 • "mincha 11225"
 • "shacharis Crown Heights"
-• "maariv"
 • "770" or "Nosson's Shul"
 
 🏷 STORE SPECIALS:
-• "specials"
+• "specials" — all stores
 • "specials Crown Heights"
 
-📋 LIST YOUR BUSINESS:
-• Call (888) 516-3399
+📋 ADD YOUR BUSINESS:
 • Email: list@connect2kehilla.com
+• Call: (888) 516-3399
 
 📌 COMMANDS:
-• HELP — this menu
+• ? or HELP — this menu
 • SPECIALS — grocery deals
 • STOP — unsubscribe
 • START — resubscribe
 
 🌐 connect2kehilla.com
-Msg & data rates may apply.`,
+17,000+ businesses • English עברית אידיש`,
 
   STOP: `You have been unsubscribed from Connect2Kehilla. 
 You will no longer receive messages.
