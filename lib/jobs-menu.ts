@@ -210,11 +210,14 @@ export async function handleJobsMenu(userId: string, phone: string, input: strin
   return null
 }
 
-// Detect if user is in an active JOBS menu flow
+// Detect if user is in an active JOBS menu flow.
+// Returns true for ANY active session (including MAIN) so the user's
+// next reply (e.g. "2") is routed to handleJobsMenu and not to the
+// specials-number picker further down the SMS handler.
 export async function hasActiveJobsSession(userId: string): Promise<boolean> {
   try {
     const session = await getSession(userId)
-    return session !== null && session.step !== 'MAIN' as any
+    return session !== null
   } catch (error) {
     console.error('hasActiveJobsSession DB error (non-fatal):', error)
     return false
