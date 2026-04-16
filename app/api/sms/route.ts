@@ -338,8 +338,14 @@ export async function POST(request: NextRequest) {
 
     return createTwiMLResponse(responseText)
 
-  } catch (error) {
-    console.error('❌ SMS processing error:', error)
+  } catch (error: any) {
+    console.error('❌ SMS processing error')
+    console.error('  name:', error?.name)
+    console.error('  code:', error?.code)
+    console.error('  clientVersion:', error?.clientVersion)
+    console.error('  message:', error?.message)
+    console.error('  meta:', JSON.stringify(error?.meta))
+    console.error('  stack:', error?.stack)
     return createTwiMLResponse(MESSAGES.ERROR)
   }
 }
@@ -353,7 +359,25 @@ async function handleSearch(
   rawMessage: string,
   parsed: Awaited<ReturnType<typeof parseQuery>>
 ): Promise<string> {
-  
+  try {
+    return await handleSearchInner(userId, phone, rawMessage, parsed)
+  } catch (error: any) {
+    console.error('handleSearch DB error:')
+    console.error('  name:', error?.name)
+    console.error('  code:', error?.code)
+    console.error('  message:', error?.message)
+    console.error('  meta:', JSON.stringify(error?.meta))
+    return `⚠️ Business search is temporarily unavailable.\nPlease try again in a few minutes.\n\nMinyan times, specials, and HELP still work.`
+  }
+}
+
+async function handleSearchInner(
+  userId: string,
+  phone: string,
+  rawMessage: string,
+  parsed: Awaited<ReturnType<typeof parseQuery>>
+): Promise<string> {
+
   // Shabbat mode disabled — service runs 24/7
   // TODO: re-enable when needed
   // const zipForShabbat = parsed.zipCode || await getUserDefaultZip(phone)
