@@ -227,32 +227,39 @@ export function parseHireCommand(text: string): { category: string; area: string
   return { category: normalizeCategory(match[1]), area: match[2]?.trim() || null }
 }
 
+const WORKERS_UNAVAILABLE_MSG = `⚠️ Workers directory is temporarily unavailable.\nPlease try again in a few minutes.\n\nOther services (business search, minyan times, specials) still work normally.`
+
 // ── Register worker ──
 export async function registerWorker(phone: string, category: string, area: string | null, lang: string): Promise<string> {
-  const phoneH = hashPhone(phone)
-  const msg = getMsg(lang)
-  const areaName = area || 'All areas'
+  try {
+    const phoneH = hashPhone(phone)
+    const msg = getMsg(lang)
+    const areaName = area || 'All areas'
 
-  const existing = await prisma.worker.findUnique({ where: { phone } })
-  if (existing && existing.isActive && existing.expiresAt > new Date()) {
-    return msg.alreadyRegistered(existing.category, existing.area || 'All areas', formatDate(existing.expiresAt))
+    const existing = await prisma.worker.findUnique({ where: { phone } })
+    if (existing && existing.isActive && existing.expiresAt > new Date()) {
+      return msg.alreadyRegistered(existing.category, existing.area || 'All areas', formatDate(existing.expiresAt))
+    }
+
+    const expiresAt = new Date()
+    expiresAt.setDate(expiresAt.getDate() + WORKER_DURATION_DAYS)
+
+    if (existing) {
+      await prisma.worker.update({
+        where: { phone },
+        data: { category, area: areaName, phoneHash: phoneH, language: lang, expiresAt, isActive: true, description: null },
+      })
+    } else {
+      await prisma.worker.create({
+        data: { phone, phoneHash: phoneH, category, area: areaName, language: lang, expiresAt },
+      })
+    }
+
+    return msg.registered(category, areaName, formatDate(expiresAt))
+  } catch (error) {
+    console.error('registerWorker DB error:', error)
+    return WORKERS_UNAVAILABLE_MSG
   }
-
-  const expiresAt = new Date()
-  expiresAt.setDate(expiresAt.getDate() + WORKER_DURATION_DAYS)
-
-  if (existing) {
-    await prisma.worker.update({
-      where: { phone },
-      data: { category, area: areaName, phoneHash: phoneH, language: lang, expiresAt, isActive: true, description: null },
-    })
-  } else {
-    await prisma.worker.create({
-      data: { phone, phoneHash: phoneH, category, area: areaName, language: lang, expiresAt },
-    })
-  }
-
-  return msg.registered(category, areaName, formatDate(expiresAt))
 }
 
 // ── Save worker description ──
@@ -313,54 +320,69 @@ export async function saveJobDescription(phone: string, description: string): Pr
 
 // ── Renew / Stop worker ──
 export async function renewWorker(phone: string): Promise<string> {
-  const worker = await prisma.worker.findUnique({ where: { phone } })
-  if (!worker) return MSGS.en.notFound
-  const expiresAt = new Date()
-  expiresAt.setDate(expiresAt.getDate() + WORKER_DURATION_DAYS)
-  await prisma.worker.update({ where: { phone }, data: { expiresAt, isActive: true } })
-  return getMsg(worker.language).renewed(formatDate(expiresAt))
+  try {
+    const worker = await prisma.worker.findUnique({ where: { phone } })
+    if (!worker) return MSGS.en.notFound
+    const expiresAt = new Date()
+    expiresAt.setDate(expiresAt.getDate() + WORKER_DURATION_DAYS)
+    await prisma.worker.update({ where: { phone }, data: { expiresAt, isActive: true } })
+    return getMsg(worker.language).renewed(formatDate(expiresAt))
+  } catch (error) {
+    console.error('renewWorker DB error:', error)
+    return WORKERS_UNAVAILABLE_MSG
+  }
 }
 
 export async function stopWorker(phone: string): Promise<string> {
-  const worker = await prisma.worker.findUnique({ where: { phone } })
-  if (!worker) return MSGS.en.notFound
-  await prisma.worker.update({ where: { phone }, data: { isActive: false } })
-  return getMsg(worker.language).stopped
+  try {
+    const worker = await prisma.worker.findUnique({ where: { phone } })
+    if (!worker) return MSGS.en.notFound
+    await prisma.worker.update({ where: { phone }, data: { isActive: false } })
+    return getMsg(worker.language).stopped
+  } catch (error) {
+    console.error('stopWorker DB error:', error)
+    return WORKERS_UNAVAILABLE_MSG
+  }
 }
 
 // ── Search workers (HIRE command) ──
 export async function searchWorkers(category: string, area: string | null, limit = 5): Promise<string> {
-  const where: any = { isActive: true, expiresAt: { gt: new Date() }, category: { contains: category, mode: 'insensitive' } }
-  if (area) where.area = { contains: area, mode: 'insensitive' }
+  try {
+    const where: any = { isActive: true, expiresAt: { gt: new Date() }, category: { contains: category, mode: 'insensitive' } }
+    if (area) where.area = { contains: area, mode: 'insensitive' }
 
-  let workers = await prisma.worker.findMany({
-    where, take: limit, orderBy: { createdAt: 'desc' },
-    select: { phone: true, category: true, area: true, description: true },
-  })
-
-  // Fallback without area
-  if (workers.length === 0 && area) {
-    delete where.area
-    workers = await prisma.worker.findMany({
+    let workers = await prisma.worker.findMany({
       where, take: limit, orderBy: { createdAt: 'desc' },
       select: { phone: true, category: true, area: true, description: true },
     })
-  }
 
-  if (workers.length === 0) {
-    return `No ${CATEGORY_LABELS[category] || category} available right now.\n\nKnow someone? Tell them to text:\nWORK ${category} ${area || 'Brooklyn'}\nto (888) 516-3399`
-  }
-
-  let response = `👷 Found ${workers.length} ${CATEGORY_LABELS[category] || category}${area ? ` in ${area}` : ''}:\n\n`
-  workers.forEach((w: any, i: number) => {
-    response += `${i + 1}. ${w.phone}\n`
-    if (w.description) {
-      const desc = w.description.length > 60 ? w.description.substring(0, 57) + '...' : w.description
-      response += `   ${desc}\n`
+    // Fallback without area
+    if (workers.length === 0 && area) {
+      delete where.area
+      workers = await prisma.worker.findMany({
+        where, take: limit, orderBy: { createdAt: 'desc' },
+        select: { phone: true, category: true, area: true, description: true },
+      })
     }
-    if (w.area) response += `   📍 ${w.area}\n`
-    response += '\n'
-  })
-  response += 'Call directly — it\'s FREE!'
-  return response
+
+    if (workers.length === 0) {
+      return `No ${CATEGORY_LABELS[category] || category} available right now.\n\nKnow someone? Tell them to text:\nWORK ${category} ${area || 'Brooklyn'}\nto (888) 516-3399`
+    }
+
+    let response = `👷 Found ${workers.length} ${CATEGORY_LABELS[category] || category}${area ? ` in ${area}` : ''}:\n\n`
+    workers.forEach((w: any, i: number) => {
+      response += `${i + 1}. ${w.phone}\n`
+      if (w.description) {
+        const desc = w.description.length > 60 ? w.description.substring(0, 57) + '...' : w.description
+        response += `   ${desc}\n`
+      }
+      if (w.area) response += `   📍 ${w.area}\n`
+      response += '\n'
+    })
+    response += 'Call directly — it\'s FREE!'
+    return response
+  } catch (error) {
+    console.error('searchWorkers DB error:', error)
+    return WORKERS_UNAVAILABLE_MSG
+  }
 }
