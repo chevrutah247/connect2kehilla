@@ -212,6 +212,11 @@ export async function handleJobsMenu(userId: string, phone: string, input: strin
 
 // Detect if user is in an active JOBS menu flow
 export async function hasActiveJobsSession(userId: string): Promise<boolean> {
-  const session = await getSession(userId)
-  return session !== null && session.step !== 'MAIN' as any
+  try {
+    const session = await getSession(userId)
+    return session !== null && session.step !== 'MAIN' as any
+  } catch (error) {
+    console.error('hasActiveJobsSession DB error (non-fatal):', error)
+    return false
+  }
 }
