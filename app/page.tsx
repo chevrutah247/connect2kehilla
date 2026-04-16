@@ -114,6 +114,29 @@ export default function Home() {
         .pulse-btn { animation: pulse-green 2s infinite; }
       `}</style>
 
+      {/* ═══ TOP NAVIGATION ═══ */}
+      <nav className="bg-gray-900 border-b border-gray-800 sticky top-0 z-50">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+          <a href="/" className="text-white font-black text-xl">Connect<span className="text-emerald-500">2</span>Kehilla</a>
+          <div className="hidden md:flex gap-6 text-sm">
+            <a href="/faq" className="text-gray-300 hover:text-white transition">❓ FAQ</a>
+            <a href="/pricing" className="text-gray-300 hover:text-white transition">💰 Pricing</a>
+            <a href="/jobs" className="text-gray-300 hover:text-white transition">📋 Jobs</a>
+            <a href="/add-business" className="text-gray-300 hover:text-white transition">🏪 Add Business</a>
+            <a href="/add-service" className="text-gray-300 hover:text-white transition">🔧 Add Service</a>
+          </div>
+          <a href="sms:+18885163399" className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-bold">📱 Text Us</a>
+        </div>
+        {/* Mobile nav */}
+        <div className="md:hidden border-t border-gray-800 px-4 py-2 flex flex-wrap gap-3 text-xs">
+          <a href="/faq" className="text-gray-300">FAQ</a>
+          <a href="/pricing" className="text-gray-300">Pricing</a>
+          <a href="/jobs" className="text-gray-300">Jobs</a>
+          <a href="/add-business" className="text-gray-300">Add Business</a>
+          <a href="/add-service" className="text-gray-300">Add Service</a>
+        </div>
+      </nav>
+
       {/* ═══ HERO — Dark gradient with phone image ═══ */}
       <section className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e3a5f 40%, #1e4d6e 100%)' }}>
         {/* Decorative circles */}
@@ -156,6 +179,39 @@ export default function Home() {
             <div className="flex justify-center">
               <PhoneMockup />
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ QUICK LINKS ═══ */}
+      <section className="py-10 px-4 bg-white border-b border-gray-100">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <a href="/faq" className="bg-gradient-to-br from-blue-50 to-white border-2 border-blue-100 rounded-xl p-4 hover:border-blue-400 hover:shadow-lg transition text-center">
+              <div className="text-3xl mb-2">❓</div>
+              <div className="font-bold text-gray-800 text-sm">FAQ</div>
+              <div className="text-xs text-gray-500 mt-1">How to use</div>
+            </a>
+            <a href="/pricing" className="bg-gradient-to-br from-yellow-50 to-white border-2 border-yellow-100 rounded-xl p-4 hover:border-yellow-400 hover:shadow-lg transition text-center">
+              <div className="text-3xl mb-2">💰</div>
+              <div className="font-bold text-gray-800 text-sm">Pricing</div>
+              <div className="text-xs text-gray-500 mt-1">5 plans</div>
+            </a>
+            <a href="/jobs" className="bg-gradient-to-br from-purple-50 to-white border-2 border-purple-100 rounded-xl p-4 hover:border-purple-400 hover:shadow-lg transition text-center">
+              <div className="text-3xl mb-2">📋</div>
+              <div className="font-bold text-gray-800 text-sm">Jobs Board</div>
+              <div className="text-xs text-gray-500 mt-1">Hire & work</div>
+            </a>
+            <a href="/add-business" className="bg-gradient-to-br from-emerald-50 to-white border-2 border-emerald-100 rounded-xl p-4 hover:border-emerald-400 hover:shadow-lg transition text-center">
+              <div className="text-3xl mb-2">🏪</div>
+              <div className="font-bold text-gray-800 text-sm">Add Business</div>
+              <div className="text-xs text-gray-500 mt-1">Store/Office</div>
+            </a>
+            <a href="/add-service" className="bg-gradient-to-br from-orange-50 to-white border-2 border-orange-100 rounded-xl p-4 hover:border-orange-400 hover:shadow-lg transition text-center">
+              <div className="text-3xl mb-2">🔧</div>
+              <div className="font-bold text-gray-800 text-sm">Add Service</div>
+              <div className="text-xs text-gray-500 mt-1">Individual</div>
+            </a>
           </div>
         </div>
       </section>
@@ -312,10 +368,20 @@ export default function Home() {
           </a>
         </p>
         <p className="text-gray-500">© 2026 Connect2Kehilla. All rights reserved.</p>
-        <div className="mt-4 space-x-4">
-          <a href="/privacy" className="hover:text-white underline">Privacy Policy</a>
+        <div className="mt-4 flex flex-wrap justify-center gap-3 text-sm">
+          <a href="/faq" className="hover:text-white underline">FAQ</a>
           <span>•</span>
-          <a href="/terms" className="hover:text-white underline">Terms of Service</a>
+          <a href="/pricing" className="hover:text-white underline">Pricing</a>
+          <span>•</span>
+          <a href="/jobs" className="hover:text-white underline">Jobs</a>
+          <span>•</span>
+          <a href="/add-business" className="hover:text-white underline">Add Business</a>
+          <span>•</span>
+          <a href="/add-service" className="hover:text-white underline">Add Service</a>
+          <span>•</span>
+          <a href="/privacy" className="hover:text-white underline">Privacy</a>
+          <span>•</span>
+          <a href="/terms" className="hover:text-white underline">Terms</a>
         </div>
         <p className="mt-4 text-gray-500">
           SMS: (888) 516-3399 • Reply STOP to unsubscribe • Reply HELP for support
