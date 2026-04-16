@@ -88,11 +88,18 @@ The community directory that works WITHOUT internet!
 • Email: list@connect2kehilla.com
 • Call: (888) 516-3399
 
+👷 FIND WORK / HIRE:
+• "WORK driver Williamsburg" — register as available
+• "HIRE driver Williamsburg" — find workers
+• "WORK RENEW" — extend 30 days
+• "WORK STOP" — remove yourself
+
 📌 COMMANDS:
 • ? or HELP — this menu
 • SPECIALS — grocery deals
+• WORK — register for jobs
+• HIRE — find workers
 • STOP — unsubscribe
-• START — resubscribe
 
 🌐 connect2kehilla.com
 17,000+ businesses • English עברית אידיש`,

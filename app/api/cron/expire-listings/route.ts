@@ -48,10 +48,17 @@ export async function GET(request: NextRequest) {
     data: { isActive: false },
   })
 
+  // Expire workers (30-day listings)
+  const expiredWorkers = await prisma.worker.updateMany({
+    where: { expiresAt: { lt: now }, isActive: true },
+    data: { isActive: false },
+  })
+
   return NextResponse.json({
     ok: true,
     expiredListings: expiredListings.count,
     resetToFree: idsWithoutActive.length,
     expiredJobs: expiredJobs.count,
+    expiredWorkers: expiredWorkers.count,
   })
 }

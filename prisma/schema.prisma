@@ -151,6 +151,30 @@ model JobSubscription {
 }
 
 // ============================================
+// РАБОТНИКИ "НА ПОДХВАТЕ" (Day Workers)
+// ============================================
+model Worker {
+  id          String   @id @default(cuid())
+  phone       String   @unique  // real phone — they opted in from their own number
+  phoneHash   String             // for lookup by phoneHash
+  category    String             // "driver", "mover", "babysitter"
+  area        String?            // "Williamsburg"
+  zipCode     String?
+  description String?            // skills, experience, availability
+  language    String   @default("en") // en, he, yi — registration language
+  expiresAt   DateTime           // +30 days from registration
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category])
+  @@index([area])
+  @@index([expiresAt])
+  @@index([phoneHash])
+  @@index([isActive])
+}
+
+// ============================================
 // ПОЛЬЗОВАТЕЛИ (анонимизированные)
 // ============================================
 model User {
