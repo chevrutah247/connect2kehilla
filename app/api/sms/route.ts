@@ -10,6 +10,7 @@ import { searchBusinesses, searchBusinessesExpanded, searchBusinessesFuzzy, reco
 import { normalizeCategory, normalizeArea, normalizeCity, detectLanguage, matchKeywordToCategory } from '@/lib/fuzzy'
 import { getAllStores, getStoreByIndex, getStoresByArea, getStoresByZip, getAreaByZip, fetchStoreSpecials, formatSpecialsForSMS, formatStoreListForSMS, Store } from '@/lib/specials'
 import { parseWorkCommand, parseJobCommand, parseHireCommand, registerWorker, saveWorkerDescription, postJob, saveJobDescription, renewWorker, stopWorker, searchWorkers, JOBS_HELP } from '@/lib/workers'
+import { handleJobsMenu, hasActiveJobsSession, JOBS_MAIN_MENU } from '@/lib/jobs-menu'
 import { detectTefillah, searchShulsByZip, searchShulsByArea, searchShulByName, formatMinyanForSMS, formatShulForSMS } from '@/lib/minyanim'
 import prisma from '@/lib/db'
 
@@ -108,10 +109,22 @@ export async function POST(request: NextRequest) {
       return createTwiMLResponse(MESSAGES.HELP)
     }
 
-    // ── JOBS help ──
-    if (upperTrimmed === 'JOBS' || upperTrimmed === 'JOB') {
-      await prisma.query.create({ data: { userId: user.id, rawMessage: body, parsedIntent: 'JOBS', responseText: JOBS_HELP, processedAt: new Date() } })
-      return createTwiMLResponse(JOBS_HELP)
+    // ── JOBS interactive menu ──
+    if (upperTrimmed === 'JOBS' || upperTrimmed === 'JOB' || upperTrimmed === 'MENU JOBS') {
+      const responseText = await handleJobsMenu(user.id, from, 'JOBS')
+      if (responseText) {
+        await prisma.query.create({ data: { userId: user.id, rawMessage: body, parsedIntent: 'JOBS', responseText, processedAt: new Date() } })
+        return createTwiMLResponse(responseText)
+      }
+    }
+
+    // ── Check if user is in active JOBS menu and continue flow ──
+    if (await hasActiveJobsSession(user.id)) {
+      const menuResponse = await handleJobsMenu(user.id, from, trimmed)
+      if (menuResponse) {
+        await prisma.query.create({ data: { userId: user.id, rawMessage: body, parsedIntent: 'JOBS', responseText: menuResponse, processedAt: new Date() } })
+        return createTwiMLResponse(menuResponse)
+      }
     }
 
     // ── WORK commands — register as worker ──

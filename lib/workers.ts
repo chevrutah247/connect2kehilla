@@ -60,7 +60,7 @@ const CATEGORY_LIST = {
   men: ['driver', 'mover', 'handyman', 'painter', 'helper', 'tutor'],
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
+export const CATEGORY_LABELS: Record<string, string> = {
   'babysitter': '👶 Babysitter / Nanny',
   'cleaning': '🧹 Cleaning Lady',
   'para': '🧩 Para (Special Needs)',
