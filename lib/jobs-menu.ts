@@ -153,14 +153,18 @@ export async function handleJobsMenu(userId: string, phone: string, input: strin
       await saveSession(userId, { step: 'POST_GENDER' })
       return GENDER_MENU('POST')
     }
-    return 'Please reply 1, 2 or 3\n\n' + JOBS_MAIN_MENU
+    // Not a menu reply — exit the JOBS flow so the outer handler can
+    // treat this as a normal business/minyan/specials query.
+    await clearSession(userId)
+    return null
   }
 
   // Handle based on step
   if (session.step === 'WORK_GENDER' || session.step === 'HIRE_GENDER' || session.step === 'POST_GENDER') {
     const num = parseInt(trimmed)
     if (num !== 1 && num !== 2) {
-      return 'Please reply 1 (Men) or 2 (Women)'
+      await clearSession(userId)
+      return null
     }
     const gender = num === 1 ? 'men' : 'women'
     const nextStep = session.step === 'WORK_GENDER' ? 'WORK_CATEGORY' : session.step === 'HIRE_GENDER' ? 'HIRE_CATEGORY' : 'POST_CATEGORY'
@@ -173,7 +177,8 @@ export async function handleJobsMenu(userId: string, phone: string, input: strin
     const num = parseInt(trimmed)
     const cats = CATEGORIES_BY_GENDER[session.gender!]
     if (num < 1 || num > cats.length) {
-      return `Please reply 1-${cats.length}`
+      await clearSession(userId)
+      return null
     }
     const cat = cats[num - 1]
     const nextStep = session.step === 'WORK_CATEGORY' ? 'WORK_AREA' : session.step === 'HIRE_CATEGORY' ? 'HIRE_AREA' : 'POST_AREA'
@@ -201,7 +206,10 @@ export async function handleJobsMenu(userId: string, phone: string, input: strin
 
   if (session.step === 'POST_TYPE') {
     const num = parseInt(trimmed)
-    if (num < 1 || num > 4) return 'Please reply 1-4'
+    if (num < 1 || num > 4) {
+      await clearSession(userId)
+      return null
+    }
     const jobType = JOB_TYPES[num - 1].key
     await clearSession(userId)
     return await postJob(phone, session.category!, session.area!, jobType, 'en')
