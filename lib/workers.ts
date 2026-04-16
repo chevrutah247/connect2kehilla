@@ -257,12 +257,17 @@ export async function registerWorker(phone: string, category: string, area: stri
 
 // ── Save worker description ──
 export async function saveWorkerDescription(phone: string, description: string): Promise<string | null> {
-  const worker = await prisma.worker.findUnique({ where: { phone } })
-  if (!worker || !worker.isActive || worker.description) return null
+  try {
+    const worker = await prisma.worker.findUnique({ where: { phone } })
+    if (!worker || !worker.isActive || worker.description) return null
 
-  await prisma.worker.update({ where: { phone }, data: { description } })
-  const msg = getMsg(worker.language)
-  return msg.descriptionSaved(worker.category, worker.area || 'All areas', formatDate(worker.expiresAt), worker.phone)
+    await prisma.worker.update({ where: { phone }, data: { description } })
+    const msg = getMsg(worker.language)
+    return msg.descriptionSaved(worker.category, worker.area || 'All areas', formatDate(worker.expiresAt), worker.phone)
+  } catch (error) {
+    console.error('saveWorkerDescription DB error (non-fatal):', error)
+    return null
+  }
 }
 
 // ── Post a job ──
@@ -289,16 +294,21 @@ export async function postJob(phone: string, category: string, area: string | nu
 
 // ── Save job description (second message) ──
 export async function saveJobDescription(phone: string, description: string): Promise<string | null> {
-  const job = await prisma.job.findFirst({
-    where: { phone, isActive: true, description: '', expiresAt: { gt: new Date() } },
-    orderBy: { createdAt: 'desc' },
-  })
-  if (!job) return null
+  try {
+    const job = await prisma.job.findFirst({
+      where: { phone, isActive: true, description: '', expiresAt: { gt: new Date() } },
+      orderBy: { createdAt: 'desc' },
+    })
+    if (!job) return null
 
-  await prisma.job.update({ where: { id: job.id }, data: { description } })
+    await prisma.job.update({ where: { id: job.id }, data: { description } })
 
-  // TODO: notify subscribers
-  return `✅ Job listing complete!\n${job.title}\n📍 ${job.area}\n⏰ Active until ${formatDate(job.expiresAt)}`
+    // TODO: notify subscribers
+    return `✅ Job listing complete!\n${job.title}\n📍 ${job.area}\n⏰ Active until ${formatDate(job.expiresAt)}`
+  } catch (error) {
+    console.error('saveJobDescription DB error (non-fatal):', error)
+    return null
+  }
 }
 
 // ── Renew / Stop worker ──
