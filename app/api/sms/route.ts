@@ -9,7 +9,7 @@ import { getOrCreateUser, isUserBlocked, blockUser, unblockUser, getUserDefaultZ
 import { searchBusinesses, searchBusinessesExpanded, searchBusinessesFuzzy, recordLeads } from '@/lib/businesses'
 import { normalizeCategory, normalizeArea, normalizeCity, detectLanguage, matchKeywordToCategory } from '@/lib/fuzzy'
 import { getAllStores, getStoreByIndex, getStoresByArea, getStoresByZip, getAreaByZip, fetchStoreSpecials, formatSpecialsForSMS, formatStoreListForSMS, Store } from '@/lib/specials'
-import { parseWorkCommand, registerWorker, saveWorkerDescription, renewWorker, stopWorker, searchWorkers } from '@/lib/workers'
+import { parseWorkCommand, parseJobCommand, parseHireCommand, registerWorker, saveWorkerDescription, postJob, saveJobDescription, renewWorker, stopWorker, searchWorkers, JOBS_HELP } from '@/lib/workers'
 import { detectTefillah, searchShulsByZip, searchShulsByArea, searchShulByName, formatMinyanForSMS, formatShulForSMS } from '@/lib/minyanim'
 import prisma from '@/lib/db'
 
@@ -108,37 +108,56 @@ export async function POST(request: NextRequest) {
       return createTwiMLResponse(MESSAGES.HELP)
     }
 
-    // ── WORK / HIRE commands — worker directory ──
+    // ── JOBS help ──
+    if (upperTrimmed === 'JOBS' || upperTrimmed === 'JOB') {
+      await prisma.query.create({ data: { userId: user.id, rawMessage: body, parsedIntent: 'JOBS', responseText: JOBS_HELP, processedAt: new Date() } })
+      return createTwiMLResponse(JOBS_HELP)
+    }
+
+    // ── WORK commands — register as worker ──
     const workCmd = parseWorkCommand(trimmed)
     if (workCmd.action === 'stop') {
       const responseText = await stopWorker(from)
-      await prisma.query.create({ data: { userId: user.id, rawMessage: body, parsedIntent: 'SEARCH', responseText, processedAt: new Date() } })
+      await prisma.query.create({ data: { userId: user.id, rawMessage: body, parsedIntent: 'JOBS', responseText, processedAt: new Date() } })
       return createTwiMLResponse(responseText)
     }
     if (workCmd.action === 'renew') {
       const responseText = await renewWorker(from)
-      await prisma.query.create({ data: { userId: user.id, rawMessage: body, parsedIntent: 'SEARCH', responseText, processedAt: new Date() } })
+      await prisma.query.create({ data: { userId: user.id, rawMessage: body, parsedIntent: 'JOBS', responseText, processedAt: new Date() } })
       return createTwiMLResponse(responseText)
     }
     if (workCmd.action === 'register' && workCmd.category) {
       const responseText = await registerWorker(from, workCmd.category, workCmd.area, workCmd.lang)
-      await prisma.query.create({ data: { userId: user.id, rawMessage: body, parsedIntent: 'SEARCH', responseText, processedAt: new Date() } })
+      await prisma.query.create({ data: { userId: user.id, rawMessage: body, parsedIntent: 'JOBS', responseText, processedAt: new Date() } })
       return createTwiMLResponse(responseText)
     }
 
-    // ── HIRE command — search workers ──
-    const hireMatch = trimmed.match(/^(?:HIRE|hire|Hire)\s+(\S+)(?:\s+(.+))?$/i)
-    if (hireMatch) {
-      const responseText = await searchWorkers(hireMatch[1], hireMatch[2]?.trim() || null)
-      await prisma.query.create({ data: { userId: user.id, rawMessage: body, parsedIntent: 'SEARCH', responseText, processedAt: new Date() } })
+    // ── JOB command — post a job opening ──
+    const jobCmd = parseJobCommand(trimmed)
+    if (jobCmd) {
+      const responseText = await postJob(from, jobCmd.category!, jobCmd.area, jobCmd.jobType, jobCmd.lang)
+      await prisma.query.create({ data: { userId: user.id, rawMessage: body, parsedIntent: 'JOBS', responseText, processedAt: new Date() } })
       return createTwiMLResponse(responseText)
     }
 
-    // ── Check if worker just registered and is sending description ──
+    // ── HIRE command — find workers ──
+    const hireCmd = parseHireCommand(trimmed)
+    if (hireCmd) {
+      const responseText = await searchWorkers(hireCmd.category, hireCmd.area)
+      await prisma.query.create({ data: { userId: user.id, rawMessage: body, parsedIntent: 'JOBS', responseText, processedAt: new Date() } })
+      return createTwiMLResponse(responseText)
+    }
+
+    // ── Check if worker/job poster just registered and is sending description ──
     const workerDesc = await saveWorkerDescription(from, trimmed)
     if (workerDesc) {
-      await prisma.query.create({ data: { userId: user.id, rawMessage: body, parsedIntent: 'SEARCH', responseText: workerDesc, processedAt: new Date() } })
+      await prisma.query.create({ data: { userId: user.id, rawMessage: body, parsedIntent: 'JOBS', responseText: workerDesc, processedAt: new Date() } })
       return createTwiMLResponse(workerDesc)
+    }
+    const jobDesc = await saveJobDescription(from, trimmed)
+    if (jobDesc) {
+      await prisma.query.create({ data: { userId: user.id, rawMessage: body, parsedIntent: 'JOBS', responseText: jobDesc, processedAt: new Date() } })
+      return createTwiMLResponse(jobDesc)
     }
 
     // ── Check for active specials session (DB-based for serverless) ──
