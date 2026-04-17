@@ -104,7 +104,7 @@ export async function searchBusinesses(params: SearchParams): Promise<SearchResu
   if (sponsoredName) {
     const sponsored = await prisma.business.findFirst({
       where: { isActive: true, name: { contains: sponsoredName, mode: 'insensitive' } },
-      select: { id: true, name: true, phone: true, area: true, categories: true, status: true },
+      select: { id: true, name: true, phone: true, area: true, categories: true, status: true, address: true, website: true },
     })
     if (sponsored) {
       // Only show other businesses if we have a category filter (avoid random results)
@@ -118,7 +118,7 @@ export async function searchBusinesses(params: SearchParams): Promise<SearchResu
           },
           take: limit - 1,
           orderBy: [{ status: 'desc' }, { leadCount: 'asc' }],
-          select: { id: true, name: true, phone: true, area: true, categories: true, status: true },
+          select: { id: true, name: true, phone: true, area: true, categories: true, status: true, address: true, website: true },
         })
         return [sponsored, ...others]
       }
@@ -149,6 +149,8 @@ export async function searchBusinesses(params: SearchParams): Promise<SearchResu
         area: true,
         categories: true,
         status: true,
+        address: true,
+        website: true,
       }
     })
     return businesses
@@ -213,7 +215,7 @@ export async function searchBusinesses(params: SearchParams): Promise<SearchResu
         },
         take: limit,
         orderBy: [{ status: 'desc' }, { leadCount: 'asc' }],
-        select: { id: true, name: true, phone: true, area: true, categories: true, status: true },
+        select: { id: true, name: true, phone: true, area: true, categories: true, status: true, address: true, website: true },
       })
     }
   }
@@ -248,6 +250,8 @@ export async function searchBusinessesExpanded(params: SearchParams): Promise<Se
         area: true,
         categories: true,
         status: true,
+        address: true,
+        website: true,
       }
     })
   }
