@@ -101,12 +101,20 @@ export async function POST(request: NextRequest) {
     const trimmed = body.trim()
     const upperTrimmed = trimmed.toUpperCase()
 
-    // ── Fast HELP/? intercept — before AI parser, before Twilio can swallow it ──
-    if (upperTrimmed === 'HELP' || upperTrimmed === '?' || upperTrimmed === 'MENU') {
+    // ── Fast HELP intercept — CTIA/carrier compliance auto-reply ──
+    if (upperTrimmed === 'HELP') {
       await prisma.query.create({
         data: { userId: user.id, rawMessage: body, parsedIntent: 'HELP', responseText: MESSAGES.HELP, processedAt: new Date() }
       })
       return createTwiMLResponse(MESSAGES.HELP)
+    }
+
+    // ── Fast MENU intercept — feature menu ──
+    if (upperTrimmed === 'MENU' || upperTrimmed === '?') {
+      await prisma.query.create({
+        data: { userId: user.id, rawMessage: body, parsedIntent: 'HELP', responseText: MESSAGES.MENU, processedAt: new Date() }
+      })
+      return createTwiMLResponse(MESSAGES.MENU)
     }
 
     // ── JOBS interactive menu ──
@@ -267,7 +275,8 @@ export async function POST(request: NextRequest) {
 
     switch (parsed.intent) {
       case 'help':
-        responseText = MESSAGES.HELP
+        // AI-detected "help me / what can I do" → show feature menu, not compliance text
+        responseText = MESSAGES.MENU
         break
 
       case 'stop':
