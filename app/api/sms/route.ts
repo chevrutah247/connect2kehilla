@@ -405,10 +405,13 @@ async function handleSearchInner(
   // const zipForShabbat = parsed.zipCode || await getUserDefaultZip(phone)
   // const isShabbat = await isShabbatWithBuffer(zipForShabbat ?? undefined)
 
-  // ── Direct business name match: skip ZIP requirement if unique match ──
+  // ── Direct business name match: prefer user's ZIP/area but fall back to all ──
   if (parsed.businessName && !parsed.category) {
+    const defaultZipForName = parsed.zipCode || await getUserDefaultZip(phone)
     const directMatches = await searchBusinesses({
       businessName: parsed.businessName,
+      zipCode: defaultZipForName,
+      area: parsed.area,
       limit: 3,
     })
     if (directMatches.length >= 1 && directMatches.length <= 3) {
