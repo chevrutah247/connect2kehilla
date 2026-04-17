@@ -64,45 +64,36 @@ export const MESSAGES = {
 Text us what you need + your ZIP code.
 Example: "plumber 11211" or "electrician Monsey"
 
-Reply HELP for more info.`,
+Reply MENU for options, HELP for support.`,
 
-  HELP: `📱 Connect2Kehilla — Kosher Phone SMS Directory
-The community directory that works WITHOUT internet!
+  // Compliance auto-reply (CTIA/carrier standard)
+  HELP: `Connect2Kehilla — community SMS directory.
+Reply MENU for options.
+Reply STOP to unsubscribe.
+Support: (888) 516-3399
+Msg & data rates may apply.`,
 
-🔍 FIND A BUSINESS:
-• "plumber 11211"
-• "electrician Monsey"
-• "shower door Williamsburg"
-• "Lemofet Glass"
+  // Feature menu (what the product can do)
+  MENU: `📱 Connect2Kehilla MENU
 
-🕍 MINYAN / SHUL TIMES:
-• "mincha 11225"
-• "shacharis Crown Heights"
-• "770" or "Nosson's Shul"
+🔍 SEARCH
+ "plumber 11213"
+ "doctor Crown Heights"
+ "Lemofet Glass"
 
-🏷 STORE SPECIALS:
-• "specials" — all stores
-• "specials Crown Heights"
+🕍 MINYAN
+ "mincha 11225"
+ "shacharis Williamsburg"
+ "770"
 
-📋 ADD YOUR BUSINESS:
-• Email: list@connect2kehilla.com
-• Call: (888) 516-3399
-
-👷 FIND WORK / HIRE:
-• "WORK driver Williamsburg" — register as available
-• "HIRE driver Williamsburg" — find workers
-• "WORK RENEW" — extend 30 days
-• "WORK STOP" — remove yourself
-
-📌 COMMANDS:
-• ? or HELP — this menu
-• SPECIALS — grocery deals
-• WORK — register for jobs
-• HIRE — find workers
-• STOP — unsubscribe
+🏷 SPECIALS: text SPECIALS
+👷 JOBS/WORK: text JOBS
+📋 ADD BUSINESS: (888) 516-3399
 
 🌐 connect2kehilla.com
-17,000+ businesses • English עברית אידיש`,
+17,000+ businesses • EN / עברית / אידיש
+
+Reply HELP for support, STOP to opt out.`,
 
   STOP: `You have been unsubscribed from Connect2Kehilla. 
 You will no longer receive messages.
@@ -137,7 +128,7 @@ Send the following info via SMS or email:
 We'll add your business within 24 hours!`,
 
   ERROR: `Sorry, something went wrong. Please try again.
-If the problem persists, text HELP for support.`,
+If the problem persists, text MENU for options.`,
 }
 
 // ============================================

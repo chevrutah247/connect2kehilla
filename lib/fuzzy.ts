@@ -42,6 +42,12 @@ const CATEGORY_ALIASES: Record<string, string> = {
   // Organizations / Institutions
   'kollel': 'kollel', 'beis medrash': 'beis_medrash', 'beis midrash': 'beis_medrash',
   'bais medrash': 'beis_medrash', 'beit midrash': 'beis_medrash',
+
+  // Beis Din / Rabbinical Court (all spelling variants → beis_din)
+  'beis din': 'beis_din', 'bais din': 'beis_din', 'beth din': 'beis_din',
+  'bet din': 'beis_din', 'beit din': 'beis_din', 'beys din': 'beis_din',
+  'rabbinical court': 'beis_din', 'rabbinic court': 'beis_din',
+  'jewish court': 'beis_din', 'בית דין': 'beis_din', 'בעצ דין': 'beis_din',
   'headquarters': 'headquarters', 'hq': 'headquarters',
   'publishing': 'publishing', 'publisher': 'publishing',
   'media': 'media', 'fund': 'fund', 'campaign': 'campaign',
@@ -232,6 +238,11 @@ const KEYWORD_TO_CATEGORY: Record<string, string> = {
   'sefer torah': 'sofrim', 'sofer': 'sofrim',
   'shaimos': 'shaimos_services',
   'mikvah': 'businesses_organizations',
+
+  // Beis Din / Rabbinical Court
+  'beis din': 'beis_din', 'bais din': 'beis_din', 'beth din': 'beis_din',
+  'bet din': 'beis_din', 'beit din': 'beis_din',
+  'rabbinical court': 'beis_din', 'rabbinic court': 'beis_din',
 }
 
 /**

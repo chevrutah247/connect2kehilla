@@ -5,6 +5,37 @@ import prisma from './db'
 import { BusinessStatus } from '@prisma/client'
 
 // ============================================
+// Expand spelling variants for Hebrew transliterations
+// (beis/bais/beth/bet/beit) etc.
+// ============================================
+function expandSpellingVariants(term: string): string[] {
+  if (!term) return []
+  const lower = term.toLowerCase().trim()
+  const variants = new Set<string>([lower])
+
+  // Beis/Bais/Beth/Bet/Beit interchange (Hebrew ב transliteration)
+  if (/\b(beis|bais|beth|bet|beit|beys)\b/i.test(lower)) {
+    for (const v of ['beis', 'bais', 'beth', 'bet', 'beit']) {
+      variants.add(lower.replace(/\b(beis|bais|beth|bet|beit|beys)\b/gi, v))
+    }
+    // "beis din" → add "rabbinical court" as synonym if "din" present
+    if (/\bdin\b/i.test(lower)) {
+      variants.add('rabbinical court')
+      variants.add('rabbinic court')
+    }
+  }
+
+  // Shul / shull / shule
+  if (/\bshul\b/i.test(lower)) {
+    for (const v of ['shul', 'shull', 'shule']) {
+      variants.add(lower.replace(/\bshul\b/gi, v))
+    }
+  }
+
+  return Array.from(variants)
+}
+
+// ============================================
 // Sponsored listings — always show first for specific keywords
 // ============================================
 interface SponsoredListing {
@@ -96,15 +127,15 @@ export async function searchBusinesses(params: SearchParams): Promise<SearchResu
     }
   }
 
-  // Если ищут по имени бизнеса
+  // Если ищут по имени бизнеса (с expansion по вариантам написания)
   if (businessName) {
+    const variants = expandSpellingVariants(businessName)
     const businesses = await prisma.business.findMany({
       where: {
         isActive: true,
-        name: {
-          contains: businessName,
-          mode: 'insensitive'
-        }
+        OR: variants.map(v => ({
+          name: { contains: v, mode: 'insensitive' as const }
+        }))
       },
       take: limit,
       orderBy: [
@@ -240,20 +271,25 @@ export async function searchBusinessesFuzzy(params: SearchParams): Promise<Searc
   }
 
   // Try partial category match (any tag that CONTAINS the search term)
+  // Expand spelling variants (beis/bais/beth/bet/beit → all tried)
   if (category) {
-    // Search where category name appears anywhere in name or categoryRaw
-    where.OR = [
-      { categoryRaw: { contains: category, mode: 'insensitive' } },
-      { name: { contains: category, mode: 'insensitive' } },
-    ]
+    const variants = expandSpellingVariants(category)
+    where.OR = variants.flatMap(v => [
+      { categoryRaw: { contains: v, mode: 'insensitive' as const } },
+      { name: { contains: v, mode: 'insensitive' as const } },
+    ])
   }
 
   if (businessName) {
-    // Split name into words and search for any word match
-    const words = businessName.split(/\s+/).filter(w => w.length > 2)
-    if (words.length > 0) {
-      where.OR = words.map(word => ({
-        name: { contains: word, mode: 'insensitive' }
+    // Split name into words and search for any word match (across all spelling variants)
+    const variants = expandSpellingVariants(businessName)
+    const allWords = new Set<string>()
+    for (const v of variants) {
+      v.split(/\s+/).filter(w => w.length > 2).forEach(w => allWords.add(w))
+    }
+    if (allWords.size > 0) {
+      where.OR = Array.from(allWords).map(word => ({
+        name: { contains: word, mode: 'insensitive' as const }
       }))
     }
   }
