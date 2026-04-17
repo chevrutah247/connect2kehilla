@@ -93,6 +93,7 @@ Msg & data rates may apply.`,
  "shacharis Williamsburg"
  "770"
 
+🕐 ZMANIM: "zmanim 11213"
 🏷 SPECIALS: text SPECIALS
 👷 JOBS/WORK: text JOBS
 📋 ADD BUSINESS: (888) 516-3399

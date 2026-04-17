@@ -13,6 +13,7 @@ import { parseWorkCommand, parseJobCommand, parseHireCommand, registerWorker, sa
 import { fastParse } from '@/lib/fast-parser'
 import { handleJobsMenu, hasActiveJobsSession, JOBS_MAIN_MENU } from '@/lib/jobs-menu'
 import { detectTefillah, searchShulsByZip, searchShulsByArea, searchShulByName, formatMinyanForSMS, formatShulForSMS } from '@/lib/minyanim'
+import { formatZmanimForSMS } from '@/lib/zmanim'
 import prisma from '@/lib/db'
 
 // ============================================
@@ -216,9 +217,24 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // ── Zmanim (halachic times) — fast intercept before AI parser ──
+    const zmanimKeywords = ['zman', 'zmanim', 'zmanei', 'זמנים', 'זמני', 'זמן']
+    const bodyLower = body.toLowerCase().trim()
+    const isZmanimQuery = zmanimKeywords.some(kw => bodyLower.includes(kw))
+
+    if (isZmanimQuery) {
+      const zipMatch = body.match(/\b(\d{5})\b/)
+      let zmanimZip = zipMatch ? zipMatch[1] : null
+      if (!zmanimZip) zmanimZip = await getUserDefaultZip(from)
+      const responseText = formatZmanimForSMS(zmanimZip || '11213')
+      await prisma.query.create({
+        data: { userId: user.id, rawMessage: body, parsedCategory: 'zmanim', parsedZip: zmanimZip, parsedIntent: 'SEARCH', responseText, processedAt: new Date() }
+      })
+      return createTwiMLResponse(responseText)
+    }
+
     // ── Minyan / Shul search (before AI parser — fast keyword detection) ──
     const minyanKeywords = ['mincha', 'minchah', 'shacharis', 'shachrit', 'shachris', 'maariv', 'mariv', 'arvit', 'davening', 'minyan', 'shul', 'שחרית', 'מנחה', 'מעריב', 'שול', 'מנין']
-    const bodyLower = body.toLowerCase().trim()
     const isMinyanQuery = minyanKeywords.some(kw => bodyLower.includes(kw))
 
     if (isMinyanQuery) {
