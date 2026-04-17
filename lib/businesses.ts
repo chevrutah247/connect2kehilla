@@ -130,29 +130,55 @@ export async function searchBusinesses(params: SearchParams): Promise<SearchResu
   // Если ищут по имени бизнеса (с expansion по вариантам написания)
   if (businessName) {
     const variants = expandSpellingVariants(businessName)
-    const businesses = await prisma.business.findMany({
-      where: {
-        isActive: true,
-        OR: variants.map(v => ({
-          name: { contains: v, mode: 'insensitive' as const }
-        }))
-      },
-      take: limit,
-      orderBy: [
-        { status: 'desc' }, // PAID первыми
-        { leadCount: 'asc' } // Меньше лидов = выше приоритет (ротация)
-      ],
-      select: {
-        id: true,
-        name: true,
-        phone: true,
-        area: true,
-        categories: true,
-        status: true,
-        address: true,
-        website: true,
-      }
-    })
+    const ZIP_TO_AREA: Record<string, string> = {
+      '11211': 'Williamsburg', '11249': 'Williamsburg', '11206': 'Williamsburg', '11205': 'Williamsburg',
+      '11219': 'Borough Park', '11204': 'Borough Park', '11218': 'Borough Park',
+      '11230': 'Flatbush', '11210': 'Flatbush',
+      '11213': 'Crown Heights', '11225': 'Crown Heights', '11203': 'Crown Heights',
+      '10952': 'Monsey', '08701': 'Lakewood',
+    }
+    const nameClause = {
+      OR: variants.map(v => ({
+        name: { contains: v, mode: 'insensitive' as const }
+      }))
+    }
+    const areaFromZip = zipCode ? ZIP_TO_AREA[zipCode] : null
+
+    // Step 1: name match + user's area/ZIP
+    let businesses: SearchResult[] = []
+    if (zipCode || area) {
+      const locationFilter: any[] = []
+      if (zipCode) locationFilter.push({ zipCode })
+      if (areaFromZip) locationFilter.push({ area: { contains: areaFromZip, mode: 'insensitive' as const } })
+      if (area) locationFilter.push({ area: { contains: area, mode: 'insensitive' as const } })
+
+      businesses = await prisma.business.findMany({
+        where: {
+          isActive: true,
+          AND: [nameClause, { OR: locationFilter }]
+        },
+        take: limit,
+        orderBy: [{ status: 'desc' }, { leadCount: 'asc' }],
+        select: {
+          id: true, name: true, phone: true, area: true,
+          categories: true, status: true, address: true, website: true,
+        }
+      })
+    }
+
+    // Step 2: if no results in user's area, fallback to anywhere
+    if (businesses.length === 0) {
+      businesses = await prisma.business.findMany({
+        where: { isActive: true, ...nameClause },
+        take: limit,
+        orderBy: [{ status: 'desc' }, { leadCount: 'asc' }],
+        select: {
+          id: true, name: true, phone: true, area: true,
+          categories: true, status: true, address: true, website: true,
+        }
+      })
+    }
+
     return businesses
   }
 
