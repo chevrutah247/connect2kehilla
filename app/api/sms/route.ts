@@ -10,6 +10,7 @@ import { searchBusinesses, searchBusinessesExpanded, searchBusinessesFuzzy, reco
 import { normalizeCategory, normalizeArea, normalizeCity, detectLanguage, matchKeywordToCategory } from '@/lib/fuzzy'
 import { getAllStores, getStoreByIndex, getStoresByArea, getStoresByZip, getAreaByZip, fetchStoreSpecials, formatSpecialsForSMS, formatStoreListForSMS, Store } from '@/lib/specials'
 import { parseWorkCommand, parseJobCommand, parseHireCommand, registerWorker, saveWorkerDescription, postJob, saveJobDescription, renewWorker, stopWorker, searchWorkers, JOBS_HELP } from '@/lib/workers'
+import { fastParse } from '@/lib/fast-parser'
 import { handleJobsMenu, hasActiveJobsSession, JOBS_MAIN_MENU } from '@/lib/jobs-menu'
 import { detectTefillah, searchShulsByZip, searchShulsByArea, searchShulByName, formatMinyanForSMS, formatShulForSMS } from '@/lib/minyanim'
 import prisma from '@/lib/db'
@@ -266,9 +267,13 @@ export async function POST(request: NextRequest) {
       return createTwiMLResponse(responseText)
     }
 
-    // Парсим сообщение через AI
-    const parsed = await parseQuery(body)
-    console.log('🤖 Parsed:', parsed)
+    // ── Fast regex parser: skip OpenAI for simple "<category> <zip>" queries ──
+    // Saves ~1.2–2.6 sec on common patterns. Falls back to AI if nothing matched.
+    const fastParsed = fastParse(body)
+    const parsed = fastParsed
+      ? { ...fastParsed, city: null, needsMoreInfo: false, missingFields: [] }
+      : await parseQuery(body)
+    console.log(fastParsed ? '⚡ Fast-parsed:' : '🤖 AI-parsed:', parsed)
 
     // Обрабатываем по интенту
     let responseText = ''
@@ -331,19 +336,27 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Сохраняем запрос в базу
-    await prisma.query.create({
-      data: {
-        userId: user.id,
-        rawMessage: body,
-        parsedCategory: parsed.category,
-        parsedZip: parsed.zipCode,
-        parsedArea: parsed.area,
-        parsedIntent: parsed.intent.toUpperCase() as any,
-        responseText,
-        processedAt: new Date(),
-      }
-    })
+    // Сохраняем запрос в базу (best-effort, не ломаем ответ если лог не записался)
+    try {
+      const upperIntent = String(parsed.intent || 'unknown').toUpperCase()
+      // Map any unknown value to UNKNOWN so Prisma doesn't reject invalid enum
+      const validIntents = new Set(['SEARCH','HELP','STOP','INFO','SPECIALS','JOBS','UNKNOWN'])
+      const safeIntent = validIntents.has(upperIntent) ? upperIntent : 'UNKNOWN'
+      await prisma.query.create({
+        data: {
+          userId: user.id,
+          rawMessage: body,
+          parsedCategory: parsed.category,
+          parsedZip: parsed.zipCode,
+          parsedArea: parsed.area,
+          parsedIntent: safeIntent as any,
+          responseText,
+          processedAt: new Date(),
+        }
+      })
+    } catch (logErr: any) {
+      console.error('⚠️ Query log write failed (non-fatal):', logErr?.code, logErr?.message)
+    }
 
     return createTwiMLResponse(responseText)
 

@@ -32,26 +32,33 @@ export async function sendSMS(to: string, body: string): Promise<boolean> {
 // Форматирование ответа с бизнесами
 // ============================================
 export function formatBusinessResponse(
-  businesses: Array<{ name: string; phone: string; area?: string | null }>,
+  businesses: Array<{ name: string; phone: string; area?: string | null; address?: string | null; website?: string | null }>,
   category: string
 ): string {
   if (businesses.length === 0) {
     return `Sorry, we couldn't find any ${category} in your area. Try a different ZIP code or category.`
   }
-  
+
   let response = `Found ${businesses.length} ${category}:\n\n`
-  
+
   businesses.forEach((biz, index) => {
     response += `${index + 1}. ${biz.name}\n`
     response += `   📞 ${biz.phone}\n`
-    if (biz.area) {
+    if (biz.address) {
+      // Truncate very long addresses (some have multiple locations separated by ;)
+      const addr = biz.address.length > 80 ? biz.address.slice(0, 77) + '...' : biz.address
+      response += `   📍 ${addr}\n`
+    } else if (biz.area) {
       response += `   📍 ${biz.area}\n`
+    }
+    if (biz.website) {
+      response += `   🌐 ${biz.website}\n`
     }
     response += '\n'
   })
-  
-  response += '💡 Please tell them Connect2Kehilla sent you!\n\n'
-  response += 'Reply HELP for assistance or STOP to unsubscribe.'
+
+  response += '💡 Tell them Connect2Kehilla sent you!\n'
+  response += 'Reply MENU for options, STOP to opt out.'
 
   return response
 }
