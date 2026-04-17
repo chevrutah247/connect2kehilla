@@ -254,9 +254,16 @@ export function matchKeywordToCategory(input: string): string | null {
   // Exact match
   if (KEYWORD_TO_CATEGORY[lower]) return KEYWORD_TO_CATEGORY[lower];
 
-  // Check if input contains a keyword
+  // Check if input contains a keyword (word-boundary match to avoid 'ac' matching inside 'pharmacy')
   for (const [keyword, category] of Object.entries(KEYWORD_TO_CATEGORY)) {
-    if (lower.includes(keyword)) return category;
+    // Only match if keyword appears as a whole word or phrase (not inside another word)
+    if (keyword.length <= 2) {
+      // Short keywords (ac, dj) — require exact match or word boundary
+      const re = new RegExp(`\\b${keyword}\\b`, 'i')
+      if (re.test(lower)) return category
+    } else {
+      if (lower.includes(keyword)) return category
+    }
   }
 
   return null;
