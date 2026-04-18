@@ -1,0 +1,45 @@
+{
+  "name": "Connect2Kehilla — Kosher SMS Business Directory",
+  "short_name": "Connect2Kehilla",
+  "description": "Find 18,000+ Jewish community businesses via SMS. Text (888) 516-3399 — works on any phone.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#1e3a5f",
+  "scope": "/",
+  "lang": "en-US",
+  "dir": "ltr",
+  "categories": ["business", "lifestyle", "utilities"],
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Find a business",
+      "short_name": "Search",
+      "description": "Search via SMS",
+      "url": "/?src=shortcut-search"
+    },
+    {
+      "name": "Add your business",
+      "short_name": "Add Business",
+      "url": "/add-business"
+    },
+    {
+      "name": "Pricing",
+      "short_name": "Pricing",
+      "url": "/pricing"
+    }
+  ]
+}
