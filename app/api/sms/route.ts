@@ -9,9 +9,9 @@ import { getOrCreateUser, isUserBlocked, blockUser, unblockUser, getUserDefaultZ
 import { searchBusinesses, searchBusinessesExpanded, searchBusinessesFuzzy, recordLeads } from '@/lib/businesses'
 import { normalizeCategory, normalizeArea, normalizeCity, detectLanguage, matchKeywordToCategory } from '@/lib/fuzzy'
 import { getAllStores, getStoreByIndex, getStoresByArea, getStoresByZip, getAreaByZip, fetchStoreSpecials, formatSpecialsForSMS, formatStoreListForSMS, Store } from '@/lib/specials'
-import { parseWorkCommand, parseJobCommand, parseHireCommand, registerWorker, saveWorkerDescription, postJob, saveJobDescription, renewWorker, stopWorker, searchWorkers, JOBS_HELP } from '@/lib/workers'
+import { parseWorkCommand, parseJobCommand, parseHireCommand, registerWorker, saveWorkerDescription, postJob, saveJobDescription, renewWorker, stopWorker, searchWorkers, JOBS_HELP, parseFreeformJobPost, postFreeformJob } from '@/lib/workers'
 import { fastParse } from '@/lib/fast-parser'
-import { handleJobsMenu, hasActiveJobsSession, JOBS_MAIN_MENU } from '@/lib/jobs-menu'
+import { handleJobsMenu, hasActiveJobsSession, handleJobZipEntry, JOBS_MAIN_MENU } from '@/lib/jobs-menu'
 import { detectTefillah, searchShulsByZip, searchShulsByArea, searchShulByName, formatMinyanForSMS, formatShulForSMS } from '@/lib/minyanim'
 import { formatZmanimForSMS } from '@/lib/zmanim'
 import prisma from '@/lib/db'
@@ -119,7 +119,26 @@ export async function POST(request: NextRequest) {
       return createTwiMLResponse(MESSAGES.MENU)
     }
 
-    // ── JOBS interactive menu ──
+    // ── JOB + ZIP — zip-aware 2-option menu (Seekers/Posters) ──
+    const jobZipMatch = trimmed.match(/^jobs?\s+(\d{5})\s*$/i)
+    if (jobZipMatch) {
+      const zip = jobZipMatch[1]
+      const responseText = await handleJobZipEntry(user.id, from, zip)
+      await prisma.query.create({ data: { userId: user.id, rawMessage: body, parsedIntent: 'JOBS', responseText, processedAt: new Date() } })
+      return createTwiMLResponse(responseText)
+    }
+
+    // ── JOB freeform post — "job cashier 11211 full $20/hr John 718-555-1234" ──
+    if (/^jobs?\s+.{10,}/i.test(trimmed) && /\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b/.test(trimmed)) {
+      const parsed = parseFreeformJobPost(trimmed)
+      if (parsed && parsed.position && parsed.phone) {
+        const responseText = await postFreeformJob(from, parsed)
+        await prisma.query.create({ data: { userId: user.id, rawMessage: body, parsedIntent: 'JOBS', responseText, processedAt: new Date() } })
+        return createTwiMLResponse(responseText)
+      }
+    }
+
+    // ── JOBS interactive menu (plain "JOB" / "JOBS") ──
     if (upperTrimmed === 'JOBS' || upperTrimmed === 'JOB' || upperTrimmed === 'MENU JOBS') {
       const responseText = await handleJobsMenu(user.id, from, 'JOBS')
       if (responseText) {
