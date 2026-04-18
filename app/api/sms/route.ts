@@ -50,16 +50,29 @@ setInterval(() => {
 }, 5 * 60_000)
 
 // ============================================
+// Timing helper — логирует длительность в Vercel
+// ============================================
+async function timed<T>(label: string, fn: () => Promise<T> | T): Promise<T> {
+  const t0 = Date.now()
+  try {
+    return await fn()
+  } finally {
+    console.log(`⏱ ${label}: ${Date.now() - t0}ms`)
+  }
+}
+
+// ============================================
 // POST /api/sms - Twilio Webhook
 // ============================================
 export async function POST(request: NextRequest) {
+  const reqStart = Date.now()
   try {
     // Validate Twilio signature to prevent spoofed requests
     const twilioSignature = request.headers.get('x-twilio-signature') || ''
     const webhookUrl = process.env.TWILIO_WEBHOOK_URL || `${request.nextUrl.origin}/api/sms`
 
     // Clone the request to read formData without consuming the body
-    const formData = await request.formData()
+    const formData = await timed('formData', () => request.formData())
 
     // Build params object for validation
     const params: Record<string, string> = {}
@@ -86,8 +99,10 @@ export async function POST(request: NextRequest) {
 
     console.log(`SMS received and processing`)
 
-    // Проверяем, заблокирован ли пользователь (STOP)
-    const isBlocked = await isUserBlocked(from)
+    // Параллелим blocked-check + user lookup — они независимы
+    const [isBlocked, user] = await timed('blocked+user (parallel)', () =>
+      Promise.all([isUserBlocked(from), getOrCreateUser(from)])
+    )
     if (isBlocked) {
       // Проверяем, не пытается ли вернуться (START)
       if (body.trim().toUpperCase() === 'START') {
@@ -97,9 +112,6 @@ export async function POST(request: NextRequest) {
       // Иначе - не отвечаем
       return createTwiMLResponse('')
     }
-
-    // Получаем или создаём пользователя
-    const user = await getOrCreateUser(from)
     const trimmed = body.trim()
     const upperTrimmed = trimmed.toUpperCase()
 
@@ -288,7 +300,7 @@ export async function POST(request: NextRequest) {
     const fastParsed = fastParse(body)
     const parsed = fastParsed
       ? { ...fastParsed, city: null, needsMoreInfo: false, missingFields: [] }
-      : await parseQuery(body)
+      : await timed('OpenAI parseQuery', () => parseQuery(body))
     console.log(fastParsed ? '⚡ Fast-parsed:' : '🤖 AI-parsed:', parsed)
 
     // Обрабатываем по интенту
@@ -336,7 +348,7 @@ export async function POST(request: NextRequest) {
       }
 
       case 'search':
-        responseText = await handleSearch(user.id, from, body, parsed)
+        responseText = await timed('handleSearch', () => handleSearch(user.id, from, body, parsed))
         break
 
       default: {
@@ -374,9 +386,11 @@ export async function POST(request: NextRequest) {
       console.error('⚠️ Query log write failed (non-fatal):', logErr?.code, logErr?.message)
     }
 
+    console.log(`⏱ TOTAL request: ${Date.now() - reqStart}ms`)
     return createTwiMLResponse(responseText)
 
   } catch (error: any) {
+    console.log(`⏱ TOTAL request (error): ${Date.now() - reqStart}ms`)
     console.error('❌ SMS processing error')
     console.error('  name:', error?.name)
     console.error('  code:', error?.code)
@@ -494,50 +508,50 @@ async function handleSearchInner(
   console.log(`🔍 AFTER FUZZY: category=${category}, area=${area}, zip=${zipCode}, businessName=${parsed.businessName}`)
 
   // Step 1: Search with location filter
-  let businesses = await searchBusinesses({
+  let businesses = await timed('search step1 (with location)', () => searchBusinesses({
     category,
     zipCode,
     area,
     businessName: parsed.businessName,
     limit: 3,
-  })
+  }))
 
   // Step 2: If not found — retry WITHOUT location (ZIP/area often missing in DB)
   if (businesses.length === 0) {
     console.log('🔍 Step 2: retry without location filter')
-    businesses = await searchBusinesses({
+    businesses = await timed('search step2 (no location)', () => searchBusinesses({
       category,
       businessName: parsed.businessName,
       limit: 3,
-    })
+    }))
   }
 
   // Step 3: Fuzzy search
   if (businesses.length === 0 && (category || parsed.businessName)) {
     console.log('🔍 Step 3: fuzzy search')
-    businesses = await searchBusinessesFuzzy({
+    businesses = await timed('search step3 (fuzzy)', () => searchBusinessesFuzzy({
       category,
       businessName: parsed.businessName,
       limit: 3,
-    })
+    }))
   }
 
   // Step 4: Treat category as business name
   if (businesses.length === 0 && parsed.category && !parsed.businessName) {
     console.log('🔍 Step 4: try category as business name')
-    businesses = await searchBusinesses({
+    businesses = await timed('search step4 (cat as name)', () => searchBusinesses({
       businessName: parsed.category,
       limit: 3,
-    })
+    }))
   }
 
   // Step 5: Try raw message as business name
   if (businesses.length === 0) {
     console.log('🔍 Step 5: try raw message as business name')
-    businesses = await searchBusinesses({
+    businesses = await timed('search step5 (raw as name)', () => searchBusinesses({
       businessName: rawMessage.replace(/\d{5}/g, '').trim(),
       limit: 3,
-    })
+    }))
   }
 
   // Если нашли - сохраняем ZIP как дефолтный
@@ -560,11 +574,11 @@ async function handleSearchInner(
   })
 
   if (businesses.length > 0) {
-    await recordLeads(
+    await timed('recordLeads', () => recordLeads(
       query.id,
       userId,
       businesses.map(b => b.id)
-    )
+    ))
   }
 
   // Форматируем ответ

@@ -350,26 +350,25 @@ export async function recordLeads(
   userId: string,
   businessIds: string[]
 ): Promise<void> {
-  // Создаём записи лидов
-  await prisma.lead.createMany({
-    data: businessIds.map((businessId, index) => ({
-      queryId,
-      userId,
-      businessId,
-      position: index + 1,
-    }))
-  })
-
-  // Обновляем счётчики у бизнесов
-  for (const businessId of businessIds) {
-    await prisma.business.update({
-      where: { id: businessId },
+  // Создаём записи лидов + батчим обновление счётчиков одним запросом
+  const now = new Date()
+  await Promise.all([
+    prisma.lead.createMany({
+      data: businessIds.map((businessId, index) => ({
+        queryId,
+        userId,
+        businessId,
+        position: index + 1,
+      }))
+    }),
+    prisma.business.updateMany({
+      where: { id: { in: businessIds } },
       data: {
         leadCount: { increment: 1 },
-        lastLeadAt: new Date(),
+        lastLeadAt: now,
       }
-    })
-  }
+    }),
+  ])
 }
 
 // ============================================
