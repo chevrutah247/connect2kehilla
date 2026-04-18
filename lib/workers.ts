@@ -386,3 +386,173 @@ export async function searchWorkers(category: string, area: string | null, limit
     return WORKERS_UNAVAILABLE_MSG
   }
 }
+
+// ============================================
+// FREEFORM JOB POST parser
+// Parses: "job cashier 11211 full $20/hr John 718-555-1234"
+// ============================================
+
+export interface FreeformJobPost {
+  position: string
+  zipCode: string | null
+  area: string | null
+  jobType: 'full-time' | 'part-time' | 'one-time' | 'hourly' | null
+  pay: string | null
+  contactName: string | null
+  phone: string | null
+  raw: string
+}
+
+const ZIP_TO_AREA_JOBS: Record<string, string> = {
+  '11211': 'Williamsburg', '11249': 'Williamsburg', '11206': 'Williamsburg', '11205': 'Williamsburg',
+  '11219': 'Boro Park', '11204': 'Boro Park', '11218': 'Boro Park',
+  '11230': 'Flatbush', '11210': 'Flatbush',
+  '11213': 'Crown Heights', '11225': 'Crown Heights', '11203': 'Crown Heights',
+  '10952': 'Monsey', '10977': 'Spring Valley', '10950': 'Monroe',
+  '08701': 'Lakewood', '11516': 'Cedarhurst', '11559': 'Lawrence',
+  '07666': 'Teaneck', '07055': 'Passaic',
+}
+
+// Known areas (for parsing)
+const AREA_KEYWORDS = [
+  'williamsburg', 'boro park', 'borough park', 'boropark', 'crown heights',
+  'crown hts', 'flatbush', 'monsey', 'monroe', 'kiryas joel', 'lakewood',
+  'five towns', 'cedarhurst', 'lawrence', 'woodmere', 'teaneck', 'passaic',
+  'brooklyn', 'far rockaway', 'staten island',
+]
+
+export function parseFreeformJobPost(text: string): FreeformJobPost | null {
+  const raw = text.trim()
+  if (!raw) return null
+
+  // Strip leading "job" / "jobs"
+  let remaining = raw.replace(/^jobs?\s+/i, '').trim()
+
+  // 1. Phone — find last phone-shaped group of digits
+  const phoneMatch = remaining.match(/(?:\+?1[-.\s]?)?\(?(\d{3})\)?[-.\s]?(\d{3})[-.\s]?(\d{4})/)
+  const phone = phoneMatch ? `+1${phoneMatch[1]}${phoneMatch[2]}${phoneMatch[3]}` : null
+
+  // Remove the phone from text to simplify remaining parsing
+  if (phoneMatch) remaining = remaining.replace(phoneMatch[0], ' ').trim()
+
+  // 2. ZIP — first 5-digit sequence (after phone removal)
+  const zipMatch = remaining.match(/\b(\d{5})\b/)
+  const zipCode = zipMatch ? zipMatch[1] : null
+  if (zipMatch) remaining = remaining.replace(zipMatch[0], ' ').trim()
+
+  // 3. Pay — $ amount
+  const payMatch = remaining.match(/\$\s*[\d,]+(?:\.\d+)?(?:\s*\/\s*(?:hr|hour|yr|year|week|wk|day|mo|month))?/i)
+  const pay = payMatch ? payMatch[0].trim() : null
+  if (payMatch) remaining = remaining.replace(payMatch[0], ' ').trim()
+
+  // 4. Job type
+  let jobType: FreeformJobPost['jobType'] = null
+  const jtMatch = remaining.match(/\b(full[-\s]?time|full|ft|part[-\s]?time|part|pt|one[-\s]?time|once|hourly|per hour|temporary|temp)\b/i)
+  if (jtMatch) {
+    const kw = jtMatch[0].toLowerCase().replace(/\s/g, '-')
+    jobType = JOB_TYPE_ALIASES[kw] as any
+      || (kw.includes('full') || kw === 'ft' ? 'full-time' : null)
+      || (kw.includes('part') || kw === 'pt' ? 'part-time' : null)
+      || (kw.includes('one') || kw === 'once' || kw === 'temp' || kw === 'temporary' ? 'one-time' : null)
+      || (kw.includes('hour') ? 'hourly' : null)
+    remaining = remaining.replace(jtMatch[0], ' ').trim()
+  }
+
+  // 5. Area (if provided as name)
+  let area: string | null = zipCode ? (ZIP_TO_AREA_JOBS[zipCode] || null) : null
+  const lowerRem = remaining.toLowerCase()
+  for (const a of AREA_KEYWORDS) {
+    if (lowerRem.includes(a)) {
+      area = a.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+      // Normalize
+      if (area.toLowerCase() === 'borough park' || area.toLowerCase() === 'boropark') area = 'Boro Park'
+      if (area.toLowerCase() === 'crown hts') area = 'Crown Heights'
+      // Strip from remaining
+      const re = new RegExp(a.replace(/\s+/g, '\\s+'), 'i')
+      remaining = remaining.replace(re, ' ').trim()
+      break
+    }
+  }
+
+  // 6. Contact name — capitalized word(s) left over (take 1-2 words)
+  let contactName: string | null = null
+  const tokens = remaining.split(/\s+/).filter(t => t.length > 0 && t !== '-' && t !== '—')
+  // Find first capitalized token (proper name) that's NOT the position
+  const namingTokens: string[] = []
+  for (let i = tokens.length - 1; i >= 0 && namingTokens.length < 2; i--) {
+    const t = tokens[i]
+    if (/^[A-Z][a-zA-Z]+$/.test(t)) {
+      namingTokens.unshift(t)
+    } else if (namingTokens.length > 0) {
+      break
+    }
+  }
+  if (namingTokens.length > 0) {
+    contactName = namingTokens.join(' ')
+    // Remove name tokens from remaining
+    for (const n of namingTokens) {
+      remaining = remaining.replace(new RegExp(`\\b${n}\\b`), ' ')
+    }
+    remaining = remaining.trim()
+  }
+
+  // 7. Position — whatever's left, take first 1-3 meaningful words
+  const positionTokens = remaining.split(/\s+/).filter(t => t.length > 0 && !/^[,.;:]+$/.test(t)).slice(0, 3)
+  const position = positionTokens.join(' ').trim()
+
+  if (!position || !phone) return null
+
+  return { position, zipCode, area, jobType, pay, contactName, phone, raw }
+}
+
+// ============================================
+// Post freeform job with 7-day expiry
+// ============================================
+export async function postFreeformJob(posterPhone: string, parsed: FreeformJobPost): Promise<string> {
+  const expiresAt = new Date()
+  expiresAt.setDate(expiresAt.getDate() + 7) // 7-day expiry for freeform posts
+
+  // Normalize category from position
+  const category = normalizeCategory(parsed.position)
+
+  // Title
+  const typeLabel = parsed.jobType ? parsed.jobType : 'any schedule'
+  const title = `${parsed.position} — ${typeLabel}`
+
+  // Description (readable summary)
+  const descParts: string[] = []
+  if (parsed.position) descParts.push(parsed.position)
+  if (parsed.jobType) descParts.push(parsed.jobType)
+  if (parsed.pay) descParts.push(parsed.pay)
+  if (parsed.contactName) descParts.push(`contact: ${parsed.contactName}`)
+  const description = descParts.join(' • ') + '\n\n' + parsed.raw
+
+  try {
+    await prisma.job.create({
+      data: {
+        title,
+        description,
+        category,
+        area: parsed.area,
+        zipCode: parsed.zipCode,
+        phone: parsed.phone!, // we already validated it's set
+        salary: parsed.pay,
+        type: 'OFFERING',
+        expiresAt,
+        isActive: true,
+      },
+    })
+
+    const expiryDateStr = expiresAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    return `✅ Job posted successfully!
+
+💼 ${title}
+${parsed.area ? `📍 ${parsed.area}${parsed.zipCode ? ' ('+parsed.zipCode+')' : ''}\n` : parsed.zipCode ? `📍 ZIP ${parsed.zipCode}\n` : ''}${parsed.pay ? `💰 ${parsed.pay}\n` : ''}📞 ${parsed.contactName ? parsed.contactName + ' ' : ''}${parsed.phone}
+
+⏰ Active until ${expiryDateStr} (7 days)
+📱 Text "JOB ${parsed.zipCode || ''}" to see your listing`
+  } catch (error: any) {
+    console.error('postFreeformJob error:', error?.message)
+    return '⚠️ Could not save job right now. Please try again in a moment.'
+  }
+}

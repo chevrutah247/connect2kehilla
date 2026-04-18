@@ -9,13 +9,25 @@ const SESSION_TTL_MINUTES = 30
 // Session stored in Query table: rawMessage = __JOBS_STATE__<step>:<data>
 // step = MAIN | WORK_GENDER | WORK_CATEGORY | WORK_AREA | HIRE_GENDER | HIRE_CATEGORY | HIRE_AREA | POST_GENDER | POST_CATEGORY | POST_AREA | POST_TYPE
 
-type Step = 'MAIN' | 'WORK_GENDER' | 'WORK_CATEGORY' | 'WORK_AREA' | 'HIRE_GENDER' | 'HIRE_CATEGORY' | 'HIRE_AREA' | 'POST_GENDER' | 'POST_CATEGORY' | 'POST_AREA' | 'POST_TYPE'
+type Step = 'MAIN' | 'WORK_GENDER' | 'WORK_CATEGORY' | 'WORK_AREA' | 'HIRE_GENDER' | 'HIRE_CATEGORY' | 'HIRE_AREA' | 'POST_GENDER' | 'POST_CATEGORY' | 'POST_AREA' | 'POST_TYPE' | 'JOB_ZIP_MENU'
 
 interface SessionState {
   step: Step
   gender?: 'men' | 'women'
   category?: string
   area?: string
+  zipCode?: string
+}
+
+// ZIP → area mapping for zip-aware job menu
+const ZIP_TO_AREA: Record<string, string> = {
+  '11211': 'Williamsburg', '11249': 'Williamsburg', '11206': 'Williamsburg', '11205': 'Williamsburg',
+  '11219': 'Boro Park', '11204': 'Boro Park', '11218': 'Boro Park',
+  '11230': 'Flatbush', '11210': 'Flatbush',
+  '11213': 'Crown Heights', '11225': 'Crown Heights', '11203': 'Crown Heights',
+  '10952': 'Monsey', '10977': 'Spring Valley', '10950': 'Monroe',
+  '08701': 'Lakewood', '11516': 'Cedarhurst', '11559': 'Lawrence',
+  '07666': 'Teaneck', '07055': 'Passaic',
 }
 
 const CATEGORIES_BY_GENDER = {
@@ -46,7 +58,7 @@ const JOB_TYPES = [
 
 // ── Session helpers ──
 async function saveSession(userId: string, state: SessionState): Promise<void> {
-  const tag = `__JOBS_STATE__${state.step}:${JSON.stringify({ gender: state.gender, category: state.category, area: state.area })}`
+  const tag = `__JOBS_STATE__${state.step}:${JSON.stringify({ gender: state.gender, category: state.category, area: state.area, zipCode: state.zipCode })}`
   await prisma.query.create({
     data: { userId, rawMessage: tag, parsedIntent: 'JOBS', responseText: '', processedAt: new Date() },
   })
@@ -122,6 +134,33 @@ const JOB_TYPE_MENU = (cat: string) => {
   return `⏰ ${label} — what type?\n\n1️⃣ Full-time\n2️⃣ Part-time\n3️⃣ One-time\n4️⃣ Hourly\n\nReply 1-4`
 }
 
+// ────────────────────────────────────────────────
+// ZIP-aware JOBS entry: "job 11213" → 2-option menu
+// ────────────────────────────────────────────────
+const JOB_ZIP_MENU_TEXT = (zip: string, area: string) => `💼 JOBS for ZIP ${zip}${area ? ` (${area})` : ''}
+
+Reply:
+1️⃣ Job Seekers — see open jobs
+2️⃣ Job Posters — post a new job
+
+Free for everyone!`
+
+const JOB_POSTER_INSTRUCTIONS = `📝 Post a job — text back in this format:
+
+job [position] [ZIP] [full|part] [pay] [name] [phone]
+
+Example:
+job cashier 11211 full $20/hr John 718-555-1234
+
+Job will be listed for 7 days.`
+
+export async function handleJobZipEntry(userId: string, _phone: string, zipCode: string): Promise<string> {
+  const area = ZIP_TO_AREA[zipCode] || ''
+  await clearSession(userId)
+  await saveSession(userId, { step: 'JOB_ZIP_MENU', zipCode, area })
+  return JOB_ZIP_MENU_TEXT(zipCode, area)
+}
+
 // ── Process menu input ──
 export async function handleJobsMenu(userId: string, phone: string, input: string): Promise<string | null> {
   const trimmed = input.trim()
@@ -136,6 +175,59 @@ export async function handleJobsMenu(userId: string, phone: string, input: strin
 
   // Get current session
   const session = await getSession(userId)
+
+  // JOB_ZIP_MENU — reply "1" (seekers) or "2" (posters)
+  if (session && session.step === 'JOB_ZIP_MENU') {
+    const num = parseInt(trimmed)
+    const zip = session.zipCode || ''
+    const area = session.area || ''
+
+    if (num === 1) {
+      // Show open jobs
+      await clearSession(userId)
+      const now = new Date()
+      const where: any = {
+        type: 'OFFERING',
+        isActive: true,
+        expiresAt: { gt: now },
+      }
+      if (zip || area) {
+        where.OR = []
+        if (zip) where.OR.push({ zipCode: zip })
+        if (area) where.OR.push({ area: { contains: area, mode: 'insensitive' } })
+      }
+      const jobs = await prisma.job.findMany({
+        where, orderBy: { createdAt: 'desc' }, take: 5,
+      })
+      if (jobs.length === 0) {
+        return `📭 No job openings available in ${area || 'your area'} right now.\n\nCheck back soon — jobs are posted daily!`
+      }
+      // Format list
+      const fmtDaysLeft = (d: Date) => {
+        const diff = Math.ceil((new Date(d).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+        return diff <= 0 ? 'today' : `${diff} day${diff === 1 ? '' : 's'} left`
+      }
+      let response = `💼 Jobs in ${area || zip} (${jobs.length}):\n\n`
+      jobs.forEach((j, i) => {
+        response += `${i + 1}. ${j.title}\n`
+        if (j.salary) response += `   💰 ${j.salary}\n`
+        response += `   📞 ${j.phone}\n`
+        response += `   ⏰ ${fmtDaysLeft(j.expiresAt)}\n\n`
+      })
+      response += `Post a job: text "JOB" to start`
+      return response
+    }
+
+    if (num === 2) {
+      await clearSession(userId)
+      return JOB_POSTER_INSTRUCTIONS
+    }
+
+    // Not 1 or 2 — exit session
+    await clearSession(userId)
+    return null
+  }
+
   if (!session || session.step === 'MAIN' as any) {
     // Main menu — expect 1, 2, or 3
     if (!session) return null // no active menu
