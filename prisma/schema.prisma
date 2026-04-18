@@ -180,15 +180,18 @@ model Worker {
 model User {
   id            String   @id @default(cuid())
   phoneHash     String   @unique
+  phone         String?  @unique                   // Raw E.164 phone — enables outbound broadcasts
   defaultZip    String?
   defaultArea   String?
-  isBlocked     Boolean  @default(false)
+  isBlocked     Boolean  @default(false)           // STOP flag — excluded from all broadcasts
   createdAt     DateTime @default(now())
   lastActiveAt  DateTime @default(now())
   queries       Query[]
   leads         Lead[]
+  broadcasts    BroadcastRecipient[]
 
   @@index([phoneHash])
+  @@index([phone])
 }
 
 // ============================================
@@ -253,4 +256,38 @@ model ShabbatSchedule {
   candleLighting DateTime
   havdalah       DateTime
   updatedAt      DateTime @updatedAt
+}
+
+// ============================================
+// МАССОВЫЕ РАССЫЛКИ (SMS broadcasts)
+// ============================================
+model Broadcast {
+  id          String               @id @default(cuid())
+  message     String
+  segment     String                              // e.g. "category:plumber,zip:11213" or "all"
+  sent        Int                  @default(0)
+  failed      Int                  @default(0)
+  skipped     Int                  @default(0)   // blocked users
+  createdAt   DateTime             @default(now())
+  createdBy   String?                             // admin identifier
+  recipients  BroadcastRecipient[]
+
+  @@index([createdAt])
+}
+
+model BroadcastRecipient {
+  id          String    @id @default(cuid())
+  broadcastId String
+  broadcast   Broadcast @relation(fields: [broadcastId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  phone       String                         // snapshot of raw phone at send time
+  status      String                         // "sent" | "failed" | "skipped"
+  twilioSid   String?                        // Twilio message SID for tracking
+  error       String?                        // failure reason if any
+  sentAt      DateTime  @default(now())
+
+  @@index([broadcastId])
+  @@index([userId])
+  @@index([status])
 }

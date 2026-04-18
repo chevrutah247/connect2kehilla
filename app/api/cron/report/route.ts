@@ -213,6 +213,37 @@ export async function GET(request: NextRequest) {
   }
 
   // ============================================
+  // I. Customer Base (CRM)
+  // ============================================
+  const totalCustomers = await prisma.user.count({ where: { phone: { not: null } } })
+  const activeCustomers = await prisma.user.count({ where: { phone: { not: null }, isBlocked: false } })
+  const newCustomersToday = await prisma.user.count({
+    where: { phone: { not: null }, createdAt: { gte: todayStart, lt: todayEnd } }
+  })
+  const optedOut = await prisma.user.count({ where: { isBlocked: true } })
+
+  // Top 10 categories by unique customers (for broadcast targeting)
+  const since90 = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
+  const topSegments = await prisma.$queryRaw<Array<{ category: string, users: number }>>`
+    SELECT "parsedCategory" AS category, COUNT(DISTINCT "userId")::int AS users
+    FROM "Query"
+    WHERE "parsedIntent" = 'SEARCH'
+      AND "parsedCategory" IS NOT NULL
+      AND "createdAt" >= ${since90}
+    GROUP BY "parsedCategory"
+    ORDER BY users DESC
+    LIMIT 10
+  `
+
+  // Recent broadcasts stats
+  const recentBroadcasts = await prisma.broadcast.findMany({
+    where: { createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } },
+    orderBy: { createdAt: 'desc' },
+    take: 5,
+    select: { id: true, message: true, segment: true, sent: true, failed: true, createdAt: true },
+  })
+
+  // ============================================
   // Skip if no activity
   // ============================================
   if (totalQueries === 0) {
@@ -374,6 +405,38 @@ export async function GET(request: NextRequest) {
     ['Business', 'Area', 'Leads'],
     leadsHTML
   )) : ''}
+
+  <!-- I. Customer Base (CRM) -->
+  ${section('Customer Base', '📇', `
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+      ${card(totalCustomers, 'Total Customers', '#1e3a5f')}
+      ${card(activeCustomers, 'Active (not blocked)', '#059669')}
+      ${card(newCustomersToday, 'New Today', '#6366f1')}
+      ${card(optedOut, 'Opted Out (STOP)', '#dc2626')}
+    </div>
+    ${topSegments.length > 0 ? `
+      <strong style="display:block;margin:16px 0 8px;">Top broadcast segments (last 90 days):</strong>
+      ${tableWrap(['Category', 'Unique Customers'],
+        topSegments.map(s =>
+          `<tr><td style="padding:6px 12px;border-bottom:1px solid #f3f4f6;">${s.category}</td><td style="padding:6px 12px;text-align:right;font-weight:bold;border-bottom:1px solid #f3f4f6;">${s.users}</td></tr>`
+        ).join('')
+      )}
+    ` : ''}
+    ${recentBroadcasts.length > 0 ? `
+      <strong style="display:block;margin:16px 0 8px;">Recent broadcasts (last 7 days):</strong>
+      ${tableWrap(['Date', 'Segment', 'Sent', 'Failed'],
+        recentBroadcasts.map(b => {
+          const d = new Date(b.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/New_York' })
+          return `<tr>
+            <td style="padding:6px 12px;border-bottom:1px solid #f3f4f6;">${d}</td>
+            <td style="padding:6px 12px;border-bottom:1px solid #f3f4f6;font-size:12px;">${b.segment}</td>
+            <td style="padding:6px 12px;text-align:center;border-bottom:1px solid #f3f4f6;color:#059669;font-weight:bold;">${b.sent}</td>
+            <td style="padding:6px 12px;text-align:center;border-bottom:1px solid #f3f4f6;color:${b.failed > 0 ? '#dc2626' : '#666'};">${b.failed}</td>
+          </tr>`
+        }).join('')
+      )}
+    ` : '<p style="color:#666;font-size:13px;margin-top:12px;">No broadcasts sent recently.</p>'}
+  `)}
 
   <div style="padding:16px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px;text-align:center;background:#f9fafb;">
     <p style="color:#9ca3af;font-size:12px;margin:0;">Connect2Kehilla • +1 (888) 516-3399 • ${totalQueries > 0 ? `${totalQueries} queries from ${uniqueUsers.length} users` : 'Daily Report'}</p>
