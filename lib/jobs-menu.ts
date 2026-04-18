@@ -90,17 +90,23 @@ async function clearSession(userId: string): Promise<void> {
   })
 }
 
-// ── Main menu ──
-export const JOBS_MAIN_MENU = `📋 JOBS & WORKERS
+// ── Main menu — NEW simplified 2-option flow ──
+export const JOBS_MAIN_MENU = `💼 JOBS
 
-What do you want?
+Reply:
+1️⃣ Job Seekers — see open jobs
+2️⃣ Job Posters — post a new job
 
-1️⃣ Looking for work (register yourself)
-2️⃣ Hiring (find available workers)
-3️⃣ Post a job opening
-
-Reply 1, 2 or 3
 Free for everyone!`
+
+// Old menu kept available in case we need advanced options later
+export const JOBS_ADVANCED_MENU = `📋 JOBS & WORKERS (advanced)
+
+1️⃣ Looking for work (register yourself as worker)
+2️⃣ Hiring (find available workers)
+3️⃣ Post a job opening with category flow
+
+Reply 1, 2 or 3`
 
 const GENDER_MENU = (action: string) => `${action === 'WORK' ? '👷 REGISTER AS WORKER' : action === 'HIRE' ? '🔍 FIND WORKERS' : '📋 POST A JOB'}
 
@@ -229,22 +235,49 @@ export async function handleJobsMenu(userId: string, phone: string, input: strin
   }
 
   if (!session || session.step === 'MAIN' as any) {
-    // Main menu — expect 1, 2, or 3
+    // Main menu — NEW simplified 2-option flow
     if (!session) return null // no active menu
 
     const num = parseInt(trimmed)
+
+    // If reply looks like a ZIP (5 digits), user is providing ZIP for the menu
+    if (/^\d{5}$/.test(trimmed)) {
+      return await handleJobZipEntry(userId, phone, trimmed)
+    }
+
     if (num === 1) {
-      await saveSession(userId, { step: 'WORK_GENDER' })
-      return GENDER_MENU('WORK')
+      // Job Seekers — no specific ZIP, show most recent jobs anywhere
+      await clearSession(userId)
+      const now = new Date()
+      const jobs = await prisma.job.findMany({
+        where: { type: 'OFFERING', isActive: true, expiresAt: { gt: now } },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+      })
+      if (jobs.length === 0) {
+        return `📭 No job openings available right now.\n\nCheck back soon — jobs are posted daily!\n\nTip: text "job 11213" to filter by ZIP.`
+      }
+      const fmtDaysLeft = (d: Date) => {
+        const diff = Math.ceil((new Date(d).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+        return diff <= 0 ? 'today' : `${diff} day${diff === 1 ? '' : 's'} left`
+      }
+      let response = `💼 Open jobs (${jobs.length}):\n\n`
+      jobs.forEach((j, i) => {
+        response += `${i + 1}. ${j.title}\n`
+        if (j.area) response += `   📍 ${j.area}${j.zipCode ? ' ('+j.zipCode+')' : ''}\n`
+        if (j.salary) response += `   💰 ${j.salary}\n`
+        response += `   📞 ${j.phone}\n`
+        response += `   ⏰ ${fmtDaysLeft(j.expiresAt)}\n\n`
+      })
+      response += `Tip: text "job 11213" to filter by your ZIP`
+      return response
     }
+
     if (num === 2) {
-      await saveSession(userId, { step: 'HIRE_GENDER' })
-      return GENDER_MENU('HIRE')
+      await clearSession(userId)
+      return JOB_POSTER_INSTRUCTIONS
     }
-    if (num === 3) {
-      await saveSession(userId, { step: 'POST_GENDER' })
-      return GENDER_MENU('POST')
-    }
+
     // Not a menu reply — exit the JOBS flow so the outer handler can
     // treat this as a normal business/minyan/specials query.
     await clearSession(userId)
