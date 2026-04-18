@@ -12,10 +12,18 @@ export default function PricingPage() {
   return (
     <main className="min-h-screen bg-white">
       <section className="py-16 px-4" style={{ background: 'linear-gradient(135deg, #0f172a, #1e3a5f)' }}>
-        <div className="max-w-6xl mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl font-black text-white mb-4">Pricing Plans</h1>
-          <p className="text-xl text-blue-300 mb-2">Get found by thousands of kosher phone users</p>
-          <p className="text-blue-400">All plans include 8 calendar days (7 + Shabbat)</p>
+        <div className="max-w-6xl mx-auto">
+          <a
+            href="/"
+            className="inline-flex items-center gap-2 text-blue-300 hover:text-white transition mb-6 text-sm font-medium"
+          >
+            <span className="text-lg">←</span> Back to Home
+          </a>
+          <div className="text-center">
+            <h1 className="text-4xl md:text-5xl font-black text-white mb-4">Pricing Plans</h1>
+            <p className="text-xl text-blue-300 mb-2">Get found by thousands of kosher phone users</p>
+            <p className="text-blue-400">All plans include 8 calendar days (7 + Shabbat)</p>
+          </div>
         </div>
       </section>
 
@@ -79,6 +87,15 @@ export default function PricingPage() {
           <a href="mailto:list@connect2kehilla.com" className="border-2 border-white text-white font-bold px-8 py-3 rounded-xl hover:bg-white/10">📧 list@connect2kehilla.com</a>
         </div>
       </section>
+
+      <div className="text-center py-8 bg-white">
+        <a
+          href="/"
+          className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold transition"
+        >
+          <span className="text-xl">←</span> Back to Home
+        </a>
+      </div>
     </main>
   )
 }

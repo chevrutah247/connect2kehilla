@@ -15,10 +15,18 @@ export default function JobsPage() {
   return (
     <main className="min-h-screen bg-gray-50">
       <section className="py-12 px-4" style={{ background: 'linear-gradient(135deg, #0f172a, #1e3a5f)' }}>
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-4xl font-black text-white mb-2">📋 Job Board</h1>
-          <p className="text-blue-300">Find work or hire in the community</p>
-          <p className="text-blue-400 text-sm mt-2">SMS: Text <span className="font-bold text-white">JOBS 11211</span> to (888) 516-3399</p>
+        <div className="max-w-4xl mx-auto">
+          <a
+            href="/"
+            className="inline-flex items-center gap-2 text-blue-300 hover:text-white transition mb-6 text-sm font-medium"
+          >
+            <span className="text-lg">←</span> Back to Home
+          </a>
+          <div className="text-center">
+            <h1 className="text-4xl font-black text-white mb-2">📋 Job Board</h1>
+            <p className="text-blue-300">Find work or hire in the community</p>
+            <p className="text-blue-400 text-sm mt-2">SMS: Text <span className="font-bold text-white">JOBS 11211</span> to (888) 516-3399</p>
+          </div>
         </div>
       </section>
 
@@ -62,6 +70,15 @@ export default function JobsPage() {
 
         <div className="text-center mt-8">
           <a href="mailto:list@connect2kehilla.com?subject=Post a Job" className="inline-block bg-gray-900 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-800">Post a Job — $30/8 days</a>
+        </div>
+
+        <div className="text-center mt-8 pt-6 border-t border-gray-200">
+          <a
+            href="/"
+            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold transition"
+          >
+            <span className="text-xl">←</span> Back to Home
+          </a>
         </div>
       </section>
     </main>
