@@ -12,6 +12,8 @@ import { getAllStores, getStoreByIndex, getStoresByArea, getStoresByZip, getArea
 import { parseWorkCommand, parseJobCommand, parseHireCommand, registerWorker, saveWorkerDescription, postJob, saveJobDescription, renewWorker, stopWorker, searchWorkers, JOBS_HELP, parseFreeformJobPost, postFreeformJob } from '@/lib/workers'
 import { fastParse } from '@/lib/fast-parser'
 import { handleJobsMenu, hasActiveJobsSession, handleJobZipEntry, JOBS_MAIN_MENU } from '@/lib/jobs-menu'
+import { SHIDDUCH_RESPONSE } from '@/lib/shidduch'
+import { handleCharityNoZip, handleCharityWithZip, handleCharityReply, hasActiveCharitySession, parseFreeformCharityRequest, postFreeformCharityRequest } from '@/lib/charity'
 import { detectTefillah, searchShulsByZip, searchShulsByArea, searchShulByName, formatMinyanForSMS, formatShulForSMS } from '@/lib/minyanim'
 import { formatZmanimForSMS } from '@/lib/zmanim'
 import prisma from '@/lib/db'
@@ -117,6 +119,49 @@ export async function POST(request: NextRequest) {
         data: { userId: user.id, rawMessage: body, parsedIntent: 'HELP', responseText: MESSAGES.MENU, processedAt: new Date() }
       })
       return createTwiMLResponse(MESSAGES.MENU)
+    }
+
+    // ── SHIDDUCH — static response with shidduch resource links ──
+    if (upperTrimmed === 'SHIDDUCH' || upperTrimmed === 'SHIDDUCHIM') {
+      await prisma.query.create({
+        data: { userId: user.id, rawMessage: body, parsedCategory: 'shidduch', parsedIntent: 'INFO', responseText: SHIDDUCH_RESPONSE, processedAt: new Date() }
+      })
+      return createTwiMLResponse(SHIDDUCH_RESPONSE)
+    }
+
+    // ── CHARITY + ZIP — zip-aware 2-option menu (seek/offer help) ──
+    const charityZipMatch = trimmed.match(/^(?:charity|tzedaka|tzedakah)\s+(\d{5})\s*$/i)
+    if (charityZipMatch) {
+      const zip = charityZipMatch[1]
+      const responseText = await handleCharityWithZip(user.id, zip)
+      await prisma.query.create({ data: { userId: user.id, rawMessage: body, parsedCategory: 'charity', parsedZip: zip, parsedIntent: 'SEARCH', responseText, processedAt: new Date() } })
+      return createTwiMLResponse(responseText)
+    }
+
+    // ── CHARITY freeform post — "charity John 11213 needs rent $500 Zelle:... 718-555-1234" ──
+    if (/^charity\s+.{10,}/i.test(trimmed) && /\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b/.test(trimmed) && /\d{5}/.test(trimmed)) {
+      const parsed = parseFreeformCharityRequest(trimmed)
+      if (parsed && parsed.name && parsed.phone) {
+        const responseText = await postFreeformCharityRequest(parsed)
+        await prisma.query.create({ data: { userId: user.id, rawMessage: body, parsedCategory: 'charity', parsedZip: parsed.zipCode, parsedArea: parsed.area, parsedIntent: 'SEARCH', responseText, processedAt: new Date() } })
+        return createTwiMLResponse(responseText)
+      }
+    }
+
+    // ── CHARITY plain — ask for ZIP first ──
+    if (upperTrimmed === 'CHARITY' || upperTrimmed === 'TZEDAKA' || upperTrimmed === 'TZEDAKAH') {
+      const responseText = await handleCharityNoZip(user.id)
+      await prisma.query.create({ data: { userId: user.id, rawMessage: body, parsedCategory: 'charity', parsedIntent: 'SEARCH', responseText, processedAt: new Date() } })
+      return createTwiMLResponse(responseText)
+    }
+
+    // ── Active charity session continuation (reply with ZIP or menu option) ──
+    if (await hasActiveCharitySession(user.id)) {
+      const responseText = await handleCharityReply(user.id, from, trimmed)
+      if (responseText) {
+        await prisma.query.create({ data: { userId: user.id, rawMessage: body, parsedCategory: 'charity', parsedIntent: 'SEARCH', responseText, processedAt: new Date() } })
+        return createTwiMLResponse(responseText)
+      }
     }
 
     // ── JOB + ZIP — zip-aware 2-option menu (Seekers/Posters) ──
