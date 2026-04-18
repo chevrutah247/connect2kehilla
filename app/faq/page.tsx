@@ -379,14 +379,22 @@ export default function FaqPage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       {/* Hero */}
-      <section className="py-12 px-4" style={{ background: 'linear-gradient(135deg, #0f172a, #1e3a5f)' }}>
-        <div className="max-w-5xl mx-auto text-center">
-          <div className="inline-block bg-emerald-500/20 border border-emerald-500/40 rounded-full px-4 py-1.5 mb-4">
-            <span className="text-emerald-400 font-semibold text-sm">❓ FAQ & HOW-TO GUIDE</span>
+      <section className="py-12 px-4 relative" style={{ background: 'linear-gradient(135deg, #0f172a, #1e3a5f)' }}>
+        <div className="max-w-5xl mx-auto">
+          <a
+            href="/"
+            className="inline-flex items-center gap-2 text-blue-300 hover:text-white transition mb-6 text-sm font-medium"
+          >
+            <span className="text-lg">←</span> Back to Home
+          </a>
+          <div className="text-center">
+            <div className="inline-block bg-emerald-500/20 border border-emerald-500/40 rounded-full px-4 py-1.5 mb-4">
+              <span className="text-emerald-400 font-semibold text-sm">❓ FAQ & HOW-TO GUIDE</span>
+            </div>
+            <h1 className="text-3xl md:text-5xl font-black text-white mb-3">Frequently Asked Questions</h1>
+            <p className="text-lg text-blue-300">Everything you need to know about Connect2Kehilla</p>
+            <p className="text-sm text-emerald-400 mt-3">📱 For kosher phone users — no internet required!</p>
           </div>
-          <h1 className="text-3xl md:text-5xl font-black text-white mb-3">Frequently Asked Questions</h1>
-          <p className="text-lg text-blue-300">Everything you need to know about Connect2Kehilla</p>
-          <p className="text-sm text-emerald-400 mt-3">📱 For kosher phone users — no internet required!</p>
         </div>
       </section>
 
@@ -414,6 +422,16 @@ export default function FaqPage() {
               <a href="tel:+18885163399" className="bg-emerald-600 text-white px-6 py-3 rounded-xl font-bold text-center hover:bg-emerald-700">📞 (888) 516-3399</a>
               <a href="mailto:info@connect2kehilla.com" className="border-2 border-emerald-600 text-emerald-700 px-6 py-3 rounded-xl font-bold text-center hover:bg-emerald-50">📧 info@connect2kehilla.com</a>
             </div>
+          </div>
+
+          {/* Back to Home */}
+          <div className="text-center pt-6">
+            <a
+              href="/"
+              className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold transition"
+            >
+              <span className="text-xl">←</span> Back to Home
+            </a>
           </div>
         </div>
 
