@@ -62,6 +62,33 @@ async function timed<T>(label: string, fn: () => Promise<T> | T): Promise<T> {
 }
 
 // ============================================
+// GET /api/sms - Keep-warm endpoint for Vercel Cron
+// ============================================
+// Vercel Cron бьёт сюда каждые 4 минуты: держит warm Node/Prisma
+// + просыпает Neon endpoint (prevent scale-to-zero). Без этого
+// первый SMS после паузы ловит ~2s cold-start.
+export async function GET(request: NextRequest) {
+  // Vercel Cron автоматически добавляет Authorization: Bearer <CRON_SECRET>
+  // если в env проекта установлен CRON_SECRET. Защита от публичного флуда.
+  const auth = request.headers.get('authorization') || ''
+  const expected = `Bearer ${process.env.CRON_SECRET || ''}`
+  if (!process.env.CRON_SECRET || auth !== expected) {
+    return new NextResponse('Unauthorized', { status: 401 })
+  }
+
+  const t0 = Date.now()
+  try {
+    // Тонкий SQL чтобы разбудить Neon endpoint и прогреть connection pool
+    await prisma.$queryRaw`SELECT 1`
+    console.log(`⏱ keep-warm: ${Date.now() - t0}ms`)
+    return NextResponse.json({ ok: true, warmMs: Date.now() - t0 })
+  } catch (err: any) {
+    console.error('keep-warm error:', err?.message)
+    return NextResponse.json({ ok: false, error: err?.message }, { status: 500 })
+  }
+}
+
+// ============================================
 // POST /api/sms - Twilio Webhook
 // ============================================
 export async function POST(request: NextRequest) {
