@@ -13,6 +13,53 @@ function getClient() {
 }
 
 // ============================================
+// In-memory LRU cache для parseQuery
+// ============================================
+// Живёт в рамках одного warm-инстанса serverless-функции.
+// Cold start → кэш пустой. В тёплых периодах даёт instant-ответ
+// на повторные запросы ("pizza 11213" от разных пользователей).
+const PARSE_CACHE_MAX = 500
+const PARSE_CACHE_TTL_MS = 24 * 60 * 60 * 1000 // 24h
+
+interface CacheEntry {
+  value: ParsedQuery
+  expiresAt: number
+}
+
+const parseCache = new Map<string, CacheEntry>()
+
+function cacheKey(message: string): string {
+  return message.trim().toLowerCase().replace(/\s+/g, ' ')
+}
+
+function cacheGet(message: string): ParsedQuery | null {
+  const key = cacheKey(message)
+  const entry = parseCache.get(key)
+  if (!entry) return null
+  if (Date.now() >= entry.expiresAt) {
+    parseCache.delete(key)
+    return null
+  }
+  // LRU touch: переставляем в конец
+  parseCache.delete(key)
+  parseCache.set(key, entry)
+  return entry.value
+}
+
+function cacheSet(message: string, value: ParsedQuery): void {
+  const key = cacheKey(message)
+  // Эвикция самого старого если переполнено
+  if (parseCache.size >= PARSE_CACHE_MAX) {
+    const firstKey = parseCache.keys().next().value
+    if (firstKey !== undefined) parseCache.delete(firstKey)
+  }
+  parseCache.set(key, {
+    value,
+    expiresAt: Date.now() + PARSE_CACHE_TTL_MS,
+  })
+}
+
+// ============================================
 // Типы
 // ============================================
 export interface ParsedQuery {
@@ -106,6 +153,13 @@ Respond ONLY with valid JSON:
 // Парсинг запроса
 // ============================================
 export async function parseQuery(message: string): Promise<ParsedQuery> {
+  // Cache hit → мгновенный ответ
+  const cached = cacheGet(message)
+  if (cached) {
+    console.log('🎯 parseQuery cache HIT')
+    return cached
+  }
+
   try {
     const response = await getClient().chat.completions.create({
       model: 'gpt-4o-mini',
@@ -124,6 +178,10 @@ export async function parseQuery(message: string): Promise<ParsedQuery> {
     }
 
     const parsed = JSON.parse(content) as ParsedQuery
+    // Кэшируем только успешные парсы (не fallback на unknown)
+    if (parsed.intent !== 'unknown') {
+      cacheSet(message, parsed)
+    }
     return parsed
 
   } catch (error) {

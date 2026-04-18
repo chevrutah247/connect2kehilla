@@ -243,6 +243,54 @@ const KEYWORD_TO_CATEGORY: Record<string, string> = {
   'beis din': 'beis_din', 'bais din': 'beis_din', 'beth din': 'beis_din',
   'bet din': 'beis_din', 'beit din': 'beis_din',
   'rabbinical court': 'beis_din', 'rabbinic court': 'beis_din',
+
+  // ── Food / Restaurants (most common queries) ──
+  'pizza': 'restaurant', 'pizzeria': 'restaurant', 'pizza shop': 'restaurant',
+  'sushi': 'restaurant', 'sushi bar': 'restaurant',
+  'bagel': 'bakeries', 'bagels': 'bakeries',
+  'bakery': 'bakeries', 'bake shop': 'bakeries', 'bakeshop': 'bakeries',
+  'coffee': 'restaurant', 'coffee shop': 'restaurant', 'cafe': 'restaurant', 'café': 'restaurant',
+  'restaurant': 'restaurant', 'restaurants': 'restaurant', 'diner': 'restaurant', 'eatery': 'restaurant',
+  'falafel': 'restaurant', 'shawarma': 'restaurant', 'shwarma': 'restaurant', 'shwrma': 'restaurant',
+  'burger': 'restaurant', 'burgers': 'restaurant',
+  'chinese': 'restaurant', 'chinese food': 'restaurant',
+  'deli': 'restaurant', 'kosher deli': 'restaurant',
+  'bbq': 'restaurant', 'grill': 'restaurant', 'steakhouse': 'restaurant',
+  'ice cream': 'restaurant', 'yogurt': 'restaurant', 'froyo': 'restaurant',
+  'sandwich': 'restaurant', 'wrap': 'restaurant',
+  'take out': 'restaurant', 'takeout': 'restaurant', 'takeaway': 'restaurant',
+  'food': 'restaurant', 'eat': 'restaurant', 'lunch': 'restaurant', 'dinner': 'restaurant',
+
+  // ── Grocery / Supermarket ──
+  'supermarket': 'grocery', 'super market': 'grocery', 'grocery': 'grocery', 'groceries': 'grocery',
+  'produce': 'grocery', 'vegetables': 'grocery', 'fruits': 'grocery',
+
+  // ── Butcher / Fish ──
+  'butcher': 'meat', 'meats': 'meat', 'chicken': 'meat', 'beef': 'meat',
+  'fish store': 'fish', 'fishery': 'fish',
+
+  // ── Kosher (qualifier — map to restaurant as fallback) ──
+  'kosher': 'restaurant', 'glatt': 'restaurant', 'heimish': 'restaurant', 'haimish': 'restaurant',
+  'cholov yisroel': 'restaurant', 'chalav yisroel': 'restaurant', 'pas yisroel': 'restaurant',
+
+  // ── Services (commonly searched) ──
+  'haircut': 'beauty', 'barber': 'beauty', 'salon': 'beauty', 'hair salon': 'beauty',
+  'nails': 'beauty', 'manicure': 'beauty', 'pedicure': 'beauty', 'spa': 'beauty',
+  'gym': 'gyms', 'fitness': 'gyms', 'yoga': 'gyms',
+  'daycare': 'daycare', 'preschool': 'preschool', 'nursery': 'preschool',
+  'school': 'schools', 'yeshiva': 'schools',
+  'carwash': 'car_service', 'car wash': 'car_service',
+  'mechanic': 'auto_repair', 'auto repair': 'auto_repair',
+  'gas station': 'gas_stations', 'gas': 'gas_stations',
+  'hotel': 'lodging', 'motel': 'lodging', 'bnb': 'lodging', 'airbnb': 'lodging',
+
+  // ── Shopping ──
+  'clothes': 'clothing', 'clothing': 'clothing', 'shirt': 'clothing', 'suit': 'mens_wear',
+  'shoes': 'shoe_stores', 'sneakers': 'shoe_stores', 'boots': 'shoe_stores',
+  'toys': 'toys', 'toy store': 'toys', 'baby store': 'baby_stores',
+  'gift': 'gifts', 'gifts': 'gifts', 'gift shop': 'gifts',
+  'stationery': 'stationery', 'office supplies': 'stationery',
+  'hardware': 'hardware_housewares', 'hardware store': 'hardware_housewares',
 }
 
 /**
