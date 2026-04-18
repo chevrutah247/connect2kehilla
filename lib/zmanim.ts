@@ -2,7 +2,7 @@
 // Daily halachic zmanim (prayer times) via @hebcal/core
 // Local calculation — no API latency
 
-import { GeoLocation, Zmanim } from '@hebcal/core'
+import { GeoLocation, Zmanim, HDate, OmerEvent } from '@hebcal/core'
 
 // ============================================
 // ZIP → coordinates (shared with shabbat.ts)
@@ -91,6 +91,57 @@ export function getDailyZmanim(zipCode?: string): DailyZmanim {
 // ============================================
 // Format zmanim for SMS (~2 segments)
 // ============================================
+// ============================================
+// Hebrew date + Sefirat HaOmer helpers
+// ============================================
+
+/**
+ * Compute the day of Sefirat HaOmer for a given Hebrew date.
+ * Returns 1-49 if in Omer period (16 Nisan through 5 Sivan), else null.
+ */
+function getOmerDay(hd: HDate): number | null {
+  const month = hd.getMonth()        // 1=Nisan, 2=Iyar, 3=Sivan
+  const day = hd.getDate()
+
+  // Nisan 16 through Nisan 30: days 1-15 of Omer
+  if (month === 1 && day >= 16 && day <= 30) return day - 15
+
+  // Iyar 1 through Iyar 29: days 16-44 of Omer
+  if (month === 2) return day + 15
+
+  // Sivan 1 through Sivan 5: days 45-49 of Omer
+  if (month === 3 && day >= 1 && day <= 5) return day + 44
+
+  return null
+}
+
+/**
+ * Format Omer day count in English and Hebrew
+ * e.g. day 33 → "Day 33 — ל״ג לעומר (4 weeks, 5 days)"
+ */
+function formatOmer(day: number): string {
+  const weeks = Math.floor(day / 7)
+  const extraDays = day % 7
+
+  let weekPart = ''
+  if (weeks > 0) {
+    weekPart = weeks === 1 ? '1 week' : `${weeks} weeks`
+    if (extraDays > 0) {
+      weekPart += extraDays === 1 ? ', 1 day' : `, ${extraDays} days`
+    }
+  }
+
+  // Special named days
+  const special: Record<number, string> = {
+    33: 'Lag BaOmer',
+  }
+  const nameParts: string[] = [`Day ${day} of the Omer`]
+  if (special[day]) nameParts.push(`(${special[day]})`)
+  if (weekPart) nameParts.push(`— ${weekPart}`)
+
+  return nameParts.join(' ')
+}
+
 export function formatZmanimForSMS(zipCode?: string): string {
   const z = getDailyZmanim(zipCode)
   const dayName = z.date.toLocaleDateString('en-US', {
@@ -100,9 +151,17 @@ export function formatZmanimForSMS(zipCode?: string): string {
     timeZone: 'America/New_York',
   })
 
+  // Hebrew date — render in Hebrew script
+  const hd = new HDate(z.date)
+  const hebrewDate = hd.render('he')   // e.g. "י׳ ניסן תשפ״ו"
+
+  // Sefirat HaOmer
+  const omerDay = getOmerDay(hd)
+  const omerLine = omerDay ? `\n🌾 ${formatOmer(omerDay)}\n` : ''
+
   return `🕐 Zmanim — ${z.location}
 ${dayName}
-
+${hebrewDate}${omerLine}
 עלות Dawn: ${fmtTime(z.alotHaShachar)}
 הנץ Sunrise: ${fmtTime(z.sunrise)}
 סוף ק״ש Shma: ${fmtTime(z.sofZmanShma)}

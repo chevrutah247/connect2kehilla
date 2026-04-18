@@ -24,27 +24,31 @@ export function hashPhone(phone: string): string {
 }
 
 // ============================================
+// Нормализация телефона в E.164 (+1XXXXXXXXXX)
+// ============================================
+function normalizePhone(phone: string): string {
+  const digits = phone.replace(/\D/g, '')
+  if (digits.length === 10) return '+1' + digits
+  if (digits.length === 11 && digits.startsWith('1')) return '+' + digits
+  if (phone.startsWith('+')) return phone
+  return '+' + digits
+}
+
+// ============================================
 // Получить или создать пользователя
+// Сохраняет raw phone для последующих broadcast-рассылок
+// (пользователь уже opt-in тем что обратился к сервису)
 // ============================================
 export async function getOrCreateUser(phone: string) {
   const phoneHash = hashPhone(phone)
-  
-  let user = await prisma.user.findUnique({
-    where: { phoneHash }
+  const rawPhone = normalizePhone(phone)
+
+  const user = await prisma.user.upsert({
+    where: { phoneHash },
+    create: { phoneHash, phone: rawPhone },
+    update: { lastActiveAt: new Date(), phone: rawPhone },  // backfill phone on every interaction
   })
-  
-  if (!user) {
-    user = await prisma.user.create({
-      data: { phoneHash }
-    })
-  } else {
-    // Обновляем lastActiveAt
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { lastActiveAt: new Date() }
-    })
-  }
-  
+
   return user
 }
 
