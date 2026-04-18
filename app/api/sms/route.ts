@@ -14,6 +14,7 @@ import { fastParse } from '@/lib/fast-parser'
 import { handleJobsMenu, hasActiveJobsSession, JOBS_MAIN_MENU } from '@/lib/jobs-menu'
 import { detectTefillah, searchShulsByZip, searchShulsByArea, searchShulByName, formatMinyanForSMS, formatShulForSMS } from '@/lib/minyanim'
 import { formatZmanimForSMS } from '@/lib/zmanim'
+import { isShabbatNow } from '@/lib/is-shabbat'
 import prisma from '@/lib/db'
 
 // ============================================
@@ -74,6 +75,12 @@ export async function GET(request: NextRequest) {
   const expected = `Bearer ${process.env.CRON_SECRET || ''}`
   if (!process.env.CRON_SECRET || auth !== expected) {
     return new NextResponse('Unauthorized', { status: 401 })
+  }
+
+  // Пропускаем шаббат — Neon засыпает, счёт не капает
+  if (isShabbatNow()) {
+    console.log('⏸ keep-warm skipped: Shabbat')
+    return NextResponse.json({ ok: true, skipped: 'shabbat' })
   }
 
   const t0 = Date.now()
