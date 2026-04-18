@@ -97,7 +97,7 @@ Reply:
 1️⃣ Job Seekers — see open jobs
 2️⃣ Job Posters — post a new job
 
-Free for everyone!`
+Tip: text "JOB 11213" to filter by ZIP`
 
 // Old menu kept available in case we need advanced options later
 export const JOBS_ADVANCED_MENU = `📋 JOBS & WORKERS (advanced)
@@ -147,9 +147,7 @@ const JOB_ZIP_MENU_TEXT = (zip: string, area: string) => `💼 JOBS for ZIP ${zi
 
 Reply:
 1️⃣ Job Seekers — see open jobs
-2️⃣ Job Posters — post a new job
-
-Free for everyone!`
+2️⃣ Job Posters — post a new job`
 
 const JOB_POSTER_INSTRUCTIONS = `📝 Post a job — text back in this format:
 

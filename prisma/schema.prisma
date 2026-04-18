@@ -259,6 +259,29 @@ model ShabbatSchedule {
 }
 
 // ============================================
+// ЗАПРОСЫ О ПОМОЩИ (Tzedaka / Charity)
+// ============================================
+model CharityRequest {
+  id           String   @id @default(cuid())
+  name         String                        // requester's name
+  phone        String                        // contact phone
+  zipCode      String?
+  area         String?
+  description  String                        // what they need help with
+  amount       String?                       // "$500" or "$1,000/mo"
+  paymentInfo  String?                       // Zelle / CashApp / Venmo / etc
+  isActive     Boolean  @default(true)
+  expiresAt    DateTime                      // 30 days from posting
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([zipCode])
+  @@index([area])
+  @@index([isActive])
+  @@index([expiresAt])
+}
+
+// ============================================
 // МАССОВЫЕ РАССЫЛКИ (SMS broadcasts)
 // ============================================
 model Broadcast {

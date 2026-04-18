@@ -95,7 +95,9 @@ Msg & data rates may apply.`,
 
 🕐 ZMANIM: "zmanim 11213"
 🏷 SPECIALS: text SPECIALS
-👷 JOBS/WORK: text JOBS
+👷 JOBS: text JOBS or "job 11213"
+❤️ CHARITY: text CHARITY
+💍 SHIDDUCH: text SHIDDUCH
 📋 ADD BUSINESS: (888) 516-3399
 
 🌐 connect2kehilla.com
