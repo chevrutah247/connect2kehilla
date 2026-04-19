@@ -166,8 +166,10 @@ export async function searchBusinesses(params: SearchParams): Promise<SearchResu
       })
     }
 
-    // Step 2: if no results in user's area, fallback to anywhere
-    if (businesses.length === 0) {
+    // Step 2: if no results in user's area AND location was specified,
+    // DO NOT fallback to everywhere — better to return empty than mislead user.
+    // Only fallback to anywhere if user didn't specify location at all.
+    if (businesses.length === 0 && !zipCode && !area) {
       businesses = await prisma.business.findMany({
         where: { isActive: true, approvalStatus: 'APPROVED' as const, ...nameClause },
         take: limit,
