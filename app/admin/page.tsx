@@ -37,8 +37,11 @@ export default function AdminPage() {
   const [data, setData] = useState<Analytics | null>(null)
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState('')
-  const [tab, setTab] = useState<'dashboard' | 'logs'>('dashboard')
+  const [tab, setTab] = useState<'dashboard' | 'logs' | 'pending'>('dashboard')
   const [searchFilter, setSearchFilter] = useState('')
+  const [pendingData, setPendingData] = useState<{ businesses: any[]; charityRequests: any[]; counts: any } | null>(null)
+  const [pendingLoading, setPendingLoading] = useState(false)
+  const [pendingCount, setPendingCount] = useState<number | null>(null)
 
   // Load token from localStorage on mount
   useEffect(() => {
@@ -46,7 +49,7 @@ export default function AdminPage() {
     if (saved) setToken(saved)
   }, [])
 
-  // Fetch data when token or date changes
+  // Fetch analytics when token or date changes
   useEffect(() => {
     if (!token) return
     setLoading(true)
@@ -67,6 +70,48 @@ export default function AdminPage() {
       .catch(e => setErr(e.message))
       .finally(() => setLoading(false))
   }, [token, date])
+
+  // Fetch pending items
+  function loadPending() {
+    if (!token) return
+    setPendingLoading(true)
+    fetch('/api/admin/pending', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(d => {
+        setPendingData(d)
+        setPendingCount(d.counts?.total ?? 0)
+      })
+      .catch(() => {})
+      .finally(() => setPendingLoading(false))
+  }
+  useEffect(() => {
+    if (!token) return
+    loadPending()
+  }, [token])
+  useEffect(() => {
+    if (tab === 'pending') loadPending()
+  }, [tab])
+
+  async function handleApprove(type: 'business' | 'charity', id: string) {
+    if (!token) return
+    const res = await fetch('/api/admin/approve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ type, id, action: 'approve' }),
+    })
+    if (res.ok) loadPending()
+  }
+
+  async function handleReject(type: 'business' | 'charity', id: string) {
+    if (!token) return
+    const reason = window.prompt('Reason for rejection (optional):')
+    const res = await fetch('/api/admin/approve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ type, id, action: 'reject', reason: reason || undefined }),
+    })
+    if (res.ok) loadPending()
+  }
 
   // Login form
   if (!token) {
@@ -143,6 +188,17 @@ export default function AdminPage() {
           📈 Dashboard
         </button>
         <button
+          onClick={() => setTab('pending')}
+          style={{ padding: '14px 20px', background: tab === 'pending' ? '#f1f5f9' : 'transparent', border: 'none', borderBottom: tab === 'pending' ? '3px solid #dc2626' : '3px solid transparent', cursor: 'pointer', fontSize: 15, fontWeight: 600, color: tab === 'pending' ? '#dc2626' : '#64748b', position: 'relative' }}
+        >
+          🔔 Pending Review
+          {pendingCount !== null && pendingCount > 0 && (
+            <span style={{ marginLeft: 6, background: '#dc2626', color: 'white', borderRadius: 10, padding: '2px 8px', fontSize: 12 }}>
+              {pendingCount}
+            </span>
+          )}
+        </button>
+        <button
           onClick={() => setTab('logs')}
           style={{ padding: '14px 20px', background: tab === 'logs' ? '#f1f5f9' : 'transparent', border: 'none', borderBottom: tab === 'logs' ? '3px solid #2563eb' : '3px solid transparent', cursor: 'pointer', fontSize: 15, fontWeight: 600, color: tab === 'logs' ? '#2563eb' : '#64748b' }}
         >
@@ -152,8 +208,17 @@ export default function AdminPage() {
 
       <div style={{ padding: 24, maxWidth: 1300, margin: '0 auto' }}>
         {err && <div style={{ background: '#fee2e2', color: '#dc2626', padding: 12, borderRadius: 8, marginBottom: 16 }}>⚠️ {err}</div>}
-        {loading && <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>Loading…</div>}
+        {loading && tab !== 'pending' && <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>Loading…</div>}
         {!loading && data && tab === 'dashboard' && <Dashboard data={data} />}
+        {tab === 'pending' && (
+          <PendingTab
+            data={pendingData}
+            loading={pendingLoading}
+            onApprove={handleApprove}
+            onReject={handleReject}
+            onRefresh={loadPending}
+          />
+        )}
         {!loading && data && tab === 'logs' && (
           <LogTab
             logs={filteredLogs}
@@ -164,6 +229,172 @@ export default function AdminPage() {
         )}
       </div>
     </main>
+  )
+}
+
+// ============================================
+// Pending Review tab
+// ============================================
+function PendingTab({
+  data,
+  loading,
+  onApprove,
+  onReject,
+  onRefresh,
+}: {
+  data: { businesses: any[]; charityRequests: any[]; counts: any } | null
+  loading: boolean
+  onApprove: (type: 'business' | 'charity', id: string) => void
+  onReject: (type: 'business' | 'charity', id: string) => void
+  onRefresh: () => void
+}) {
+  if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>Loading pending items…</div>
+  if (!data) return <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>No data</div>
+
+  const { businesses = [], charityRequests = [] } = data
+  const total = businesses.length + charityRequests.length
+
+  if (total === 0) {
+    return (
+      <div style={{ background: 'white', borderRadius: 12, padding: 60, textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+        <div style={{ fontSize: 48, marginBottom: 12 }}>✅</div>
+        <h2 style={{ margin: 0, color: '#059669' }}>All caught up!</h2>
+        <p style={{ color: '#64748b', marginTop: 8 }}>No pending submissions to review.</p>
+        <button
+          onClick={onRefresh}
+          style={{ marginTop: 16, padding: '10px 20px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}
+        >
+          🔄 Refresh
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h2 style={{ margin: 0 }}>🔔 {total} item{total !== 1 ? 's' : ''} pending review</h2>
+        <button
+          onClick={onRefresh}
+          style={{ padding: '8px 16px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}
+        >
+          🔄 Refresh
+        </button>
+      </div>
+
+      {businesses.length > 0 && (
+        <div>
+          <h3 style={{ color: '#1e293b', marginBottom: 12 }}>🏪 Businesses & Services ({businesses.length})</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {businesses.map((b: any) => (
+              <div key={b.id} style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                      <span style={{ background: b.listingType === 'SERVICE' ? '#059669' : '#2563eb', color: 'white', padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 700 }}>
+                        {b.listingType || 'BUSINESS'}
+                      </span>
+                      <span style={{ background: '#f59e0b', color: 'white', padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 700 }}>
+                        {b.status || 'FREE'}
+                      </span>
+                      <span style={{ color: '#64748b', fontSize: 12 }}>
+                        Submitted {new Date(b.createdAt).toLocaleString()}
+                      </span>
+                    </div>
+                    <h4 style={{ margin: '0 0 8px 0', fontSize: 18, color: '#0f172a' }}>{b.name}</h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 8, fontSize: 14, color: '#475569' }}>
+                      <div>📞 {b.phone}</div>
+                      {b.address && <div>📍 {b.address}</div>}
+                      {b.area && <div>🏘 {b.area}</div>}
+                      {b.zipCode && <div>🗺 {b.zipCode}</div>}
+                      {b.email && <div>📧 {b.email}</div>}
+                      {b.website && <div>🌐 {b.website}</div>}
+                    </div>
+                    {b.categories && b.categories.length > 0 && (
+                      <div style={{ marginTop: 8, display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                        {b.categories.map((c: string) => (
+                          <span key={c} style={{ background: '#f1f5f9', padding: '2px 8px', borderRadius: 4, fontSize: 12, color: '#475569' }}>{c}</span>
+                        ))}
+                      </div>
+                    )}
+                    {b.description && (
+                      <p style={{ marginTop: 10, padding: 8, background: '#f8fafc', borderRadius: 6, fontSize: 13, color: '#475569' }}>
+                        {b.description}
+                      </p>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 120 }}>
+                    <button
+                      onClick={() => onApprove('business', b.id)}
+                      style={{ padding: '10px 16px', background: '#059669', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}
+                    >
+                      ✓ Approve
+                    </button>
+                    <button
+                      onClick={() => onReject('business', b.id)}
+                      style={{ padding: '10px 16px', background: '#dc2626', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}
+                    >
+                      ✗ Reject
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {charityRequests.length > 0 && (
+        <div>
+          <h3 style={{ color: '#1e293b', marginBottom: 12 }}>❤️ Charity Requests ({charityRequests.length})</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {charityRequests.map((c: any) => (
+              <div key={c.id} style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #fecaca' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                      <span style={{ background: '#dc2626', color: 'white', padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 700 }}>CHARITY</span>
+                      <span style={{ color: '#64748b', fontSize: 12 }}>
+                        Submitted {new Date(c.createdAt).toLocaleString()}
+                      </span>
+                    </div>
+                    <h4 style={{ margin: '0 0 8px 0', fontSize: 18, color: '#0f172a' }}>{c.name}</h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 8, fontSize: 14, color: '#475569' }}>
+                      <div>📞 {c.phone}</div>
+                      {c.area && <div>🏘 {c.area}</div>}
+                      {c.zipCode && <div>🗺 {c.zipCode}</div>}
+                      {c.amount && <div>💵 {c.amount}</div>}
+                    </div>
+                    {c.paymentInfo && (
+                      <div style={{ marginTop: 8, fontSize: 13, color: '#475569' }}>
+                        💳 {c.paymentInfo}
+                      </div>
+                    )}
+                    <p style={{ marginTop: 10, padding: 8, background: '#fef2f2', borderRadius: 6, fontSize: 13, color: '#475569' }}>
+                      {c.description}
+                    </p>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 120 }}>
+                    <button
+                      onClick={() => onApprove('charity', c.id)}
+                      style={{ padding: '10px 16px', background: '#059669', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}
+                    >
+                      ✓ Approve
+                    </button>
+                    <button
+                      onClick={() => onReject('charity', c.id)}
+                      style={{ padding: '10px 16px', background: '#dc2626', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}
+                    >
+                      ✗ Reject
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 

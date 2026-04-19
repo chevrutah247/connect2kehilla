@@ -106,6 +106,16 @@ function PhoneMockup() {
 }
 
 export default function Home() {
+  const [counts, setCounts] = useState<{ businesses: number; shuls: number; total: number } | null>(null)
+  useEffect(() => {
+    fetch('/api/stats/count')
+      .then(r => r.json())
+      .then(d => setCounts({ businesses: d.businesses || 0, shuls: d.shuls || 0, total: d.total || 0 }))
+      .catch(() => {})
+  }, [])
+  const businessesLabel = counts ? counts.businesses.toLocaleString() : '9,000'
+  const totalLabel = counts ? counts.total.toLocaleString() : '9,000'
+
   return (
     <main id="main-content" className="min-h-screen bg-white">
       <style>{`
@@ -124,6 +134,7 @@ export default function Home() {
             <a href="/jobs" className="text-gray-300 hover:text-white transition">📋 Jobs</a>
             <a href="/add-business" className="text-gray-300 hover:text-white transition">🏪 Add Business</a>
             <a href="/add-service" className="text-gray-300 hover:text-white transition">🔧 Add Service</a>
+            <a href="/add-charity" className="text-gray-300 hover:text-white transition">❤️ Charity</a>
           </div>
           <a href="sms:+18885163399" className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-bold">📱 Text Us</a>
         </div>
@@ -163,7 +174,7 @@ export default function Home() {
               </p>
 
               <p className="text-blue-300 text-lg mb-8 max-w-md mx-auto md:mx-0">
-                17,000+ businesses at your fingertips. Just send a text — no apps, no internet, no smartphone needed.
+                {businessesLabel}+ businesses at your fingertips. Just send a text — no apps, no internet, no smartphone needed.
               </p>
 
               {/* Phone number CTA */}
@@ -246,7 +257,7 @@ export default function Home() {
       <section style={{ background: 'linear-gradient(135deg, #1e3a5f, #0f172a)' }} className="py-8">
         <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4 px-4 text-center">
           {[
-            { val: '17,000+', lbl: 'Businesses Listed' },
+            { val: `${totalLabel}+`, lbl: 'Businesses Listed' },
             { val: '🏷️', lbl: 'Store Specials' },
             { val: '🕍', lbl: 'Minyan Times' },
             { val: '📱', lbl: 'Works on Any Kosher Phone' },

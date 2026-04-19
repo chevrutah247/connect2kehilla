@@ -23,8 +23,11 @@ export default function AddBusinessPage() {
     <main className="min-h-screen flex items-center justify-center bg-emerald-50 p-4">
       <div className="bg-white rounded-2xl shadow-xl p-8 text-center max-w-md">
         <div className="text-5xl mb-4">✅</div>
-        <h1 className="text-2xl font-bold text-emerald-800 mb-2">Business Listed!</h1>
-        <p className="text-gray-600 mb-6">Your business has been added to Connect2Kehilla directory.</p>
+        <h1 className="text-2xl font-bold text-emerald-800 mb-2">Submitted for Review!</h1>
+        <p className="text-gray-700 mb-3 font-medium">Thank you! Our team will review your listing.</p>
+        <p className="text-gray-600 mb-6 text-sm">
+          Once approved (usually within 24 hours), your business will be live on the Connect2Kehilla SMS directory and will be found by thousands of community members searching for your services.
+        </p>
         <a href="/" className="bg-emerald-600 text-white px-6 py-3 rounded-xl font-bold inline-block">Back to Home</a>
       </div>
     </main>

@@ -52,6 +52,13 @@ model Business {
   updatedAt     DateTime @updatedAt
   isActive      Boolean  @default(true)
 
+  // Approval workflow — web submissions need admin review before going live
+  approvalStatus  ApprovalStatus @default(APPROVED)  // default APPROVED so existing rows unaffected
+  submittedVia    String?                             // "web", "sms", "import", "admin"
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  rejectionReason String?
+
   // Связи
   leads         Lead[]
   listings      Listing[]
@@ -60,6 +67,14 @@ model Business {
   @@index([categories])
   @@index([status])
   @@index([area])
+  @@index([approvalStatus])
+}
+
+// Approval status for user-submitted records
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum ListingType {
@@ -275,10 +290,18 @@ model CharityRequest {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  // Approval workflow
+  approvalStatus  ApprovalStatus @default(APPROVED)
+  submittedVia    String?
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  rejectionReason String?
+
   @@index([zipCode])
   @@index([area])
   @@index([isActive])
   @@index([expiresAt])
+  @@index([approvalStatus])
 }
 
 // ============================================

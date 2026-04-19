@@ -103,7 +103,7 @@ export async function searchBusinesses(params: SearchParams): Promise<SearchResu
   const sponsoredName = getSponsoredBusiness(searchTerm)
   if (sponsoredName) {
     const sponsored = await prisma.business.findFirst({
-      where: { isActive: true, name: { contains: sponsoredName, mode: 'insensitive' } },
+      where: { isActive: true, approvalStatus: 'APPROVED' as const, name: { contains: sponsoredName, mode: 'insensitive' } },
       select: { id: true, name: true, phone: true, area: true, categories: true, status: true, address: true, website: true },
     })
     if (sponsored) {
@@ -111,7 +111,7 @@ export async function searchBusinesses(params: SearchParams): Promise<SearchResu
       if (category) {
         const others = await prisma.business.findMany({
           where: {
-            isActive: true,
+            isActive: true, approvalStatus: 'APPROVED' as const,
             id: { not: sponsored.id },
             categories: { has: category.toLowerCase() },
             ...(zipCode ? { zipCode } : area ? { area: { contains: area, mode: 'insensitive' } } : {}),
@@ -154,7 +154,7 @@ export async function searchBusinesses(params: SearchParams): Promise<SearchResu
 
       businesses = await prisma.business.findMany({
         where: {
-          isActive: true,
+          isActive: true, approvalStatus: 'APPROVED' as const,
           AND: [nameClause, { OR: locationFilter }]
         },
         take: limit,
@@ -169,7 +169,7 @@ export async function searchBusinesses(params: SearchParams): Promise<SearchResu
     // Step 2: if no results in user's area, fallback to anywhere
     if (businesses.length === 0) {
       businesses = await prisma.business.findMany({
-        where: { isActive: true, ...nameClause },
+        where: { isActive: true, approvalStatus: 'APPROVED' as const, ...nameClause },
         take: limit,
         orderBy: [{ status: 'desc' }, { leadCount: 'asc' }],
         select: {
@@ -184,7 +184,7 @@ export async function searchBusinesses(params: SearchParams): Promise<SearchResu
 
   // Формируем условия поиска
   const where: any = {
-    isActive: true,
+    isActive: true, approvalStatus: 'APPROVED' as const,
   }
 
   // Поиск по категории (через массив тегов)
@@ -235,7 +235,7 @@ export async function searchBusinesses(params: SearchParams): Promise<SearchResu
     if (areaFromZip) {
       businesses = await prisma.business.findMany({
         where: {
-          isActive: true,
+          isActive: true, approvalStatus: 'APPROVED' as const,
           categories: { has: category.toLowerCase() },
           area: { contains: areaFromZip, mode: 'insensitive' },
         },
@@ -259,7 +259,7 @@ export async function searchBusinessesExpanded(params: SearchParams): Promise<Se
   if (category) {
     return prisma.business.findMany({
       where: {
-        isActive: true,
+        isActive: true, approvalStatus: 'APPROVED' as const,
         categories: {
           has: category.toLowerCase()
         }
@@ -291,7 +291,7 @@ export async function searchBusinessesExpanded(params: SearchParams): Promise<Se
 export async function searchBusinessesFuzzy(params: SearchParams): Promise<SearchResult[]> {
   const { category, businessName, zipCode, area, limit = 3 } = params
 
-  const where: any = { isActive: true }
+  const where: any = { isActive: true, approvalStatus: 'APPROVED' as const }
 
   // Location filter (if provided)
   if (zipCode) {

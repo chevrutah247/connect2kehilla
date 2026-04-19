@@ -168,6 +168,7 @@ export async function handleCharityReply(userId: string, phone: string, input: s
       const now = new Date()
       const where: any = {
         isActive: true,
+        approvalStatus: 'APPROVED',
         expiresAt: { gt: now },
       }
       if (zip || area) {
