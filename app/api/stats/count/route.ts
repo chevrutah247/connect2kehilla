@@ -6,11 +6,13 @@ import prisma from '@/lib/db'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 
+// Force runtime execution — do NOT prerender at build time (DB may not be available)
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 // Cache results in memory for 5 minutes
 let cache: { data: any; at: number } | null = null
 const CACHE_TTL = 5 * 60 * 1000
-
-export const revalidate = 300 // Next.js route cache 5 min
 
 export async function GET() {
   // In-memory cache first
@@ -18,14 +20,26 @@ export async function GET() {
     return NextResponse.json(cache.data)
   }
 
-  const [businesses, charityRequests] = await Promise.all([
-    prisma.business.count({
-      where: { isActive: true, approvalStatus: 'APPROVED' },
-    }),
-    prisma.charityRequest.count({
-      where: { isActive: true, approvalStatus: 'APPROVED', expiresAt: { gt: new Date() } },
-    }),
-  ])
+  let businesses = 0
+  let charityRequests = 0
+
+  try {
+    const result = await Promise.all([
+      prisma.business.count({
+        where: { isActive: true, approvalStatus: 'APPROVED' },
+      }),
+      prisma.charityRequest.count({
+        where: { isActive: true, approvalStatus: 'APPROVED', expiresAt: { gt: new Date() } },
+      }).catch(() => 0),
+    ])
+    businesses = result[0]
+    charityRequests = result[1]
+  } catch (err) {
+    // Fallback: query without approvalStatus in case column doesn't exist yet
+    try {
+      businesses = await prisma.business.count({ where: { isActive: true } })
+    } catch {}
+  }
 
   // Count shuls from JSON file
   let shuls = 0
