@@ -149,10 +149,10 @@ export async function POST(request: NextRequest) {
       Promise.all([isUserBlocked(from), getOrCreateUser(from)])
     )
     if (isBlocked) {
-      // Проверяем, не пытается ли вернуться (START)
+      // Проверяем, не пытается ли вернуться (START) — unblock AND send full menu
       if (body.trim().toUpperCase() === 'START') {
         await unblockUser(from)
-        return createTwiMLResponse(MESSAGES.WELCOME)
+        return createTwiMLResponse(MESSAGES.MENU)
       }
       // Иначе - не отвечаем
       return createTwiMLResponse('')
@@ -168,8 +168,8 @@ export async function POST(request: NextRequest) {
       return createTwiMLResponse(MESSAGES.HELP)
     }
 
-    // ── Fast MENU intercept — feature menu ──
-    if (upperTrimmed === 'MENU' || upperTrimmed === '?') {
+    // ── Fast MENU/START intercept — same full feature menu ──
+    if (upperTrimmed === 'MENU' || upperTrimmed === 'START' || upperTrimmed === '?') {
       await prisma.query.create({
         data: { userId: user.id, rawMessage: body, parsedIntent: 'HELP', responseText: MESSAGES.MENU, processedAt: new Date() }
       })
