@@ -130,6 +130,7 @@ export default function Home() {
           <a href="/" className="text-white font-black text-xl">Connect<span className="text-emerald-500">2</span>Kehilla</a>
           <div className="hidden md:flex gap-6 text-sm">
             <a href="/faq" className="text-gray-300 hover:text-white transition">❓ FAQ</a>
+            <a href="/calendar" className="text-gray-300 hover:text-white transition">📅 Zman</a>
             <a href="/pricing" className="text-gray-300 hover:text-white transition">💰 Pricing</a>
             <a href="/jobs" className="text-gray-300 hover:text-white transition">📋 Jobs</a>
             <a href="/add-business" className="text-gray-300 hover:text-white transition">🏪 Add Business</a>

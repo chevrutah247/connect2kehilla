@@ -94,6 +94,9 @@ Msg & data rates may apply.`,
  "770"
 
 🕐 ZMANIM: "zmanim 11213"
+📅 ZMAN — calendar menu
+  CANDLE / SFIRA / ROSH CHODESH
+  FAST / BIRKAT LEVANA
 🏷 SPECIALS: text SPECIALS
 👷 JOBS: text JOBS or "job 11213"
 ❤️ CHARITY: text CHARITY

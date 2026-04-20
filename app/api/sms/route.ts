@@ -16,6 +16,15 @@ import { SHIDDUCH_RESPONSE } from '@/lib/shidduch'
 import { handleCharityNoZip, handleCharityWithZip, handleCharityReply, hasActiveCharitySession, parseFreeformCharityRequest, postFreeformCharityRequest } from '@/lib/charity'
 import { detectTefillah, searchShulsByZip, searchShulsByArea, searchShulByName, formatMinyanForSMS, formatShulForSMS } from '@/lib/minyanim'
 import { formatZmanimForSMS } from '@/lib/zmanim'
+import {
+  detectCalendarIntent,
+  formatZmanMenu,
+  formatSfiratHaOmer,
+  formatCandleLighting,
+  formatRoshChodesh,
+  formatFasts,
+  formatBirkatHalevana,
+} from '@/lib/jewish-calendar'
 import { isShabbatNow } from '@/lib/is-shabbat'
 import prisma from '@/lib/db'
 
@@ -325,6 +334,50 @@ export async function POST(request: NextRequest) {
           return createTwiMLResponse(responseText)
         }
       }
+    }
+
+    // ── Jewish calendar commands: SFIRA / CANDLE / ROSH CHODESH / FAST / BIRKAT LEVANA / ZMAN menu ──
+    // Runs BEFORE zmanim intercept so 'ZMAN' alone shows the menu, while 'ZMANIM' still works.
+    const calendarIntent = detectCalendarIntent(body)
+    if (calendarIntent) {
+      let responseText = ''
+      let category = ''
+      let zmanimZipForLogging: string | null = null
+      switch (calendarIntent) {
+        case 'zman_menu':
+          responseText = formatZmanMenu()
+          category = 'zman_menu'
+          break
+        case 'sfira':
+          responseText = formatSfiratHaOmer()
+          category = 'sfira'
+          break
+        case 'candle': {
+          const zipMatch = body.match(/\b(\d{5})\b/)
+          let candleZip = zipMatch ? zipMatch[1] : null
+          if (!candleZip) candleZip = await getUserDefaultZip(from)
+          responseText = formatCandleLighting(candleZip)
+          category = 'candle_lighting'
+          zmanimZipForLogging = candleZip
+          break
+        }
+        case 'rosh_chodesh':
+          responseText = formatRoshChodesh()
+          category = 'rosh_chodesh'
+          break
+        case 'fast':
+          responseText = formatFasts()
+          category = 'fast'
+          break
+        case 'birkat_levana':
+          responseText = formatBirkatHalevana()
+          category = 'birkat_levana'
+          break
+      }
+      await prisma.query.create({
+        data: { userId: user.id, rawMessage: body, parsedCategory: category, parsedZip: zmanimZipForLogging, parsedIntent: 'SEARCH', responseText, processedAt: new Date() },
+      })
+      return createTwiMLResponse(responseText)
     }
 
     // ── Zmanim (halachic times) — fast intercept before AI parser ──
