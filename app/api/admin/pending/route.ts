@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  try {
   const businesses = await prisma.business.findMany({
     where: { approvalStatus: 'PENDING' },
     orderBy: { createdAt: 'desc' },
@@ -65,4 +66,12 @@ export async function GET(request: NextRequest) {
       total: businesses.length + charityRequests.length + announcements.length,
     },
   })
+  } catch (err: any) {
+    console.error('Pending route error:', err?.message, err?.stack)
+    return NextResponse.json({
+      error: 'Server error',
+      message: err?.message || String(err),
+      code: err?.code,
+    }, { status: 500 })
+  }
 }
