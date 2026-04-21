@@ -9,7 +9,7 @@ export const maxDuration = 30
 
 // Round down to the nearest 1,000 and append "+" for a friendly display.
 // 21,547 → "21,000+"
-export function formatBusinessCount(n: number): string {
+function formatBusinessCount(n: number): string {
   if (n < 1000) return String(n)
   const rounded = Math.floor(n / 1000) * 1000
   return rounded.toLocaleString('en-US') + '+'
