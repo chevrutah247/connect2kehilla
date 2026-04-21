@@ -161,3 +161,84 @@ export function parseMazelTovSubmission(body: string): { text: string; type: str
   else if (/SIMCHA/.test(prefix)) type = 'simcha'
   return { text, type }
 }
+
+// ─────────────────────────────────────────────
+// Detect MAZEL TOV list/view command (no text after, or "ADD" request)
+// ─────────────────────────────────────────────
+export type MazelTovMenuIntent = 'list' | 'add_instructions' | null
+
+export function detectMazelTovMenu(body: string): MazelTovMenuIntent {
+  const t = body.trim().toUpperCase()
+  // Instructions for adding
+  if (/^ADD\s*(MAZEL\s*TOV|SIMCHA)$/.test(t)) return 'add_instructions'
+  // View list — exact command without trailing text
+  if (/^(MAZEL\s*TOV|SIMCHA|SIMCHAS|MAZEL)$/.test(t)) return 'list'
+  return null
+}
+
+// ─────────────────────────────────────────────
+// Format list of recent approved Mazel Tov announcements
+// ─────────────────────────────────────────────
+export async function formatMazelTovList(limit = 5): Promise<string> {
+  const recent = await prisma.announcement.findMany({
+    where: { approvalStatus: 'APPROVED' },
+    orderBy: { sentAt: 'desc' },
+    take: limit,
+  })
+
+  if (recent.length === 0) {
+    return `🎊 MAZEL TOV — no recent simchas yet.\n\nShare yours! Text:\n  MAZEL TOV <your message>\n\nOr text ADD MAZEL TOV for full instructions.`
+  }
+
+  const lines: string[] = ['🎊 RECENT MAZEL TOVS', '']
+  for (const ann of recent) {
+    const emoji = ann.type === 'engagement' ? '💍' :
+                  ann.type === 'wedding' ? '👰' :
+                  ann.type === 'birth' ? '👶' :
+                  ann.type === 'bar_mitzvah' ? '🎓' : '🎊'
+    // Trim text to fit SMS limits (we show 5 items max)
+    const preview = ann.text.length > 120 ? ann.text.slice(0, 120) + '…' : ann.text
+    lines.push(`${emoji} ${preview}`)
+    if (ann.sentAt) {
+      const days = Math.floor((Date.now() - new Date(ann.sentAt).getTime()) / (24 * 60 * 60 * 1000))
+      lines.push(`   ${days === 0 ? 'today' : days === 1 ? 'yesterday' : `${days} days ago`}`)
+    }
+    lines.push('')
+  }
+  lines.push('📬 Reply SUB MAZEL TOV for live alerts.')
+  lines.push('🎊 To share yours: ADD MAZEL TOV')
+  return lines.join('\n')
+}
+
+// ─────────────────────────────────────────────
+// Instructions for adding a mazel tov via SMS
+// ─────────────────────────────────────────────
+export function formatMazelTovInstructions(): string {
+  return [
+    '🎊 SHARE A SIMCHA',
+    '',
+    'Text to (888) 516-3399 in this format:',
+    '',
+    '  MAZEL TOV <your message>',
+    '',
+    'Or pick a specific type:',
+    '  ENGAGEMENT <couple + details>',
+    '  WEDDING <couple + details>',
+    '  BIRTH <parents + baby>',
+    '  BAR MITZVAH <boy + shul>',
+    '  SIMCHA <general celebration>',
+    '',
+    'EXAMPLE:',
+    '  ENGAGEMENT Yossi Cohen (Crown Heights)',
+    '  to Rivka Goldstein (Monsey).',
+    '  L\'Chaim Mon 8:30PM, 578 Albany Ave.',
+    '',
+    'Our team will review and broadcast',
+    'to all Mazel Tov subscribers.',
+    '',
+    '🌐 Or use web form:',
+    'connect2kehilla.com/add-mazel-tov',
+    '',
+    '👀 View recent: text MAZEL TOV',
+  ].join('\n')
+}

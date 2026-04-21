@@ -99,7 +99,9 @@ Msg & data rates may apply.`,
   FAST / BIRKAT LEVANA
 📬 SUB — subscribe to updates
   Mazel Tov / RC / BL / Sfira / Gmach
-🎊 MAZEL TOV <text> — share simcha
+🎊 MAZEL TOV — view recent simchas
+🎊 ADD MAZEL TOV — how to share yours
+🎊 MAZEL TOV <text> — share a simcha
 🏷 SPECIALS: text SPECIALS
 👷 JOBS: text JOBS or "job 11213"
 ❤️ CHARITY: text CHARITY

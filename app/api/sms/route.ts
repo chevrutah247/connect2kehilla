@@ -26,7 +26,13 @@ import {
   formatBirkatHalevana,
 } from '@/lib/jewish-calendar'
 import { detectSubIntent, handleSubIntent, subscribeHint } from '@/lib/subscriptions'
-import { parseMazelTovSubmission, submitMazelTov } from '@/lib/mazel-tov'
+import {
+  parseMazelTovSubmission,
+  submitMazelTov,
+  detectMazelTovMenu,
+  formatMazelTovList,
+  formatMazelTovInstructions,
+} from '@/lib/mazel-tov'
 import { isShabbatNow } from '@/lib/is-shabbat'
 import prisma from '@/lib/db'
 
@@ -188,6 +194,23 @@ export async function POST(request: NextRequest) {
         })
         return createTwiMLResponse(responseText)
       }
+    }
+
+    // ── Mazel Tov menu (view list or get instructions) ──
+    const mtMenu = detectMazelTovMenu(body)
+    if (mtMenu === 'list') {
+      const responseText = await formatMazelTovList(5)
+      await prisma.query.create({
+        data: { userId: user.id, rawMessage: body, parsedCategory: 'mazel_tov_list', parsedIntent: 'INFO', responseText, processedAt: new Date() }
+      })
+      return createTwiMLResponse(responseText)
+    }
+    if (mtMenu === 'add_instructions') {
+      const responseText = formatMazelTovInstructions()
+      await prisma.query.create({
+        data: { userId: user.id, rawMessage: body, parsedCategory: 'mazel_tov_instructions', parsedIntent: 'INFO', responseText, processedAt: new Date() }
+      })
+      return createTwiMLResponse(responseText)
     }
 
     // ── Mazel Tov / Simcha submission: "MAZEL TOV <text>" or "SIMCHA <text>" ──
