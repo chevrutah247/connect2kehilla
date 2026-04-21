@@ -8,41 +8,44 @@ import {
   CandleLightingEvent, HavdalahEvent, RoshChodeshEvent,
   Event,
 } from '@hebcal/core'
+import { lookupZip, DEFAULT_LOCATION, LocationInfo } from './locations'
 
 // ─────────────────────────────────────────────
-// ZIP → location (mirrors lib/zmanim.ts)
+// ZIP → @hebcal/core Location via lib/locations.
+// Returns null for unknown ZIPs so callers can surface
+// "not supported" instead of silently defaulting to NY.
 // ─────────────────────────────────────────────
-const ZIP_TO_LOCATION: Record<string, { lat: number; lng: number; tzid: string; city: string }> = {
-  '11211': { lat: 40.7081, lng: -73.9571, tzid: 'America/New_York', city: 'Williamsburg' },
-  '11249': { lat: 40.7081, lng: -73.9571, tzid: 'America/New_York', city: 'Williamsburg' },
-  '11206': { lat: 40.7010, lng: -73.9430, tzid: 'America/New_York', city: 'Williamsburg' },
-  '11205': { lat: 40.6945, lng: -73.9656, tzid: 'America/New_York', city: 'Williamsburg' },
-  '11219': { lat: 40.6328, lng: -73.9876, tzid: 'America/New_York', city: 'Borough Park' },
-  '11204': { lat: 40.6188, lng: -73.9847, tzid: 'America/New_York', city: 'Borough Park' },
-  '11218': { lat: 40.6432, lng: -73.9772, tzid: 'America/New_York', city: 'Borough Park' },
-  '11230': { lat: 40.6197, lng: -73.9653, tzid: 'America/New_York', city: 'Flatbush' },
-  '11210': { lat: 40.6270, lng: -73.9530, tzid: 'America/New_York', city: 'Flatbush' },
-  '11213': { lat: 40.6694, lng: -73.9422, tzid: 'America/New_York', city: 'Crown Heights' },
-  '11225': { lat: 40.6610, lng: -73.9540, tzid: 'America/New_York', city: 'Crown Heights' },
-  '11203': { lat: 40.6497, lng: -73.9360, tzid: 'America/New_York', city: 'Crown Heights' },
-  '10952': { lat: 41.1112, lng: -74.0687, tzid: 'America/New_York', city: 'Monsey' },
-  '10977': { lat: 41.1180, lng: -74.0300, tzid: 'America/New_York', city: 'Spring Valley' },
-  '10950': { lat: 41.3310, lng: -74.1855, tzid: 'America/New_York', city: 'Monroe' },
-  '08701': { lat: 40.0960, lng: -74.2177, tzid: 'America/New_York', city: 'Lakewood' },
+function locationForZip(zip?: string | null): { loc: Location; info: LocationInfo } | null {
+  const info = lookupZip(zip)
+  if (!info) return null
+  return {
+    info,
+    loc: new Location(info.lat, info.lng, false, info.tzid, info.city, 'US', info.zip),
+  }
 }
 
-function locationForZip(zip?: string | null) {
-  const cfg = (zip && ZIP_TO_LOCATION[zip]) || ZIP_TO_LOCATION['11213']!
-  return new Location(cfg.lat, cfg.lng, false, cfg.tzid, cfg.city, 'US', zip || '11213')
+// Legacy callers (sfira / rosh chodesh / fast / birkat levana) don't
+// take ZIP input — they still need SOME location for Shabbat-week
+// boundaries. Use Crown Heights as the canonical default.
+function defaultLocation(): { loc: Location; info: LocationInfo } {
+  const info = DEFAULT_LOCATION
+  return {
+    info,
+    loc: new Location(info.lat, info.lng, false, info.tzid, info.city, 'US', info.zip),
+  }
 }
 
-function formatTime(d: Date, tzid = 'America/New_York'): string {
+function formatTime(d: Date, tzid: string): string {
   return d.toLocaleTimeString('en-US', {
     hour: 'numeric', minute: '2-digit', timeZone: tzid,
   })
 }
 
-function formatDate(d: Date, tzid = 'America/New_York'): string {
+// Date formatters for Rosh Chodesh / Fasts / Birkat Halevana don't
+// care about user ZIP — these are Hebrew-calendar events with
+// day-level precision, not times. Default to Crown Heights TZ for
+// display consistency; the date itself is the same across the US.
+function formatDate(d: Date, tzid: string = DEFAULT_LOCATION.tzid): string {
   return d.toLocaleDateString('en-US', {
     weekday: 'short', month: 'short', day: 'numeric', timeZone: tzid,
   })
@@ -112,8 +115,19 @@ export function formatSfiratHaOmer(): string {
 // 2. Candle Lighting (next Friday / Yom Tov)
 // ─────────────────────────────────────────────
 export function formatCandleLighting(zip?: string | null): string {
-  const loc = locationForZip(zip)
-  const zipLabel = zip || '11213'
+  // If caller didn't provide a ZIP at all, use the default (Crown Heights).
+  // If they DID provide one but we don't recognise it — tell them, don't
+  // silently show NYC candle-lighting.
+  const resolved = zip ? locationForZip(zip) : defaultLocation()
+  if (!resolved) {
+    return `🕯 Couldn't find that ZIP code.
+Please send your 5-digit US ZIP.
+Example: candle 11213
+
+Outside the US? Email
+contact@connect2kehilla.com`
+  }
+  const { loc, info } = resolved
   const now = new Date()
   const endDate = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000) // next 14 days
 
@@ -131,7 +145,7 @@ export function formatCandleLighting(zip?: string | null): string {
   const havdalah = events.find((e: Event) => e instanceof HavdalahEvent)
 
   if (!candle) {
-    return `🕯 No candle-lighting times found in the next 14 days for ${zipLabel}.`
+    return `🕯 No candle-lighting times found in the next 14 days for ${info.zip}.`
   }
 
   const candleDate = candle.getDate().greg()
@@ -141,12 +155,12 @@ export function formatCandleLighting(zip?: string | null): string {
   const lines: string[] = []
   lines.push('🕯 CANDLE LIGHTING')
   lines.push('')
-  lines.push(`📍 ${loc.getName() || 'Crown Heights'} ${zipLabel}`)
+  lines.push(`📍 ${info.city}, ${info.state} ${info.zip}`)
   lines.push('')
-  lines.push(`${formatDate(candleDate, loc.getTzid())}`)
-  if (candleDateTime) lines.push(`🕯 Light: ${formatTime(candleDateTime, loc.getTzid())}`)
+  lines.push(`${formatDate(candleDate, info.tzid)}`)
+  if (candleDateTime) lines.push(`🕯 Light: ${formatTime(candleDateTime, info.tzid)}`)
   if (havdalah && havdalahDateTime) {
-    lines.push(`✨ Havdalah: ${formatTime(havdalahDateTime, loc.getTzid())} (72 min)`)
+    lines.push(`✨ Havdalah: ${formatTime(havdalahDateTime, info.tzid)} (72 min)`)
   }
   lines.push('')
   lines.push('Reply ZMAN for full menu.')
