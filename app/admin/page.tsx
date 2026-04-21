@@ -1269,7 +1269,9 @@ function DbTab({
             </thead>
             <tbody>
               {data.items?.map((b: any) => {
-                const isResident = b.categories?.includes('resident')
+                const isResident =
+                  b.categories?.includes('resident') ||
+                  b.categories?.includes('residential')
                 return (
                   <tr key={b.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                     <td style={{ padding: 10 }}>
