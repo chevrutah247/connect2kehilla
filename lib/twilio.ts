@@ -2,6 +2,7 @@
 // Отправка и обработка SMS через Twilio
 
 import twilio from 'twilio'
+import prisma from '@/lib/db'
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID!
 const authToken = process.env.TWILIO_AUTH_TOKEN!
@@ -80,38 +81,24 @@ Reply STOP to unsubscribe.
 Support: (888) 516-3399
 Msg & data rates may apply.`,
 
-  // Feature menu (what the product can do)
-  MENU: `📱 Connect2Kehilla MENU
+  // Feature menu — prefer getMenuMessage() which injects live business count.
+  // This static fallback is used only if the DB lookup fails.
+  MENU: `Connect2Kehilla MENU
+Text (888) 516-3399
 
-🔍 SEARCH
- "plumber 11213"
- "doctor Crown Heights"
- "Lemofet Glass"
+SEARCH   - find any business
+SIMCHA   - mazel tovs & engagements
+LECHAIM  - l'chaim events
+SPECIALS - grocery store deals
+JOBS     - find or post a job
+MINYAN   - minyan times
+ZMANIM   - zmanim & Jewish calendar
+GMACH    - free loan gemachs
+SHIDDUCH - singles & matchmaking
+CHARITY  - tzedaka & donations
 
-🕍 MINYAN
- "mincha 11225"
- "shacharis Williamsburg"
- "770"
-
-🕐 ZMANIM: "zmanim 11213"
-📅 ZMAN — calendar menu
-  CANDLE / SFIRA / ROSH CHODESH
-  FAST / BIRKAT LEVANA
-📬 SUB — subscribe to updates
-  Mazel Tov / RC / BL / Sfira / Gmach
-🎊 MAZEL TOV — view recent simchas
-🎊 ADD MAZEL TOV — how to share yours
-🎊 MAZEL TOV <text> — share a simcha
-🏷 SPECIALS: text SPECIALS
-👷 JOBS: text JOBS or "job 11213"
-❤️ CHARITY: text CHARITY
-💍 SHIDDUCH: text SHIDDUCH
-📋 ADD BUSINESS: (888) 516-3399
-
-🌐 connect2kehilla.com
-17,000+ businesses • EN / עברית / אידיש
-
-Reply HELP for support, STOP to opt out.`,
+TIP: Add ? for help (Example: JOBS ?)
+17,000+ businesses | connect2kehilla.com`,
 
   STOP: `You have been unsubscribed from Connect2Kehilla. 
 You will no longer receive messages.
@@ -147,6 +134,211 @@ We'll add your business within 24 hours!`,
 
   ERROR: `Sorry, something went wrong. Please try again.
 If the problem persists, text MENU for options.`,
+
+  // ==========================================================
+  // COMMAND ? help messages — one per category.
+  // See app/api/sms/route.ts + lib/help-commands.ts for the
+  // matcher that triggers these (e.g. "SIMCHA ?", "? simcha").
+  // ==========================================================
+  SEARCH_HELP: `SEARCH - Find any business
+
+HOW TO SEARCH:
+Text: [what you need] [ZIP code]
+ZIP code = 5-digit number on your mail
+Examples: 11225, 11213, 11211
+
+EXAMPLES:
+plumber 11213
+kosher restaurant Crown Heights
+electrician 11225
+dentist Williamsburg
+
+No ZIP? Use your neighborhood:
+lawyer Crown Heights
+doctor Flatbush`,
+
+  SIMCHA_HELP: `SIMCHA - Mazel Tov Announcements
+
+VIEW: SIMCHA [ZIP or neighborhood]
+Example: SIMCHA 11225
+Example: SIMCHA Crown Heights
+
+POST YOURS: Text ADD SIMCHA
+You receive a template to fill in.
+Types: Engagement, Wedding, Birth,
+Bar/Bat Mitzva
+
+GET NOTIFICATIONS: Text SUBSCRIBE SIMCHA
+(or short: SUB SIMCHA)
+STOP NOTIFICATIONS: Text UNSUBSCRIBE SIMCHA
+(or short: UNSUB SIMCHA)`,
+
+  LECHAIM_HELP: `LECHAIM - L'Chaim Event Announcements
+
+VIEW: LECHAIM [ZIP or neighborhood]
+Example: LECHAIM 11225
+
+POST YOURS: Text ADD LECHAIM
+Include: names, date, time, address
+
+GET NOTIFICATIONS: Text SUBSCRIBE LECHAIM
+(or short: SUB LECHAIM)
+STOP NOTIFICATIONS: Text UNSUBSCRIBE LECHAIM
+(or short: UNSUB LECHAIM)`,
+
+  SPECIALS_HELP: `SPECIALS - Kosher Grocery Store Deals
+
+Text SPECIALS [neighborhood or ZIP]
+Example: SPECIALS Crown Heights
+Example: SPECIALS 11225
+
+You get a list of stores.
+Reply with store number for their
+weekly deals. Updated every Thursday.
+
+For businesses: email
+business@connect2kehilla.com`,
+
+  JOBS_HELP: `JOBS - Job Board
+
+FIND A JOB: Text JOBS [ZIP or area]
+Example: JOBS 11225
+Example: JOBS Crown Heights
+
+POST A JOB: Text ADD JOB
+Free to post!
+
+GET NOTIFICATIONS: Text SUBSCRIBE JOBS [ZIP]
+(or short: SUB JOBS 11225)
+STOP NOTIFICATIONS: Text UNSUBSCRIBE JOBS
+(or short: UNSUB JOBS)`,
+
+  MINYAN_HELP: `MINYAN - Minyan Times
+
+Text MINYAN [ZIP or shul name]
+Example: MINYAN 11225
+Example: MINYAN 770 Eastern Pkwy
+Example: MINYAN Williamsburg
+Example: shacharis Crown Heights
+Example: mincha 11213
+
+Results: shul name, address, times.
+To add your shul: Text ADD MINYAN`,
+
+  ZMANIM_HELP: `ZMANIM - Jewish Times & Calendar
+
+ZMANIM [ZIP] - daily times
+(sunrise, sunset, candle lighting)
+Example: ZMANIM 11225
+
+CANDLE [ZIP] - Shabbat candle lighting
+Example: CANDLE 11225
+
+SFIRA - today's Omer count
+ROSH CHODESH - next Rosh Chodesh date
+(Not RC - write full words)
+FAST - next fast day & times
+BIRKAT LEVANA - Kiddush Levana window
+(Not BL - write full words)`,
+
+  GMACH_HELP: `GMACH - Free Loan Services
+
+Text GMACH [type] [ZIP or area]
+Example: GMACH baby 11225
+Example: GMACH wedding Crown Heights
+Example: GMACH money Flatbush
+
+Types: baby items, wedding, clothing,
+money, medical, furniture, food.
+
+ADD YOUR GMACH: Text ADD GMACH
+Free to list!`,
+
+  SHIDDUCH_HELP: `SHIDDUCH - Matchmaking & Singles
+
+For full matchmaking visit:
+getashidduch.org
+
+Or text SHIDDUCH for options:
+1 - I am looking for a shidduch
+2 - I am a shadchan (matchmaker)
+3 - Submit a resume
+
+All information is kept private.`,
+
+  CHARITY_HELP: `CHARITY - Tzedaka & Donations
+
+Text CHARITY [type or ZIP]
+Example: CHARITY food 11225
+Example: CHARITY medical Crown Heights
+
+DONATE: Text DONATE [organization name]
+
+LIST YOUR ORG: Text ADD CHARITY
+Free for registered nonprofits.`,
+
+  ZIP_HELP: `For better results, add your ZIP code
+or neighborhood name.
+
+ZIP code = 5-digit number on your mail.
+Example: 11225 or 11213
+
+Brooklyn ZIPs:
+Crown Heights: 11225 or 11213
+Williamsburg:  11211 or 11206
+Flatbush:      11230 or 11210
+Boro Park:     11219 or 11204
+
+Or just write your neighborhood:
+plumber Crown Heights
+electrician Williamsburg`,
+}
+
+// ============================================
+// Динамическое главное меню
+// ============================================
+// Читает живое количество одобренных бизнесов из SystemCache
+// (обновляется cron-ом в воскресенье: /api/cron/update-stats).
+// Если в кэше ничего нет — откатываемся на статический MESSAGES.MENU.
+let _menuCache: { value: string; expiresAt: number } | null = null
+const MENU_TTL_MS = 5 * 60 * 1000 // 5 минут — защита от избыточных DB-запросов
+
+export async function getMenuMessage(): Promise<string> {
+  if (_menuCache && Date.now() < _menuCache.expiresAt) {
+    return _menuCache.value
+  }
+
+  let count = '17,000+'
+  try {
+    const cache = await prisma.systemCache.findUnique({
+      where: { key: 'business_count' },
+    })
+    if (cache?.value) count = cache.value
+  } catch {
+    // fallback below; DB may be cold or migration not yet applied
+  }
+
+  const menu = [
+    'Connect2Kehilla MENU',
+    'Text (888) 516-3399',
+    '',
+    'SEARCH   - find any business',
+    'SIMCHA   - mazel tovs & engagements',
+    "LECHAIM  - l'chaim events",
+    'SPECIALS - grocery store deals',
+    'JOBS     - find or post a job',
+    'MINYAN   - minyan times',
+    'ZMANIM   - zmanim & Jewish calendar',
+    'GMACH    - free loan gemachs',
+    'SHIDDUCH - singles & matchmaking',
+    'CHARITY  - tzedaka & donations',
+    '',
+    'TIP: Add ? for help (Example: JOBS ?)',
+    `${count} businesses | connect2kehilla.com`,
+  ].join('\n')
+
+  _menuCache = { value: menu, expiresAt: Date.now() + MENU_TTL_MS }
+  return menu
 }
 
 // ============================================
