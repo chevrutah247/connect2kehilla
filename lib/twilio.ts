@@ -243,16 +243,22 @@ BIRKAT LEVANA - Kiddush Levana window
 
   GMACH_HELP: `GMACH - Free Loan Services
 
-Text GMACH [type] [ZIP or area]
-Example: GMACH baby 11225
-Example: GMACH wedding Crown Heights
-Example: GMACH money Flatbush
+GET GMACH ALERTS in your area:
+Text SUBSCRIBE GMACH [ZIP]
+(or short: SUB GMACH 11225)
 
-Types: baby items, wedding, clothing,
-money, medical, furniture, food.
+You'll receive a text whenever
+someone offers a gmach near you —
+baby items, wedding, money,
+medical, furniture, food, etc.
 
-ADD YOUR GMACH: Text ADD GMACH
-Free to list!`,
+STOP ALERTS:
+Text UNSUBSCRIBE GMACH
+(or short: UNSUB GMACH)
+
+OFFER A GMACH:
+Email contact@connect2kehilla.com
+or call (888) 516-3399`,
 
   SHIDDUCH_HELP: `SHIDDUCH - Matchmaking & Singles
 
@@ -326,6 +332,8 @@ export async function getMenuMessage(): Promise<string> {
     'Example: plumber 11225',
     'ZIP = 5 digits on your mail',
     '',
+    'COMMANDS (add ? for details,',
+    'e.g. SIMCHA ? or JOBS ?):',
     'SEARCH   - find any business',
     'SIMCHA   - mazel tovs & engagements',
     "LECHAIM  - l'chaim events",
@@ -337,7 +345,6 @@ export async function getMenuMessage(): Promise<string> {
     'SHIDDUCH - singles & matchmaking',
     'CHARITY  - tzedaka & donations',
     '',
-    'TIP: Add ? for help (e.g. JOBS ?)',
     `${count} businesses | connect2kehilla.com`,
   ].join('\n')
 
