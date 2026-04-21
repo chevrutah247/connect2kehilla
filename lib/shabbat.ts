@@ -2,6 +2,7 @@
 // Проверка времени Шаббата через HebCal API
 
 import prisma from './db'
+import { lookupZip, DEFAULT_LOCATION } from './locations'
 
 // ============================================
 // Типы
@@ -23,41 +24,10 @@ interface HebCalResponse {
 }
 
 // ============================================
-// ZIP к координатам (основные районы)
-// ============================================
-const ZIP_TO_LOCATION: Record<string, { lat: number; lng: number; city: string }> = {
-  // Brooklyn
-  '11211': { lat: 40.7081, lng: -73.9571, city: 'Williamsburg' },
-  '11249': { lat: 40.7081, lng: -73.9571, city: 'Williamsburg' },
-  '11219': { lat: 40.6328, lng: -73.9876, city: 'Borough Park' },
-  '11230': { lat: 40.6197, lng: -73.9653, city: 'Flatbush' },
-  '11213': { lat: 40.6694, lng: -73.9422, city: 'Crown Heights' },
-  
-  // Monsey / Rockland
-  '10952': { lat: 41.1112, lng: -74.0687, city: 'Monsey' },
-  
-  // Lakewood
-  '08701': { lat: 40.0960, lng: -74.2177, city: 'Lakewood' },
-  
-  // Five Towns
-  '11516': { lat: 40.6318, lng: -73.7240, city: 'Cedarhurst' },
-  '11559': { lat: 40.6157, lng: -73.7260, city: 'Lawrence' },
-  
-  // New Jersey
-  '07666': { lat: 40.8876, lng: -74.0159, city: 'Teaneck' },
-  '07055': { lat: 40.8568, lng: -74.1285, city: 'Passaic' },
-}
-
-// Дефолт — Нью-Йорк
-const DEFAULT_LOCATION = { lat: 40.7128, lng: -74.0060, city: 'New York' }
-
-// ============================================
 // Получить время Шаббата через HebCal API
 // ============================================
 export async function getShabbatTimes(zipCode?: string): Promise<ShabbatTimes> {
-  const location = zipCode && ZIP_TO_LOCATION[zipCode] 
-    ? ZIP_TO_LOCATION[zipCode] 
-    : DEFAULT_LOCATION
+  const location = lookupZip(zipCode) ?? DEFAULT_LOCATION
 
   try {
     // HebCal API - получаем времена на ближайшие 7 дней
@@ -66,7 +36,7 @@ export async function getShabbatTimes(zipCode?: string): Promise<ShabbatTimes> {
     url.searchParams.set('geo', 'pos')
     url.searchParams.set('latitude', location.lat.toString())
     url.searchParams.set('longitude', location.lng.toString())
-    url.searchParams.set('tzid', 'America/New_York')
+    url.searchParams.set('tzid', location.tzid)
     url.searchParams.set('m', '18') // 18 минут до захода (стандарт)
 
     const response = await fetch(url.toString())
