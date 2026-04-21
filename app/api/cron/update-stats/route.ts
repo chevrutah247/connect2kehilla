@@ -26,9 +26,20 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Count only approved + active listings — what SMS search actually returns
+    // Count only approved + active BUSINESS listings (exclude residents).
+    // The Business table also stores imported JBD residents tagged with
+    // categories containing "resident" or "residential" — they bloat the
+    // total from ~16K actual businesses to ~63K. The menu promises
+    // "businesses", not "people in our directory", so filter them out.
     const count = await prisma.business.count({
-      where: { isActive: true, approvalStatus: 'APPROVED' },
+      where: {
+        isActive: true,
+        approvalStatus: 'APPROVED',
+        NOT: [
+          { categories: { has: 'resident' } },
+          { categories: { has: 'residential' } },
+        ],
+      },
     })
     const formatted = formatBusinessCount(count)
 
