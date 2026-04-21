@@ -320,7 +320,11 @@ export async function getMenuMessage(): Promise<string> {
 
   const menu = [
     'Connect2Kehilla MENU',
-    'Text (888) 516-3399',
+    '',
+    'HOW TO USE:',
+    'Text COMMAND + your ZIP',
+    'Example: plumber 11225',
+    'ZIP = 5 digits on your mail',
     '',
     'SEARCH   - find any business',
     'SIMCHA   - mazel tovs & engagements',
@@ -333,7 +337,7 @@ export async function getMenuMessage(): Promise<string> {
     'SHIDDUCH - singles & matchmaking',
     'CHARITY  - tzedaka & donations',
     '',
-    'TIP: Add ? for help (Example: JOBS ?)',
+    'TIP: Add ? for help (e.g. JOBS ?)',
     `${count} businesses | connect2kehilla.com`,
   ].join('\n')
 
