@@ -53,6 +53,8 @@ export default function AdminPage() {
   const [dbCity, setDbCity] = useState('')
   const [dbZip, setDbZip] = useState('')
   const [dbQuery, setDbQuery] = useState('')
+  const [dbOffset, setDbOffset] = useState(0)
+  const DB_PAGE_SIZE = 200
 
   // Load token from localStorage on mount
   useEffect(() => {
@@ -132,13 +134,16 @@ export default function AdminPage() {
     if (tab === 'users' && !usersData) loadUsers()
   }, [tab])
 
-  // Load DB browser
-  function loadDb() {
+  // Load DB browser. `resetOffset`=true resets to page 1 (used when filters change).
+  function loadDb(resetOffset = false) {
     if (!token) return
+    const offset = resetOffset ? 0 : dbOffset
+    if (resetOffset && dbOffset !== 0) setDbOffset(0)
     setDbLoading(true)
     const params = new URLSearchParams()
     params.set('type', dbType)
-    params.set('limit', '200')
+    params.set('limit', String(DB_PAGE_SIZE))
+    params.set('offset', String(offset))
     if (dbCity) params.set('city', dbCity)
     if (dbZip) params.set('zip', dbZip)
     if (dbQuery) params.set('q', dbQuery)
@@ -151,6 +156,11 @@ export default function AdminPage() {
   useEffect(() => {
     if (tab === 'db' && !dbData) loadDb()
   }, [tab])
+  // Reload when the offset (page) changes
+  useEffect(() => {
+    if (tab === 'db' && dbData) loadDb()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dbOffset])
 
   async function handleDelete(type: string, id: string, name: string) {
     if (!token) return
@@ -333,11 +343,14 @@ export default function AdminPage() {
           <DbTab
             data={dbData}
             loading={dbLoading}
-            type={dbType} setType={setDbType}
+            type={dbType} setType={(v) => { setDbType(v); setDbOffset(0) }}
             city={dbCity} setCity={setDbCity}
             zip={dbZip} setZip={setDbZip}
             query={dbQuery} setQuery={setDbQuery}
-            onSearch={loadDb}
+            offset={dbOffset}
+            pageSize={DB_PAGE_SIZE}
+            setOffset={setDbOffset}
+            onSearch={() => loadDb(true)}
           />
         )}
         {!loading && data && tab === 'logs' && (
@@ -1130,7 +1143,8 @@ function UsersTab({
 // Database browser — businesses + residents, filter by city/ZIP
 // ============================================
 function DbTab({
-  data, loading, type, setType, city, setCity, zip, setZip, query, setQuery, onSearch,
+  data, loading, type, setType, city, setCity, zip, setZip, query, setQuery,
+  offset, pageSize, setOffset, onSearch,
 }: {
   data: any | null
   loading: boolean
@@ -1139,8 +1153,17 @@ function DbTab({
   city: string; setCity: (v: string) => void
   zip: string; setZip: (v: string) => void
   query: string; setQuery: (v: string) => void
+  offset: number
+  pageSize: number
+  setOffset: (v: number) => void
   onSearch: () => void
 }) {
+  const total = data?.total ?? 0
+  const shown = data?.items?.length ?? 0
+  const currentPage = Math.floor(offset / pageSize) + 1
+  const totalPages = Math.max(1, Math.ceil(total / pageSize))
+  const canPrev = offset > 0
+  const canNext = offset + shown < total
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
@@ -1246,7 +1269,9 @@ function DbTab({
             </thead>
             <tbody>
               {data.items?.map((b: any) => {
-                const isResident = b.categories?.includes('resident')
+                const isResident =
+                  b.categories?.includes('resident') ||
+                  b.categories?.includes('residential')
                 return (
                   <tr key={b.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                     <td style={{ padding: 10 }}>
@@ -1271,9 +1296,39 @@ function DbTab({
               )}
             </tbody>
           </table>
-          {data.total > data.items?.length && (
-            <div style={{ padding: 12, textAlign: 'center', color: '#94a3b8', fontSize: 12, borderTop: '1px solid #f1f5f9' }}>
-              Showing {data.items.length} of {data.total.toLocaleString()} — narrow your filters to see more
+          {total > 0 && (
+            <div style={{
+              padding: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              borderTop: '1px solid #f1f5f9', background: '#f8fafc', gap: 12, flexWrap: 'wrap',
+            }}>
+              <div style={{ fontSize: 12, color: '#64748b' }}>
+                Showing <strong>{offset + 1}–{offset + shown}</strong> of <strong>{total.toLocaleString()}</strong>
+              </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <button
+                  onClick={() => setOffset(Math.max(0, offset - pageSize))}
+                  disabled={!canPrev || loading}
+                  style={{
+                    padding: '6px 14px', border: '1px solid #cbd5e1', borderRadius: 6,
+                    background: canPrev ? 'white' : '#f1f5f9',
+                    color: canPrev ? '#475569' : '#cbd5e1',
+                    cursor: canPrev && !loading ? 'pointer' : 'not-allowed', fontSize: 13, fontWeight: 600,
+                  }}
+                >← Prev</button>
+                <span style={{ fontSize: 13, color: '#475569', minWidth: 90, textAlign: 'center' }}>
+                  Page <strong>{currentPage}</strong> of <strong>{totalPages.toLocaleString()}</strong>
+                </span>
+                <button
+                  onClick={() => setOffset(offset + pageSize)}
+                  disabled={!canNext || loading}
+                  style={{
+                    padding: '6px 14px', border: '1px solid #cbd5e1', borderRadius: 6,
+                    background: canNext ? 'white' : '#f1f5f9',
+                    color: canNext ? '#475569' : '#cbd5e1',
+                    cursor: canNext && !loading ? 'pointer' : 'not-allowed', fontSize: 13, fontWeight: 600,
+                  }}
+                >Next →</button>
+              </div>
             </div>
           )}
         </div>

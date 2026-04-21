@@ -29,11 +29,16 @@ export async function GET(request: NextRequest) {
 
     const where: any = { isActive: true, approvalStatus: 'APPROVED' }
 
-    // Filter by type: residents have `categories: ['resident']`
+    // Filter by type. Residents use EITHER 'resident' OR 'residential'
+    // depending on which import script added them, so check both.
+    // `hasSome` avoids clobbering `where.OR` which is also used for city/query.
     if (type === 'residential') {
-      where.categories = { has: 'resident' }
+      where.categories = { hasSome: ['resident', 'residential'] }
     } else if (type === 'business') {
-      where.NOT = { categories: { has: 'resident' } }
+      where.NOT = [
+        { categories: { has: 'resident' } },
+        { categories: { has: 'residential' } },
+      ]
     }
 
     if (city) {

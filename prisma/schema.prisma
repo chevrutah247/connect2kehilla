@@ -385,3 +385,15 @@ model BroadcastRecipient {
   @@index([userId])
   @@index([status])
 }
+
+// ============================================
+// КЭШ СИСТЕМНЫХ МЕТРИК (System Cache)
+// ============================================
+// Простое key/value-хранилище для значений, которые
+// пересчитываются по cron-у и читаются на каждый SMS.
+// Пример: business_count = "21,000+" обновляется по воскресеньям.
+model SystemCache {
+  key       String   @id
+  value     String
+  updatedAt DateTime @default(now())
+}

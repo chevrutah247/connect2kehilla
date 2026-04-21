@@ -2,7 +2,8 @@
 // Главный webhook для обработки входящих SMS от Twilio
 
 import { NextRequest, NextResponse } from 'next/server'
-import { sendSMS, formatBusinessResponse, MESSAGES, validateTwilioRequest } from '@/lib/twilio'
+import { sendSMS, formatBusinessResponse, MESSAGES, validateTwilioRequest, getMenuMessage } from '@/lib/twilio'
+import { detectHelpCommand } from '@/lib/help-commands'
 import { parseQuery } from '@/lib/openai'
 import { isShabbatWithBuffer } from '@/lib/shabbat'
 import { getOrCreateUser, isUserBlocked, blockUser, unblockUser, getUserDefaultZip, setUserDefaultZip } from '@/lib/users'
@@ -35,6 +36,24 @@ import {
 } from '@/lib/mazel-tov'
 import { isShabbatNow } from '@/lib/is-shabbat'
 import prisma from '@/lib/db'
+
+// ============================================
+// Help-command → message map (for "SIMCHA ?", "JOBS ?", etc.)
+// ============================================
+import type { HelpKey } from '@/lib/help-commands'
+const HELP_MESSAGE_BY_KEY: Record<HelpKey, string> = {
+  search_help:   MESSAGES.SEARCH_HELP,
+  simcha_help:   MESSAGES.SIMCHA_HELP,
+  lechaim_help:  MESSAGES.LECHAIM_HELP,
+  specials_help: MESSAGES.SPECIALS_HELP,
+  jobs_help:     MESSAGES.JOBS_HELP,
+  minyan_help:   MESSAGES.MINYAN_HELP,
+  zmanim_help:   MESSAGES.ZMANIM_HELP,
+  gmach_help:    MESSAGES.GMACH_HELP,
+  shidduch_help: MESSAGES.SHIDDUCH_HELP,
+  charity_help:  MESSAGES.CHARITY_HELP,
+  zip_help:      MESSAGES.ZIP_HELP,
+}
 
 // ============================================
 // In-memory rate limiter (per phone hash)
@@ -176,12 +195,25 @@ export async function POST(request: NextRequest) {
       return createTwiMLResponse(MESSAGES.HELP)
     }
 
-    // ── Fast MENU/START intercept — same full feature menu ──
+    // ── Fast MENU/START intercept — live feature menu w/ dynamic business count ──
     if (upperTrimmed === 'MENU' || upperTrimmed === 'START' || upperTrimmed === '?') {
+      const menu = await getMenuMessage()
       await prisma.query.create({
-        data: { userId: user.id, rawMessage: body, parsedIntent: 'HELP', responseText: MESSAGES.MENU, processedAt: new Date() }
+        data: { userId: user.id, rawMessage: body, parsedIntent: 'HELP', responseText: menu, processedAt: new Date() }
       })
-      return createTwiMLResponse(MESSAGES.MENU)
+      return createTwiMLResponse(menu)
+    }
+
+    // ── Per-category help commands: "SIMCHA ?", "? jobs", "help minyan", etc. ──
+    // Runs BEFORE Mazel Tov / Charity / Jobs fast-paths so that, e.g.,
+    // "SIMCHA ?" returns SIMCHA_HELP instead of the Mazel Tov list.
+    const helpKey = detectHelpCommand(body)
+    if (helpKey) {
+      const responseText = HELP_MESSAGE_BY_KEY[helpKey]
+      await prisma.query.create({
+        data: { userId: user.id, rawMessage: body, parsedCategory: helpKey, parsedIntent: 'HELP', responseText, processedAt: new Date() }
+      })
+      return createTwiMLResponse(responseText)
     }
 
     // ── Subscriptions: SUB / SUBSCRIBE / UNSUB / MY SUBS / SUB <topic> [zip] ──
@@ -516,7 +548,7 @@ export async function POST(request: NextRequest) {
     switch (parsed.intent) {
       case 'help':
         // AI-detected "help me / what can I do" → show feature menu, not compliance text
-        responseText = MESSAGES.MENU
+        responseText = await getMenuMessage()
         break
 
       case 'stop':
@@ -704,6 +736,11 @@ async function handleSearchInner(
   // Если всё ещё нет категории и имени бизнеса - просим уточнить
   if (!category && !parsed.category && !parsed.businessName) {
     return MESSAGES.NEED_MORE_INFO
+  }
+
+  // Категория понятна, но локации нет (и не было сохранённой) — просим ZIP
+  if (category && !zipCode && !area) {
+    return MESSAGES.ZIP_HELP
   }
 
   console.log(`🔍 SEARCH DEBUG: category=${category}, businessName=${parsed.businessName}, zip=${zipCode}, area=${area}`)

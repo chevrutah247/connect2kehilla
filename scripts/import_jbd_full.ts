@@ -19,8 +19,12 @@ function normalizePhone(areaCode: any, phone: string): string {
 
 function buildName(r: any): string {
   if (r.account_type_name === 'Business' && r.business_name) return r.business_name.trim()
-  // Residential — build from first + last
-  const parts = [r.title, r.first_name, r.last_name].filter(Boolean)
+  // Residential — build from first + last.
+  // Skip `title` if it's purely numeric (source data has "1", "2"… in that
+  // field — likely a page/family index, not an actual honorific).
+  const titleSafe =
+    r.title && !/^\s*\d+\s*$/.test(String(r.title)) ? r.title : null
+  const parts = [titleSafe, r.first_name, r.last_name].filter(Boolean)
   if (parts.length === 0 && r.business_name) return r.business_name.trim()
   return parts.join(' ').trim() || 'Unknown'
 }
