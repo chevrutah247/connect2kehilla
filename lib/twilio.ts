@@ -159,31 +159,42 @@ doctor Flatbush`,
 
   SIMCHA_HELP: `SIMCHA - Mazel Tov Announcements
 
-VIEW: SIMCHA [ZIP or neighborhood]
-Example: SIMCHA 11225
-Example: SIMCHA Crown Heights
-
-POST YOURS: Text ADD SIMCHA
-You receive a template to fill in.
-Types: Engagement, Wedding, Birth,
-Bar/Bat Mitzva
-
-GET NOTIFICATIONS: Text SUBSCRIBE SIMCHA
+📬 GET SIMCHA ALERTS:
+Text SUBSCRIBE SIMCHA
 (or short: SUB SIMCHA)
-STOP NOTIFICATIONS: Text UNSUBSCRIBE SIMCHA
+You'll hear about engagements,
+weddings, births, bar/bat mitzvas.
+
+VIEW recent:
+Text SIMCHA [ZIP or neighborhood]
+Example: SIMCHA 11225
+
+POST YOURS:
+Text ADD SIMCHA
+You'll get a template to fill in.
+
+STOP ALERTS:
+Text UNSUBSCRIBE SIMCHA
 (or short: UNSUB SIMCHA)`,
 
   LECHAIM_HELP: `LECHAIM - L'Chaim Event Announcements
 
-VIEW: LECHAIM [ZIP or neighborhood]
+📬 GET LECHAIM ALERTS:
+Text SUBSCRIBE LECHAIM
+(or short: SUB LECHAIM)
+You'll hear about every l'chaim
+in your community.
+
+VIEW recent:
+Text LECHAIM [ZIP or neighborhood]
 Example: LECHAIM 11225
 
-POST YOURS: Text ADD LECHAIM
-Include: names, date, time, address
+POST YOURS:
+Text ADD LECHAIM
+Include: names, date, time, address.
 
-GET NOTIFICATIONS: Text SUBSCRIBE LECHAIM
-(or short: SUB LECHAIM)
-STOP NOTIFICATIONS: Text UNSUBSCRIBE LECHAIM
+STOP ALERTS:
+Text UNSUBSCRIBE LECHAIM
 (or short: UNSUB LECHAIM)`,
 
   SPECIALS_HELP: `SPECIALS - Kosher Grocery Store Deals
@@ -243,7 +254,7 @@ BIRKAT LEVANA - Kiddush Levana window
 
   GMACH_HELP: `GMACH - Free Loan Services
 
-GET GMACH ALERTS in your area:
+📬 GET GMACH ALERTS in your area:
 Text SUBSCRIBE GMACH [ZIP]
 (or short: SUB GMACH 11225)
 
@@ -252,13 +263,13 @@ someone offers a gmach near you —
 baby items, wedding, money,
 medical, furniture, food, etc.
 
-STOP ALERTS:
-Text UNSUBSCRIBE GMACH
-(or short: UNSUB GMACH)
-
 OFFER A GMACH:
 Email contact@connect2kehilla.com
-or call (888) 516-3399`,
+or call (888) 516-3399
+
+STOP ALERTS:
+Text UNSUBSCRIBE GMACH
+(or short: UNSUB GMACH)`,
 
   SHIDDUCH_HELP: `SHIDDUCH - Matchmaking & Singles
 
@@ -282,6 +293,38 @@ DONATE: Text DONATE [organization name]
 
 LIST YOUR ORG: Text ADD CHARITY
 Free for registered nonprofits.`,
+
+  SUBSCRIBE_HELP: `📬 SUBSCRIBE to SMS alerts
+
+Get notified when new items are
+posted in the categories you care
+about. All subscriptions are free.
+
+AVAILABLE TOPICS:
+• SIMCHA - mazel tovs & engagements
+• LECHAIM - l'chaim events
+• GMACH - free loan offers (by ZIP)
+• JOBS - job postings (by ZIP)
+• CHARITY - tzedaka requests (by ZIP)
+• SFIRA - daily Omer count
+• ROSH CHODESH - monthly reminder
+• BIRKAT LEVANA - monthly reminder
+
+HOW TO SUBSCRIBE:
+Text SUBSCRIBE <topic>
+or short: SUB <topic>
+Example: SUBSCRIBE SIMCHA
+Example: SUB GMACH 11225
+
+VIEW YOUR SUBSCRIPTIONS:
+Text MY SUBS
+
+STOP A SUBSCRIPTION:
+Text UNSUBSCRIBE <topic>
+or: UNSUB <topic>
+
+STOP ALL:
+Text UNSUBSCRIBE`,
 
   ZIP_HELP: `For better results, add your ZIP code
 or neighborhood name.
@@ -334,16 +377,17 @@ export async function getMenuMessage(): Promise<string> {
     '',
     'COMMANDS (add ? for details,',
     'e.g. SIMCHA ? or JOBS ?):',
-    'SEARCH   - find any business',
-    'SIMCHA   - mazel tovs & engagements',
-    "LECHAIM  - l'chaim events",
-    'SPECIALS - grocery store deals',
-    'JOBS     - find or post a job',
-    'MINYAN   - minyan times',
-    'ZMANIM   - zmanim & Jewish calendar',
-    'GMACH    - free loan gemachs',
-    'SHIDDUCH - singles & matchmaking',
-    'CHARITY  - tzedaka & donations',
+    'SEARCH    - find any business',
+    'SIMCHA    - mazel tovs & engagements',
+    "LECHAIM   - l'chaim events",
+    'SPECIALS  - grocery store deals',
+    'JOBS      - find or post a job',
+    'MINYAN    - minyan times',
+    'ZMANIM    - zmanim & Jewish calendar',
+    'GMACH     - free loan gemachs',
+    'SHIDDUCH  - singles & matchmaking',
+    'CHARITY   - tzedaka & donations',
+    'SUBSCRIBE - get SMS alerts (try SUBSCRIBE ?)',
     '',
     `${count} businesses | connect2kehilla.com`,
   ].join('\n')
