@@ -37,11 +37,22 @@ export default function AdminPage() {
   const [data, setData] = useState<Analytics | null>(null)
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState('')
-  const [tab, setTab] = useState<'dashboard' | 'logs' | 'pending'>('dashboard')
+  const [tab, setTab] = useState<'dashboard' | 'logs' | 'pending' | 'active' | 'users' | 'db'>('dashboard')
   const [searchFilter, setSearchFilter] = useState('')
   const [pendingData, setPendingData] = useState<{ businesses: any[]; charityRequests: any[]; announcements: any[]; counts: any } | null>(null)
   const [pendingLoading, setPendingLoading] = useState(false)
   const [pendingCount, setPendingCount] = useState<number | null>(null)
+  const [activeData, setActiveData] = useState<any | null>(null)
+  const [activeLoading, setActiveLoading] = useState(false)
+  const [usersData, setUsersData] = useState<any | null>(null)
+  const [usersLoading, setUsersLoading] = useState(false)
+  const [usersFilter, setUsersFilter] = useState('')
+  const [dbData, setDbData] = useState<any | null>(null)
+  const [dbLoading, setDbLoading] = useState(false)
+  const [dbType, setDbType] = useState<'all' | 'business' | 'residential'>('all')
+  const [dbCity, setDbCity] = useState('')
+  const [dbZip, setDbZip] = useState('')
+  const [dbQuery, setDbQuery] = useState('')
 
   // Load token from localStorage on mount
   useEffect(() => {
@@ -91,6 +102,70 @@ export default function AdminPage() {
   useEffect(() => {
     if (tab === 'pending') loadPending()
   }, [tab])
+
+  // Load active items
+  function loadActive() {
+    if (!token) return
+    setActiveLoading(true)
+    fetch('/api/admin/active', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(d => setActiveData(d))
+      .catch(() => {})
+      .finally(() => setActiveLoading(false))
+  }
+  useEffect(() => {
+    if (tab === 'active') loadActive()
+  }, [tab])
+
+  // Load Users
+  function loadUsers(filter = '') {
+    if (!token) return
+    setUsersLoading(true)
+    const url = `/api/admin/users?limit=200${filter ? `&filter=${encodeURIComponent(filter)}` : ''}`
+    fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(setUsersData)
+      .catch(() => {})
+      .finally(() => setUsersLoading(false))
+  }
+  useEffect(() => {
+    if (tab === 'users' && !usersData) loadUsers()
+  }, [tab])
+
+  // Load DB browser
+  function loadDb() {
+    if (!token) return
+    setDbLoading(true)
+    const params = new URLSearchParams()
+    params.set('type', dbType)
+    params.set('limit', '200')
+    if (dbCity) params.set('city', dbCity)
+    if (dbZip) params.set('zip', dbZip)
+    if (dbQuery) params.set('q', dbQuery)
+    fetch(`/api/admin/db?${params.toString()}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(setDbData)
+      .catch(() => {})
+      .finally(() => setDbLoading(false))
+  }
+  useEffect(() => {
+    if (tab === 'db' && !dbData) loadDb()
+  }, [tab])
+
+  async function handleDelete(type: string, id: string, name: string) {
+    if (!token) return
+    if (!window.confirm(`Delete ${type} "${name}"?\n\nThis will remove it from the live site.`)) return
+    const res = await fetch('/api/admin/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ type, id }),
+    })
+    if (res.ok) loadActive()
+    else {
+      const err = await res.json().catch(() => ({}))
+      alert(`Delete failed: ${err.message || res.status}`)
+    }
+  }
 
   async function handleApprove(type: 'business' | 'charity' | 'announcement', id: string) {
     if (!token) return
@@ -199,6 +274,24 @@ export default function AdminPage() {
           )}
         </button>
         <button
+          onClick={() => setTab('active')}
+          style={{ padding: '14px 20px', background: tab === 'active' ? '#f1f5f9' : 'transparent', border: 'none', borderBottom: tab === 'active' ? '3px solid #059669' : '3px solid transparent', cursor: 'pointer', fontSize: 15, fontWeight: 600, color: tab === 'active' ? '#059669' : '#64748b' }}
+        >
+          📅 Active {activeData?.counts?.total ? `(${activeData.counts.total})` : ''}
+        </button>
+        <button
+          onClick={() => setTab('users')}
+          style={{ padding: '14px 20px', background: tab === 'users' ? '#f1f5f9' : 'transparent', border: 'none', borderBottom: tab === 'users' ? '3px solid #8b5cf6' : '3px solid transparent', cursor: 'pointer', fontSize: 15, fontWeight: 600, color: tab === 'users' ? '#8b5cf6' : '#64748b' }}
+        >
+          👥 Users {usersData?.total ? `(${usersData.total})` : ''}
+        </button>
+        <button
+          onClick={() => setTab('db')}
+          style={{ padding: '14px 20px', background: tab === 'db' ? '#f1f5f9' : 'transparent', border: 'none', borderBottom: tab === 'db' ? '3px solid #0891b2' : '3px solid transparent', cursor: 'pointer', fontSize: 15, fontWeight: 600, color: tab === 'db' ? '#0891b2' : '#64748b' }}
+        >
+          🗂 Database {dbData?.total ? `(${dbData.total})` : ''}
+        </button>
+        <button
           onClick={() => setTab('logs')}
           style={{ padding: '14px 20px', background: tab === 'logs' ? '#f1f5f9' : 'transparent', border: 'none', borderBottom: tab === 'logs' ? '3px solid #2563eb' : '3px solid transparent', cursor: 'pointer', fontSize: 15, fontWeight: 600, color: tab === 'logs' ? '#2563eb' : '#64748b' }}
         >
@@ -217,6 +310,34 @@ export default function AdminPage() {
             onApprove={handleApprove}
             onReject={handleReject}
             onRefresh={loadPending}
+          />
+        )}
+        {tab === 'active' && (
+          <ActiveTab
+            data={activeData}
+            loading={activeLoading}
+            onDelete={handleDelete}
+            onRefresh={loadActive}
+          />
+        )}
+        {tab === 'users' && (
+          <UsersTab
+            data={usersData}
+            loading={usersLoading}
+            filter={usersFilter}
+            setFilter={setUsersFilter}
+            onSearch={loadUsers}
+          />
+        )}
+        {tab === 'db' && (
+          <DbTab
+            data={dbData}
+            loading={dbLoading}
+            type={dbType} setType={setDbType}
+            city={dbCity} setCity={setDbCity}
+            zip={dbZip} setZip={setDbZip}
+            query={dbQuery} setQuery={setDbQuery}
+            onSearch={loadDb}
           />
         )}
         {!loading && data && tab === 'logs' && (
@@ -665,6 +786,498 @@ function LogTab({ logs, totalCount, filter, setFilter }: {
           </tbody>
         </table>
       </div>
+    </div>
+  )
+}
+
+// ============================================
+// Active / Published tab — shows live time-sensitive items with delete action
+// ============================================
+function ActiveTab({
+  data,
+  loading,
+  onDelete,
+  onRefresh,
+}: {
+  data: any | null
+  loading: boolean
+  onDelete: (type: string, id: string, name: string) => void
+  onRefresh: () => void
+}) {
+  if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>Loading active items…</div>
+  if (!data) return <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>No data</div>
+
+  const now = new Date()
+  const daysUntil = (iso: string | Date) => {
+    const d = new Date(iso)
+    return Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+  }
+  const daysAgo = (iso: string | Date) => {
+    const d = new Date(iso)
+    return Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24))
+  }
+
+  const card = (style?: any) => ({
+    background: 'white', borderRadius: 12, padding: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+    border: '1px solid #e2e8f0', marginBottom: 10, ...style,
+  })
+
+  const deleteBtn = (type: string, id: string, name: string) => (
+    <button
+      onClick={() => onDelete(type, id, name)}
+      style={{ padding: '6px 12px', background: '#dc2626', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}
+    >
+      🗑 Delete
+    </button>
+  )
+
+  const expiryBadge = (iso: string | Date) => {
+    const d = daysUntil(iso)
+    const color = d <= 1 ? '#dc2626' : d <= 3 ? '#f59e0b' : '#059669'
+    return (
+      <span style={{ fontSize: 11, fontWeight: 700, color, background: `${color}20`, padding: '2px 8px', borderRadius: 4 }}>
+        {d <= 0 ? 'Expires today' : `${d} day${d !== 1 ? 's' : ''} left`}
+      </span>
+    )
+  }
+
+  const sectionHeader = (icon: string, label: string, count: number, color: string) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, marginTop: 24 }}>
+      <h3 style={{ color, margin: 0 }}>{icon} {label}</h3>
+      <span style={{ background: `${color}20`, color, padding: '2px 10px', borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
+        {count}
+      </span>
+    </div>
+  )
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <div>
+          <h2 style={{ margin: 0 }}>📅 Active / Published</h2>
+          <p style={{ color: '#64748b', fontSize: 13, marginTop: 4 }}>
+            {data.counts.total} items live on the site right now
+          </p>
+        </div>
+        <button
+          onClick={onRefresh}
+          style={{ padding: '8px 16px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}
+        >
+          🔄 Refresh
+        </button>
+      </div>
+
+      {/* Mazel Tov (sent last 30 days) */}
+      {data.announcements?.length > 0 && (
+        <>
+          {sectionHeader('🎊', 'Mazel Tov (last 30 days)', data.announcements.length, '#C9A227')}
+          {data.announcements.map((a: any) => (
+            <div key={a.id} style={card({ background: '#fffbeb', borderLeftWidth: 4, borderLeftColor: '#C9A227', borderLeftStyle: 'solid' })}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 11, color: '#64748b', marginBottom: 6 }}>
+                    {a.type?.toUpperCase()} • Sent {a.sentAt ? new Date(a.sentAt).toLocaleString() : '—'} • {a.recipientCount || 0} recipients
+                  </div>
+                  <div style={{ fontSize: 14, whiteSpace: 'pre-wrap' }}>{a.text}</div>
+                </div>
+                {deleteBtn('announcement', a.id, a.text.slice(0, 40))}
+              </div>
+            </div>
+          ))}
+        </>
+      )}
+
+      {/* Charity */}
+      {data.charityRequests?.length > 0 && (
+        <>
+          {sectionHeader('❤️', 'Charity Requests', data.charityRequests.length, '#dc2626')}
+          {data.charityRequests.map((c: any) => (
+            <div key={c.id} style={card()}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
+                    <strong>{c.name}</strong>
+                    <span style={{ color: '#64748b', fontSize: 12 }}>📞 {c.phone}</span>
+                    {c.area && <span style={{ color: '#64748b', fontSize: 12 }}>🏘 {c.area}</span>}
+                    {c.zipCode && <span style={{ color: '#64748b', fontSize: 12 }}>🗺 {c.zipCode}</span>}
+                    {c.amount && <span style={{ color: '#059669', fontSize: 12, fontWeight: 700 }}>💵 {c.amount}</span>}
+                    {expiryBadge(c.expiresAt)}
+                  </div>
+                  <p style={{ margin: 0, color: '#475569', fontSize: 13 }}>{c.description}</p>
+                </div>
+                {deleteBtn('charity', c.id, c.name)}
+              </div>
+            </div>
+          ))}
+        </>
+      )}
+
+      {/* Paid Listings */}
+      {data.listings?.length > 0 && (
+        <>
+          {sectionHeader('💰', 'Paid Listings', data.listings.length, '#2563eb')}
+          {data.listings.map((l: any) => (
+            <div key={l.id} style={card()}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
+                    <strong>{l.business?.name || '—'}</strong>
+                    <span style={{ background: '#dbeafe', color: '#1e40af', padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 700 }}>
+                      {l.plan}
+                    </span>
+                    <span style={{ color: '#059669', fontSize: 12, fontWeight: 700 }}>${l.price}</span>
+                    {expiryBadge(l.expiresAt)}
+                  </div>
+                  <div style={{ color: '#64748b', fontSize: 12 }}>
+                    📞 {l.business?.phone} • {l.business?.area || l.business?.zipCode || '—'} • Paid {new Date(l.paidAt).toLocaleDateString()}
+                  </div>
+                </div>
+                {deleteBtn('listing', l.id, l.business?.name || 'listing')}
+              </div>
+            </div>
+          ))}
+        </>
+      )}
+
+      {/* Paid Businesses (without active Listing) */}
+      {data.paidBusinesses?.length > 0 && (
+        <>
+          {sectionHeader('🏪', 'Businesses on Paid Plans', data.paidBusinesses.length, '#C9A227')}
+          {data.paidBusinesses.map((b: any) => (
+            <div key={b.id} style={card()}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
+                    <strong>{b.name}</strong>
+                    <span style={{ background: '#fef3c7', color: '#92400e', padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 700 }}>
+                      {b.status}
+                    </span>
+                    <span style={{ color: '#64748b', fontSize: 12 }}>{b.listingType}</span>
+                  </div>
+                  <div style={{ color: '#64748b', fontSize: 12 }}>
+                    📞 {b.phone} • {b.area || b.zipCode || '—'} • Updated {new Date(b.updatedAt).toLocaleDateString()}
+                  </div>
+                </div>
+                {deleteBtn('business', b.id, b.name)}
+              </div>
+            </div>
+          ))}
+        </>
+      )}
+
+      {/* Jobs */}
+      {data.jobs?.length > 0 && (
+        <>
+          {sectionHeader('📋', 'Jobs (hiring/seeking)', data.jobs.length, '#7c3aed')}
+          {data.jobs.map((j: any) => (
+            <div key={j.id} style={card()}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
+                    <strong>{j.title}</strong>
+                    <span style={{ background: j.type === 'OFFERING' ? '#dbeafe' : '#d1fae5', color: j.type === 'OFFERING' ? '#1e40af' : '#065f46', padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 700 }}>
+                      {j.type === 'OFFERING' ? 'HIRING' : 'SEEKING'}
+                    </span>
+                    {j.salary && <span style={{ color: '#059669', fontSize: 12, fontWeight: 700 }}>💵 {j.salary}</span>}
+                    {expiryBadge(j.expiresAt)}
+                  </div>
+                  <div style={{ color: '#64748b', fontSize: 12, marginBottom: 4 }}>
+                    📞 {j.phone} • {j.area || j.zipCode || '—'} • {j.category}
+                  </div>
+                  <div style={{ color: '#475569', fontSize: 13 }}>{j.description}</div>
+                </div>
+                {deleteBtn('job', j.id, j.title)}
+              </div>
+            </div>
+          ))}
+        </>
+      )}
+
+      {/* Workers */}
+      {data.workers?.length > 0 && (
+        <>
+          {sectionHeader('👷', 'Day Workers', data.workers.length, '#0891b2')}
+          {data.workers.map((w: any) => (
+            <div key={w.id} style={card()}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
+                    <strong>{w.category}</strong>
+                    <span style={{ color: '#64748b', fontSize: 12 }}>📞 {w.phone}</span>
+                    {w.area && <span style={{ color: '#64748b', fontSize: 12 }}>🏘 {w.area}</span>}
+                    {w.zipCode && <span style={{ color: '#64748b', fontSize: 12 }}>🗺 {w.zipCode}</span>}
+                    {expiryBadge(w.expiresAt)}
+                  </div>
+                  {w.description && <div style={{ color: '#475569', fontSize: 13 }}>{w.description}</div>}
+                </div>
+                {deleteBtn('worker', w.id, w.category)}
+              </div>
+            </div>
+          ))}
+        </>
+      )}
+
+      {/* Empty state */}
+      {data.counts?.total === 0 && (
+        <div style={{ background: 'white', borderRadius: 12, padding: 60, textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', marginTop: 20 }}>
+          <div style={{ fontSize: 48, marginBottom: 12 }}>📭</div>
+          <h2 style={{ margin: 0, color: '#64748b' }}>Nothing active right now</h2>
+          <p style={{ color: '#94a3b8', marginTop: 8 }}>
+            No live items with expiration timers at this moment.
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ============================================
+// Users tab — anyone who has texted our service
+// ============================================
+function UsersTab({
+  data, loading, filter, setFilter, onSearch,
+}: {
+  data: any | null
+  loading: boolean
+  filter: string
+  setFilter: (v: string) => void
+  onSearch: (filter?: string) => void
+}) {
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <div>
+          <h2 style={{ margin: 0 }}>👥 Users</h2>
+          <p style={{ color: '#64748b', fontSize: 13, marginTop: 4 }}>
+            {data ? `${data.total} total · ${data.totalActive} active · ${data.totalBlocked} opted out (STOP)` : 'Loading…'}
+          </p>
+        </div>
+      </div>
+
+      {/* Filter */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        <input
+          value={filter}
+          onChange={e => setFilter(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') onSearch(filter) }}
+          placeholder="Filter by phone, ZIP, or area…"
+          style={{ flex: 1, padding: 10, border: '1px solid #cbd5e1', borderRadius: 8, fontSize: 14 }}
+        />
+        <button
+          onClick={() => onSearch(filter)}
+          style={{ padding: '10px 20px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 8, fontWeight: 600, cursor: 'pointer' }}
+        >
+          🔍 Search
+        </button>
+        <button
+          onClick={() => { setFilter(''); onSearch('') }}
+          style={{ padding: '10px 20px', background: '#e2e8f0', color: '#475569', border: 'none', borderRadius: 8, fontWeight: 600, cursor: 'pointer' }}
+        >
+          Reset
+        </button>
+      </div>
+
+      {loading && <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>Loading…</div>}
+
+      {!loading && data && (
+        <div style={{ background: 'white', borderRadius: 12, padding: 0, boxShadow: '0 1px 3px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+            <thead style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+              <tr>
+                <th style={{ padding: 10, textAlign: 'left' }}>Phone</th>
+                <th style={{ padding: 10, textAlign: 'left' }}>ZIP</th>
+                <th style={{ padding: 10, textAlign: 'left' }}>Area</th>
+                <th style={{ padding: 10, textAlign: 'right' }}>Queries</th>
+                <th style={{ padding: 10, textAlign: 'right' }}>Leads</th>
+                <th style={{ padding: 10, textAlign: 'right' }}>Subs</th>
+                <th style={{ padding: 10, textAlign: 'left' }}>First seen</th>
+                <th style={{ padding: 10, textAlign: 'left' }}>Last active</th>
+                <th style={{ padding: 10, textAlign: 'center' }}>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.users?.map((u: any) => (
+                <tr key={u.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <td style={{ padding: 10, fontFamily: 'monospace' }}>{u.phoneMasked || '—'}</td>
+                  <td style={{ padding: 10 }}>{u.defaultZip || '—'}</td>
+                  <td style={{ padding: 10 }}>{u.defaultArea || '—'}</td>
+                  <td style={{ padding: 10, textAlign: 'right' }}>{u._count?.queries ?? 0}</td>
+                  <td style={{ padding: 10, textAlign: 'right' }}>{u._count?.leads ?? 0}</td>
+                  <td style={{ padding: 10, textAlign: 'right' }}>{u._count?.subscriptions ?? 0}</td>
+                  <td style={{ padding: 10, color: '#64748b', fontSize: 12 }}>{new Date(u.createdAt).toLocaleDateString()}</td>
+                  <td style={{ padding: 10, color: '#64748b', fontSize: 12 }}>{new Date(u.lastActiveAt).toLocaleString()}</td>
+                  <td style={{ padding: 10, textAlign: 'center' }}>
+                    {u.isBlocked ? (
+                      <span style={{ background: '#fee2e2', color: '#dc2626', padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 700 }}>BLOCKED</span>
+                    ) : (
+                      <span style={{ background: '#d1fae5', color: '#065f46', padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 700 }}>ACTIVE</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+              {data.users?.length === 0 && (
+                <tr><td colSpan={9} style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>No users match this filter</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ============================================
+// Database browser — businesses + residents, filter by city/ZIP
+// ============================================
+function DbTab({
+  data, loading, type, setType, city, setCity, zip, setZip, query, setQuery, onSearch,
+}: {
+  data: any | null
+  loading: boolean
+  type: 'all' | 'business' | 'residential'
+  setType: (v: 'all' | 'business' | 'residential') => void
+  city: string; setCity: (v: string) => void
+  zip: string; setZip: (v: string) => void
+  query: string; setQuery: (v: string) => void
+  onSearch: () => void
+}) {
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <div>
+          <h2 style={{ margin: 0 }}>🗂 Database Browser</h2>
+          <p style={{ color: '#64748b', fontSize: 13, marginTop: 4 }}>
+            {data ? `${data.total.toLocaleString()} matching records` : 'Browse businesses & residents'}
+          </p>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div style={{ background: 'white', borderRadius: 12, padding: 16, marginBottom: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 4 }}>
+            {(['all', 'business', 'residential'] as const).map(t => (
+              <button
+                key={t}
+                onClick={() => setType(t)}
+                style={{
+                  padding: '8px 14px',
+                  background: type === t ? '#0891b2' : '#e2e8f0',
+                  color: type === t ? 'white' : '#475569',
+                  border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 600, fontSize: 13,
+                }}
+              >
+                {t === 'all' ? 'All' : t === 'business' ? '🏪 Business' : '🏠 Resident'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <input
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') onSearch() }}
+            placeholder="Name / phone…"
+            style={{ flex: 2, minWidth: 200, padding: 10, border: '1px solid #cbd5e1', borderRadius: 8, fontSize: 14 }}
+          />
+          <input
+            value={city}
+            onChange={e => setCity(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') onSearch() }}
+            placeholder="City or area"
+            list="city-list"
+            style={{ flex: 1, minWidth: 140, padding: 10, border: '1px solid #cbd5e1', borderRadius: 8, fontSize: 14 }}
+          />
+          <datalist id="city-list">
+            {data?.cities?.map((c: any) => <option key={c.city} value={c.city}>{c.count}</option>)}
+          </datalist>
+          <input
+            value={zip}
+            onChange={e => setZip(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') onSearch() }}
+            placeholder="ZIP"
+            style={{ width: 100, padding: 10, border: '1px solid #cbd5e1', borderRadius: 8, fontSize: 14 }}
+          />
+          <button
+            onClick={onSearch}
+            style={{ padding: '10px 20px', background: '#0891b2', color: 'white', border: 'none', borderRadius: 8, fontWeight: 600, cursor: 'pointer' }}
+          >
+            🔍 Search
+          </button>
+          <button
+            onClick={() => { setCity(''); setZip(''); setQuery(''); setType('all'); onSearch() }}
+            style={{ padding: '10px 20px', background: '#e2e8f0', color: '#475569', border: 'none', borderRadius: 8, fontWeight: 600, cursor: 'pointer' }}
+          >
+            Reset
+          </button>
+        </div>
+
+        {data?.cities?.length > 0 && (
+          <div style={{ marginTop: 12, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 12, color: '#64748b', alignSelf: 'center', marginRight: 4 }}>Top cities:</span>
+            {data.cities.slice(0, 10).map((c: any) => (
+              <button
+                key={c.city}
+                onClick={() => { setCity(c.city); onSearch() }}
+                style={{ padding: '4px 10px', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: 12, fontSize: 12, cursor: 'pointer', color: '#475569' }}
+              >
+                {c.city} <span style={{ color: '#94a3b8' }}>({c.count})</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {loading && <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>Loading…</div>}
+
+      {!loading && data && (
+        <div style={{ background: 'white', borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+            <thead style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+              <tr>
+                <th style={{ padding: 10, textAlign: 'left' }}>Type</th>
+                <th style={{ padding: 10, textAlign: 'left' }}>Name</th>
+                <th style={{ padding: 10, textAlign: 'left' }}>Phone</th>
+                <th style={{ padding: 10, textAlign: 'left' }}>City / Area</th>
+                <th style={{ padding: 10, textAlign: 'left' }}>ZIP</th>
+                <th style={{ padding: 10, textAlign: 'left' }}>Category</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.items?.map((b: any) => {
+                const isResident = b.categories?.includes('resident')
+                return (
+                  <tr key={b.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <td style={{ padding: 10 }}>
+                      {isResident ? (
+                        <span style={{ background: '#dbeafe', color: '#1e40af', padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 700 }}>🏠 RES</span>
+                      ) : (
+                        <span style={{ background: '#fef3c7', color: '#92400e', padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 700 }}>🏪 BIZ</span>
+                      )}
+                    </td>
+                    <td style={{ padding: 10, fontWeight: 600 }}>{b.name}</td>
+                    <td style={{ padding: 10, fontFamily: 'monospace', color: '#475569' }}>{b.phone || '—'}</td>
+                    <td style={{ padding: 10 }}>{b.city || b.area || '—'}</td>
+                    <td style={{ padding: 10 }}>{b.zipCode || '—'}</td>
+                    <td style={{ padding: 10, color: '#64748b', fontSize: 12 }}>
+                      {isResident ? 'Resident' : (b.categoryRaw || (b.categories || []).slice(0, 3).join(', '))}
+                    </td>
+                  </tr>
+                )
+              })}
+              {data.items?.length === 0 && (
+                <tr><td colSpan={6} style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>No records match — try different filters</td></tr>
+              )}
+            </tbody>
+          </table>
+          {data.total > data.items?.length && (
+            <div style={{ padding: 12, textAlign: 'center', color: '#94a3b8', fontSize: 12, borderTop: '1px solid #f1f5f9' }}>
+              Showing {data.items.length} of {data.total.toLocaleString()} — narrow your filters to see more
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
