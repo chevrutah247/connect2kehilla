@@ -24,6 +24,7 @@ export type HelpKey =
   | 'gmach_help'
   | 'shidduch_help'
   | 'charity_help'
+  | 'subscribe_help'
   | 'zip_help'
 
 // Canonical category → aliases recognised in input.
@@ -39,6 +40,7 @@ const CATEGORY_ALIASES: Array<{ key: HelpKey; aliases: string[] }> = [
   { key: 'gmach_help', aliases: ['gmach', 'gmah', 'gemach', 'gemachs'] },
   { key: 'shidduch_help', aliases: ['shidduch', 'shidduchim'] },
   { key: 'charity_help', aliases: ['charity', 'tzedaka', 'tzedakah', 'donate', 'donation'] },
+  { key: 'subscribe_help', aliases: ['subscribe', 'sub', 'subs', 'subscription', 'subscriptions', 'alerts', 'notifications'] },
   { key: 'zip_help', aliases: ['zip', 'zipcode', 'zip code'] },
 ]
 

@@ -52,6 +52,7 @@ const HELP_MESSAGE_BY_KEY: Record<HelpKey, string> = {
   gmach_help:    MESSAGES.GMACH_HELP,
   shidduch_help: MESSAGES.SHIDDUCH_HELP,
   charity_help:  MESSAGES.CHARITY_HELP,
+  subscribe_help: MESSAGES.SUBSCRIBE_HELP,
   zip_help:      MESSAGES.ZIP_HELP,
 }
 
