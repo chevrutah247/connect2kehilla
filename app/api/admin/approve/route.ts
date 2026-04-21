@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
   if (!type || !id || !action) {
     return NextResponse.json({ error: 'Missing required fields: type, id, action' }, { status: 400 })
   }
-  if (!['business', 'charity'].includes(type)) {
+  if (!['business', 'charity', 'announcement'].includes(type)) {
     return NextResponse.json({ error: 'Invalid type' }, { status: 400 })
   }
   if (!['approve', 'reject'].includes(action)) {
@@ -52,12 +52,24 @@ export async function POST(request: NextRequest) {
         data: updateData,
       })
       return NextResponse.json({ ok: true, id: updated.id, approvalStatus: updated.approvalStatus })
-    } else {
+    } else if (type === 'charity') {
       const updated = await prisma.charityRequest.update({
         where: { id },
         data: updateData,
       })
       return NextResponse.json({ ok: true, id: updated.id, approvalStatus: updated.approvalStatus })
+    } else {
+      // announcement (mazel tov / simcha)
+      if (action === 'approve') {
+        // Approval triggers broadcast
+        const { approveAndBroadcast } = await import('@/lib/mazel-tov')
+        const result = await approveAndBroadcast(id, 'admin')
+        return NextResponse.json({ ok: true, id, approvalStatus: 'APPROVED', sent: result.sent, failed: result.failed })
+      } else {
+        const { rejectAnnouncement } = await import('@/lib/mazel-tov')
+        await rejectAnnouncement(id, reason, 'admin')
+        return NextResponse.json({ ok: true, id, approvalStatus: 'REJECTED' })
+      }
     }
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })

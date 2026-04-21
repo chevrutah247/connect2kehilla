@@ -16,7 +16,9 @@ datasource db {
 // ============================================
 model Business {
   id            String   @id @default(cuid())
-  name          String
+  name          String   // English (transliterated if Yiddish/Hebrew original)
+  nameYiddish   String?  // Original Yiddish name
+  nameHebrew    String?  // Original Hebrew name
   phone         String
   categoryRaw   String?
   categories    String[]
@@ -75,6 +77,51 @@ enum ApprovalStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+// ============================================
+// ПОДПИСКИ (Subscriptions)
+// ============================================
+model Subscription {
+  id          String   @id @default(cuid())
+  userId      String                              // FK to User
+  user        User     @relation(fields: [userId], references: [id])
+  topic       String                              // "mazel_tov", "sfira", "rosh_chodesh", "birkat_levana", "gmach", "jobs", "charity"
+  zipCode     String?                             // optional location filter (e.g. GMACH wants nearby)
+  area        String?                             // optional area filter
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  lastSentAt  DateTime?                           // dedup — don't send the same subscription twice in a window
+
+  @@unique([userId, topic])                       // one subscription per user per topic
+  @@index([topic])
+  @@index([isActive])
+  @@index([zipCode])
+}
+
+// ============================================
+// АНОНСЫ (Mazel Tov / Simcha / Community announcements)
+// ============================================
+model Announcement {
+  id              String          @id @default(cuid())
+  type            String          @default("mazel_tov")  // "mazel_tov", "simcha", "engagement", "wedding", "birth", "bar_mitzvah", "general"
+  text            String                                  // the announcement message
+  submittedByPhone String?                                // phone of submitter (for moderation / abuse tracking)
+  submittedByName String?                                 // optional name
+  zipCode         String?                                 // optional location
+  area            String?
+  approvalStatus  ApprovalStatus  @default(PENDING)
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  rejectionReason String?
+  sentAt          DateTime?                               // when blast went out
+  recipientCount  Int             @default(0)             // how many subscribers received it
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([approvalStatus])
+  @@index([type])
+  @@index([createdAt])
 }
 
 enum ListingType {
@@ -204,6 +251,7 @@ model User {
   queries       Query[]
   leads         Lead[]
   broadcasts    BroadcastRecipient[]
+  subscriptions Subscription[]
 
   @@index([phoneHash])
   @@index([phone])

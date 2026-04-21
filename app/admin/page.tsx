@@ -39,7 +39,7 @@ export default function AdminPage() {
   const [err, setErr] = useState('')
   const [tab, setTab] = useState<'dashboard' | 'logs' | 'pending'>('dashboard')
   const [searchFilter, setSearchFilter] = useState('')
-  const [pendingData, setPendingData] = useState<{ businesses: any[]; charityRequests: any[]; counts: any } | null>(null)
+  const [pendingData, setPendingData] = useState<{ businesses: any[]; charityRequests: any[]; announcements: any[]; counts: any } | null>(null)
   const [pendingLoading, setPendingLoading] = useState(false)
   const [pendingCount, setPendingCount] = useState<number | null>(null)
 
@@ -92,7 +92,7 @@ export default function AdminPage() {
     if (tab === 'pending') loadPending()
   }, [tab])
 
-  async function handleApprove(type: 'business' | 'charity', id: string) {
+  async function handleApprove(type: 'business' | 'charity' | 'announcement', id: string) {
     if (!token) return
     const res = await fetch('/api/admin/approve', {
       method: 'POST',
@@ -102,7 +102,7 @@ export default function AdminPage() {
     if (res.ok) loadPending()
   }
 
-  async function handleReject(type: 'business' | 'charity', id: string) {
+  async function handleReject(type: 'business' | 'charity' | 'announcement', id: string) {
     if (!token) return
     const reason = window.prompt('Reason for rejection (optional):')
     const res = await fetch('/api/admin/approve', {
@@ -242,17 +242,17 @@ function PendingTab({
   onReject,
   onRefresh,
 }: {
-  data: { businesses: any[]; charityRequests: any[]; counts: any } | null
+  data: { businesses: any[]; charityRequests: any[]; announcements: any[]; counts: any } | null
   loading: boolean
-  onApprove: (type: 'business' | 'charity', id: string) => void
-  onReject: (type: 'business' | 'charity', id: string) => void
+  onApprove: (type: 'business' | 'charity' | 'announcement', id: string) => void
+  onReject: (type: 'business' | 'charity' | 'announcement', id: string) => void
   onRefresh: () => void
 }) {
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>Loading pending items…</div>
   if (!data) return <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>No data</div>
 
-  const { businesses = [], charityRequests = [] } = data
-  const total = businesses.length + charityRequests.length
+  const { businesses = [], charityRequests = [], announcements = [] } = data
+  const total = businesses.length + charityRequests.length + announcements.length
 
   if (total === 0) {
     return (
@@ -383,6 +383,56 @@ function PendingTab({
                     </button>
                     <button
                       onClick={() => onReject('charity', c.id)}
+                      style={{ padding: '10px 16px', background: '#dc2626', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}
+                    >
+                      ✗ Reject
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {announcements.length > 0 && (
+        <div>
+          <h3 style={{ color: '#1e293b', marginBottom: 12 }}>🎊 Mazel Tov / Simcha ({announcements.length})</h3>
+          <p style={{ color: '#64748b', fontSize: 13, marginTop: -8, marginBottom: 12 }}>
+            ⚠️ Approving will <strong>immediately broadcast</strong> via SMS to all Mazel Tov subscribers.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {announcements.map((a: any) => (
+              <div key={a.id} style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #fde68a' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                      <span style={{ background: '#C9A227', color: 'white', padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 700 }}>
+                        {a.type?.toUpperCase().replace(/_/g, ' ') || 'MAZEL TOV'}
+                      </span>
+                      <span style={{ color: '#64748b', fontSize: 12 }}>
+                        Submitted {new Date(a.createdAt).toLocaleString()}
+                      </span>
+                    </div>
+                    <p style={{ marginTop: 0, padding: 12, background: '#fffbeb', borderRadius: 6, fontSize: 14, color: '#1e293b', lineHeight: 1.5, whiteSpace: 'pre-wrap', borderLeft: '4px solid #C9A227' }}>
+                      {a.text}
+                    </p>
+                    <div style={{ marginTop: 8, fontSize: 13, color: '#475569', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                      {a.submittedByName && <span>👤 {a.submittedByName}</span>}
+                      {a.submittedByPhone && <span>📞 {a.submittedByPhone}</span>}
+                      {a.area && <span>🏘 {a.area}</span>}
+                      {a.zipCode && <span>🗺 {a.zipCode}</span>}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 120 }}>
+                    <button
+                      onClick={() => onApprove('announcement', a.id)}
+                      style={{ padding: '10px 16px', background: '#059669', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}
+                    >
+                      ✓ Approve & Send
+                    </button>
+                    <button
+                      onClick={() => onReject('announcement', a.id)}
                       style={{ padding: '10px 16px', background: '#dc2626', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}
                     >
                       ✗ Reject

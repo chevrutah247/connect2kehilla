@@ -48,13 +48,21 @@ export async function GET(request: NextRequest) {
     take: 50,
   })
 
+  const announcements = await prisma.announcement.findMany({
+    where: { approvalStatus: 'PENDING' },
+    orderBy: { createdAt: 'desc' },
+    take: 50,
+  })
+
   return NextResponse.json({
     businesses,
     charityRequests,
+    announcements,
     counts: {
       businesses: businesses.length,
       charityRequests: charityRequests.length,
-      total: businesses.length + charityRequests.length,
+      announcements: announcements.length,
+      total: businesses.length + charityRequests.length + announcements.length,
     },
   })
 }

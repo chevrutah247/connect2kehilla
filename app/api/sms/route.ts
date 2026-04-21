@@ -25,6 +25,8 @@ import {
   formatFasts,
   formatBirkatHalevana,
 } from '@/lib/jewish-calendar'
+import { detectSubIntent, handleSubIntent, subscribeHint } from '@/lib/subscriptions'
+import { parseMazelTovSubmission, submitMazelTov } from '@/lib/mazel-tov'
 import { isShabbatNow } from '@/lib/is-shabbat'
 import prisma from '@/lib/db'
 
@@ -174,6 +176,37 @@ export async function POST(request: NextRequest) {
         data: { userId: user.id, rawMessage: body, parsedIntent: 'HELP', responseText: MESSAGES.MENU, processedAt: new Date() }
       })
       return createTwiMLResponse(MESSAGES.MENU)
+    }
+
+    // ── Subscriptions: SUB / SUBSCRIBE / UNSUB / MY SUBS / SUB <topic> [zip] ──
+    const subIntent = detectSubIntent(body)
+    if (subIntent) {
+      const responseText = await handleSubIntent(subIntent, user.id)
+      if (responseText) {
+        await prisma.query.create({
+          data: { userId: user.id, rawMessage: body, parsedCategory: 'subscription', parsedIntent: 'INFO', responseText, processedAt: new Date() }
+        })
+        return createTwiMLResponse(responseText)
+      }
+    }
+
+    // ── Mazel Tov / Simcha submission: "MAZEL TOV <text>" or "SIMCHA <text>" ──
+    const mtSubmission = parseMazelTovSubmission(body)
+    if (mtSubmission) {
+      try {
+        await submitMazelTov({
+          text: mtSubmission.text,
+          type: mtSubmission.type,
+          submittedByPhone: from,
+        })
+        const responseText = `🎊 Thank you! Your mazel tov is pending review.\n\nOnce approved by our team it will be sent to all Mazel Tov subscribers.\n\nReply SUB to see all subscriptions.`
+        await prisma.query.create({
+          data: { userId: user.id, rawMessage: body, parsedCategory: 'mazel_tov_submission', parsedIntent: 'INFO', responseText, processedAt: new Date() }
+        })
+        return createTwiMLResponse(responseText)
+      } catch (err) {
+        console.error('Mazel Tov submission error:', err)
+      }
     }
 
     // ── SHIDDUCH — static response with shidduch resource links ──
@@ -349,7 +382,7 @@ export async function POST(request: NextRequest) {
           category = 'zman_menu'
           break
         case 'sfira':
-          responseText = formatSfiratHaOmer()
+          responseText = formatSfiratHaOmer() + subscribeHint('sfira')
           category = 'sfira'
           break
         case 'candle': {
@@ -362,7 +395,7 @@ export async function POST(request: NextRequest) {
           break
         }
         case 'rosh_chodesh':
-          responseText = formatRoshChodesh()
+          responseText = formatRoshChodesh() + subscribeHint('rosh_chodesh')
           category = 'rosh_chodesh'
           break
         case 'fast':
@@ -370,7 +403,7 @@ export async function POST(request: NextRequest) {
           category = 'fast'
           break
         case 'birkat_levana':
-          responseText = formatBirkatHalevana()
+          responseText = formatBirkatHalevana() + subscribeHint('birkat_levana')
           category = 'birkat_levana'
           break
       }

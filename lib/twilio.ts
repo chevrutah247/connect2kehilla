@@ -97,6 +97,9 @@ Msg & data rates may apply.`,
 📅 ZMAN — calendar menu
   CANDLE / SFIRA / ROSH CHODESH
   FAST / BIRKAT LEVANA
+📬 SUB — subscribe to updates
+  Mazel Tov / RC / BL / Sfira / Gmach
+🎊 MAZEL TOV <text> — share simcha
 🏷 SPECIALS: text SPECIALS
 👷 JOBS: text JOBS or "job 11213"
 ❤️ CHARITY: text CHARITY

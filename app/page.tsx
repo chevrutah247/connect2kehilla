@@ -136,6 +136,7 @@ export default function Home() {
             <a href="/add-business" className="text-gray-300 hover:text-white transition">🏪 Add Business</a>
             <a href="/add-service" className="text-gray-300 hover:text-white transition">🔧 Add Service</a>
             <a href="/add-charity" className="text-gray-300 hover:text-white transition">❤️ Charity</a>
+            <a href="/add-mazel-tov" className="text-gray-300 hover:text-white transition">🎊 Mazel Tov</a>
           </div>
           <a href="sms:+18885163399" className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-bold">📱 Text Us</a>
         </div>
