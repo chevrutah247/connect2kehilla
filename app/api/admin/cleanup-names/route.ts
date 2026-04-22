@@ -34,7 +34,7 @@ function checkAuth(request: NextRequest): boolean {
 // Функция очистки одного имени
 // Возвращает очищенную строку + список применённых правил
 // ============================================
-export function cleanName(raw: string): { clean: string; applied: string[] } {
+function cleanName(raw: string): { clean: string; applied: string[] } {
   let s = raw
   const applied: string[] = []
 
