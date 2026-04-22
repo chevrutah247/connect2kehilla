@@ -1,12 +1,13 @@
 // Admin one-off: чистим мусор в поле Business.name
 //
-// Что убираем:
-//   1) Ведущий "<digits> " — артефакт импорта JBD ("1 ADLER" → "ADLER")
-//   2) Ведущий "<digits>. " или "<digits>) " — варианты нумерации
-//   3) Ведущие знаки пунктуации после цифр (. , ; :) — "1 . COLEMAN" → "COLEMAN"
-//   4) Ведущие bullet-символы (• · * -) — если остались от импорта
-//   5) Множественные пробелы в середине → один пробел
-//   6) Leading/trailing whitespace
+// Что убираем (консервативно — только явные артефакты JBD-импорта):
+//   1) Ведущий "1 " (единица + пробел) — артефакт JBD ("1 ADLER" → "ADLER")
+//      Только literal "1 ", не любые цифры — иначе ломает "13th Ave", "5 Star Photo",
+//      "11219 Plumbing" и т.п.
+//   2) Множественные пробелы в середине → один пробел
+//   3) Leading/trailing whitespace
+//
+// Точки/запятые в именах НЕ трогаем (по запросу — "1 . COLEMAN" → ". COLEMAN").
 //
 // Usage:
 //   GET /api/admin/cleanup-names?dry=1    — DRY RUN: отчёт без изменений
@@ -14,8 +15,8 @@
 //
 // Auth: Bearer <CRON_SECRET> или <ADMIN_PASSWORD>
 //
-//   curl -H "Authorization: Bearer $CRON_SECRET" \
-//     https://connect2kehilla.com/api/admin/cleanup-names?dry=1
+//   curl -L -H "Authorization: Bearer $CRON_SECRET" \
+//     https://www.connect2kehilla.com/api/admin/cleanup-names?dry=1
 
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/db'
@@ -33,32 +34,30 @@ function checkAuth(request: NextRequest): boolean {
 // ============================================
 // Функция очистки одного имени
 // Возвращает очищенную строку + список применённых правил
+//
+// КОНСЕРВАТИВНО: режем ТОЛЬКО явные JBD-артефакты, не трогаем легитимные
+// названия типа "13th Ave Home Center", "5 Star Photo", "11219 Plumbing".
 // ============================================
 function cleanName(raw: string): { clean: string; applied: string[] } {
   let s = raw
   const applied: string[] = []
 
-  // 1) Ведущие цифры с необязательным разделителем и пробелом: "1 ", "1. ", "2) ", "3 - "
-  const m1 = s.match(/^(\d+)[.)\s:,;-]*\s*/)
-  if (m1 && m1[0].length > 0) {
-    s = s.slice(m1[0].length)
-    applied.push('digit-prefix')
+  // 1) Ведущий литеральный "1 " (единица + пробел) — артефакт JBD-импорта,
+  //    где r.title содержал "1" как индекс/family-size. Пример: "1 ADLER" → "ADLER".
+  //    Только literal "1 " — другие цифры не трогаем (могут быть частью названия).
+  //    Применяется многократно для случаев "1 1 NAME" (повторный артефакт).
+  while (s.startsWith('1 ')) {
+    s = s.slice(2)
+    if (!applied.includes('one-prefix')) applied.push('one-prefix')
   }
 
-  // 2) Ведущие знаки пунктуации / bullets после первого шага
-  const m2 = s.match(/^[.,;:•·*\-\s]+/)
-  if (m2 && m2[0].length > 0) {
-    s = s.slice(m2[0].length)
-    applied.push('leading-punct')
-  }
-
-  // 3) Множественные пробелы внутри → один
+  // 2) Множественные пробелы внутри → один
   if (/\s{2,}/.test(s)) {
     s = s.replace(/\s{2,}/g, ' ')
     applied.push('collapse-spaces')
   }
 
-  // 4) Trim
+  // 3) Trim
   const trimmed = s.trim()
   if (trimmed !== s) {
     s = trimmed
