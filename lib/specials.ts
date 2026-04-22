@@ -36,6 +36,8 @@ const STORES: Store[] = [
   { id: 'kosherfamily', name: 'Kosher Family', apiBase: 'https://kosherfamily.com/api', webUrl: 'https://kosherfamily.com/Brooklyn-Crown-Heights', area: 'Crown Heights', zips: ['11213', '11225', '11238'] },
   // Borough Park
   { id: 'breadberry', name: 'Breadberry', apiBase: 'https://breadberry.com/api', webUrl: 'https://breadberry.com/Brooklyn', area: 'Borough Park', zips: ['11204', '11219', '11218', '11230'] },
+  // Five Towns
+  { id: 'kahans', name: "Kahan's Kosher", apiBase: null, scrapeUrl: 'https://www.kahanskosher.com/specials', webUrl: 'https://www.kahanskosher.com/specials', area: 'Five Towns', zips: ['11516', '11559', '11598'] },
 ];
 
 // ZIP → area name mapping (for quick lookup)
