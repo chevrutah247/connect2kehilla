@@ -81,8 +81,8 @@ export function formatStoreListForSMS(storeList?: Store[], areaLabel?: string): 
   const stores = storeList || STORES;
   const title = areaLabel ? `🏷 ${areaLabel} Stores:` : '🏷 Kosher Store Specials:';
   const lines = stores.map((s, i) => {
-    const hasData = s.apiBase || (s.scrapeUrl && getScrapedSpecials(s.id));
-    const tag = hasData ? '' : ' (website only)';
+    // Show (website only) only for stores with no API and no scrapeUrl at all
+    const tag = !s.apiBase && !s.scrapeUrl ? ' (website only)' : '';
     return `${i + 1}. ${s.name}${tag}`;
   });
   return `${title}\n${lines.join('\n')}\n\nReply 1-${stores.length} to see specials`;
@@ -149,22 +149,45 @@ async function fetchFromAPI(store: Store): Promise<Special[]> {
   }
 }
 
+async function getDbSpecials(storeId: string): Promise<Special[] | null> {
+  try {
+    const { PrismaClient } = await import('@prisma/client');
+    const prisma = new PrismaClient();
+    const rows = await prisma.storeSpecial.findMany({
+      where: { storeId, expiresAt: { gt: new Date() } },
+      select: { name: true, price: true, oldPrice: true, category: true },
+      orderBy: { name: 'asc' },
+    });
+    await prisma.$disconnect();
+    if (rows.length === 0) return null;
+    return rows.map(r => ({
+      name: r.name,
+      price: r.price,
+      oldPrice: r.oldPrice,
+      category: r.category || '',
+    }));
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchStoreSpecials(store: Store): Promise<Special[]> {
-  // For non-API stores, try scraped data
+  // For non-API stores: try DB first, then fall back to scraped JSON
   if (!store.apiBase) {
     if (store.scrapeUrl) {
+      const db = await getDbSpecials(store.id);
+      if (db) return db;
       return getScrapedSpecials(store.id) || [];
     }
     return [];
   }
 
-  // Check cache first
+  // MCG API stores: check cache first
   const cached = specialsCache.get(store.id);
   if (cached && Date.now() - cached.fetchedAt < CACHE_TTL) {
     return cached.specials;
   }
 
-  // Fetch fresh and cache
   const specials = await fetchFromAPI(store);
   if (specials.length > 0) {
     specialsCache.set(store.id, { specials, fetchedAt: Date.now() });
