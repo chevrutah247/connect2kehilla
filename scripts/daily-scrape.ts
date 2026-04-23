@@ -5,8 +5,11 @@
 // Usage: npx tsx scripts/daily-scrape.ts
 // Env required: CRON_SECRET, API_URL (defaults to https://connect2kehilla.com)
 
-import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer-extra';
+import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import pdfParse from 'pdf-parse';
+
+puppeteer.use(StealthPlugin());
 
 const API_URL = process.env.API_URL || 'https://www.connect2kehilla.com';
 const SECRET = process.env.CRON_SECRET;
@@ -197,7 +200,7 @@ async function scrapeKahans(): Promise<StorePayload | null> {
   try {
     const page = await browser.newPage();
     await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36');
-    await page.goto('https://www.kahanskosher.com/specials', { waitUntil: 'networkidle2', timeout: 60000 });
+    await page.goto('https://www.kahanskosher.com/specials', { waitUntil: 'networkidle2', timeout: 120000 });
 
     // Scroll to load all lazy-loaded items
     let previousHeight = 0;
@@ -253,6 +256,143 @@ async function scrapeKahans(): Promise<StorePayload | null> {
   }
 }
 
+// ── Foodoo — own API, intercept network responses ────────────────────────────
+
+async function scrapeFoodoo(): Promise<StorePayload | null> {
+  const executablePath = await findChrome();
+  const browser = await puppeteer.launch({
+    headless: true,
+    executablePath,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+    timeout: 90000,
+  });
+
+  try {
+    const page = await browser.newPage();
+    await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36');
+
+    const allItems: any[] = [];
+    page.on('response', async (resp) => {
+      if (resp.url().includes('/v2/retailers') && resp.url().includes('/specials?')) {
+        try {
+          const json = await resp.json();
+          if (json.specials?.length) allItems.push(...json.specials);
+        } catch {}
+      }
+    });
+
+    await page.goto('https://www.foodookosher.com/specials', { waitUntil: 'networkidle2', timeout: 90000 });
+
+    // Scroll to trigger lazy-load pagination
+    let prevH = 0, stableCount = 0;
+    for (let i = 0; i < 30; i++) {
+      const h = await page.evaluate(() => document.body.scrollHeight);
+      if (h === prevH) { stableCount++; if (stableCount >= 3) break; } else stableCount = 0;
+      prevH = h;
+      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+      await new Promise(r => setTimeout(r, 1200));
+    }
+
+    // Extract name + price from Foodoo's API structure
+    const seen = new Set<string>();
+    const specials: Special[] = [];
+    for (const s of allItems) {
+      const pd = s.branch?.productsData;
+      const brand = pd?.brands?.[0]?.names?.['2'] || '';
+      const family = pd?.families?.[0]?.names?.['2']?.name || '';
+      const name = [brand, family].filter(Boolean).join(' ') || s.description || '';
+      const price = s.localDescription || s.description || '';
+      const key = `${name}|${price}`;
+      if (!name || !price || seen.has(key)) continue;
+      seen.add(key);
+      specials.push({ name, price, oldPrice: null, category: pd?.categories?.[0]?.names?.['2'] || '' });
+    }
+
+    return { storeId: 'foodoo', storeName: 'Foodoo Kosher', area: 'Williamsburg', specials, scrapedAt: new Date().toISOString() };
+  } catch (e) {
+    console.error(`  ⚠️  Foodoo scrape failed:`, (e as Error).message);
+    return null;
+  } finally {
+    await browser.close();
+  }
+}
+
+// ── MCG browser-based stores (Cloudflare-protected) ──────────────────────────
+// Hatzlacha and Foodoo are on MCG platform but behind Cloudflare.
+// We navigate with stealth browser, then parse page text — same format as Kahan's.
+
+const MCG_BROWSER_STORES = [
+  { id: 'hatzlacha', name: 'Hatzlacha Kosher', area: 'Williamsburg', url: 'https://www.hatzlachakosher.com/specials' },
+  // Foodoo has its own API — handled by scrapeFoodoo()
+];
+
+// Parse MCG text format: "Buy [NAME] for $X\nONLY $X.XX\nBuy...\nValid...\nAdd"
+function parseMcgPageText(text: string): Special[] {
+  const specials: Special[] = [];
+  const lines = text.split('\n').map(l => l.trim());
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    // Detect price label: "ONLY $X.XX" or "X FOR $Y"
+    const onlyMatch = line.match(/^ONLY \$([\d.]+)$/i);
+    const forMatch = line.match(/^(\d+)\s+FOR\s+\$([\d.]+)$/i);
+
+    if (onlyMatch || forMatch) {
+      // Product name is on the line before (the "Buy X for $Y" line)
+      const buyLine = lines[i - 1] || '';
+      const nameMatch = buyLine.match(/^Buy (.+?) for \$/i);
+      const name = nameMatch ? nameMatch[1].trim() : '';
+
+      if (name && name.length > 2) {
+        // Strip leading "N units " or "N pack " from name
+        const cleanName = name.replace(/^\d+\s+(units?|pack)\s+/i, '');
+        const price = onlyMatch
+          ? `$${onlyMatch[1]}`
+          : `${forMatch![1]} for $${forMatch![2]}`;
+        specials.push({ name: cleanName, price, oldPrice: null, category: '' });
+      }
+    }
+  }
+
+  return specials;
+}
+
+async function scrapeMcgBrowserStore(store: typeof MCG_BROWSER_STORES[number]): Promise<StorePayload | null> {
+  const executablePath = await findChrome();
+  const browser = await puppeteer.launch({
+    headless: true,
+    executablePath,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+    timeout: 60000,
+  });
+
+  try {
+    const page = await browser.newPage();
+    await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36');
+    await page.goto(store.url, { waitUntil: 'networkidle2', timeout: 90000 });
+
+    // Scroll until height stops growing — wait for stable height 3× in a row
+    let prevHeight = 0, stableScrolls = 0;
+    for (let i = 0; i < 40; i++) {
+      const h = await page.evaluate(() => document.body.scrollHeight);
+      if (h === prevHeight) { stableScrolls++; if (stableScrolls >= 3) break; } else stableScrolls = 0;
+      prevHeight = h;
+      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+      await new Promise(r => setTimeout(r, 2000));
+    }
+
+    const text = await page.evaluate(() => document.body.innerText);
+    const specials = parseMcgPageText(text);
+
+    return { storeId: store.id, storeName: store.name, area: store.area, specials, scrapedAt: new Date().toISOString() };
+  } catch (e) {
+    console.error(`  ⚠️  ${store.name} scrape failed:`, (e as Error).message);
+    return null;
+  } finally {
+    await browser.close();
+  }
+}
+
 // ── Upload to connect2kehilla API ─────────────────────────────────────────────
 
 async function uploadPayloads(payloads: StorePayload[]) {
@@ -295,50 +435,106 @@ async function uploadPayloads(payloads: StorePayload[]) {
   });
 }
 
+// ── Hash cache — skip upload if specials haven't changed ─────────────────────
+
+import { createHash } from 'crypto';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { join } from 'path';
+
+const HASH_FILE = join(process.cwd(), 'data', 'specials-hashes.json');
+const FORCE = process.argv.includes('--force');
+
+function hashSpecials(specials: Special[]): string {
+  const sorted = [...specials].sort((a, b) => a.name.localeCompare(b.name));
+  return createHash('md5').update(JSON.stringify(sorted)).digest('hex');
+}
+
+function loadHashes(): Record<string, string> {
+  try {
+    return existsSync(HASH_FILE) ? JSON.parse(readFileSync(HASH_FILE, 'utf-8')) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveHashes(hashes: Record<string, string>) {
+  writeFileSync(HASH_FILE, JSON.stringify(hashes, null, 2));
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 async function main() {
-  console.log(`\n📦 Daily Specials Scraper — ${new Date().toLocaleString()}`);
+  console.log(`\n📦 Specials Scraper — ${new Date().toLocaleString()}${FORCE ? ' [--force]' : ''}`);
   console.log(`   Target: ${API_URL}\n`);
 
-  const payloads: StorePayload[] = [];
+  const hashes = loadHashes();
+  const scraped: StorePayload[] = [];
 
-  // 1. MCG API stores (run in parallel)
+  // 1. MCG API stores (parallel)
   console.log('🏪 Fetching MCG API stores...');
   const mcgResults = await Promise.all(MCG_STORES.map(fetchMcgStore));
-  for (const result of mcgResults) {
-    if (result) {
-      console.log(`  ✅ ${result.storeName}: ${result.specials.length} items`);
-      payloads.push(result);
-    }
+  for (const r of mcgResults) {
+    if (r) { console.log(`  ✅ ${r.storeName}: ${r.specials.length} items`); scraped.push(r); }
   }
 
-  // 2. Watsonsale PDF stores (run in parallel)
+  // 2. Watsonsale PDF stores (parallel)
   console.log('\n📄 Fetching watsonsale.com PDFs...');
   const pdfResults = await Promise.all(WATSONSALE_STORES.map(fetchWatsonsaleStore));
-  for (const result of pdfResults) {
-    if (result) {
-      console.log(`  ✅ ${result.storeName}: ${result.specials.length} items`);
-      payloads.push(result);
-    }
+  for (const r of pdfResults) {
+    if (r) { console.log(`  ✅ ${r.storeName}: ${r.specials.length} items`); scraped.push(r); }
   }
 
   // 3. Kahan's (headless browser)
-  console.log('\n🌐 Scraping Kahan\'s via headless browser...');
+  console.log('\n🌐 Scraping Kahan\'s...');
   const kahans = await scrapeKahans();
-  if (kahans) {
-    console.log(`  ✅ Kahan's: ${kahans.specials.length} items`);
-    payloads.push(kahans);
+  if (kahans) { console.log(`  ✅ Kahan's: ${kahans.specials.length} items`); scraped.push(kahans); }
+
+  // 4. Cloudflare-protected MCG stores (sequential)
+  console.log('\n🌐 Scraping Cloudflare-protected MCG stores...');
+  for (const store of MCG_BROWSER_STORES) {
+    const r = await scrapeMcgBrowserStore(store);
+    if (r) { console.log(`  ✅ ${r.storeName}: ${r.specials.length} items`); scraped.push(r); }
   }
 
-  // 4. Upload all
-  if (payloads.length === 0) {
+  // 5. Foodoo (own API — intercept network responses)
+  console.log('\n🌐 Scraping Foodoo...');
+  const foodoo = await scrapeFoodoo();
+  if (foodoo) { console.log(`  ✅ Foodoo: ${foodoo.specials.length} items`); scraped.push(foodoo); }
+
+  if (scraped.length === 0) {
     console.log('\n⚠️  No data scraped. Nothing to upload.');
     return;
   }
 
-  console.log(`\n⬆️  Uploading ${payloads.length} stores to ${API_URL}...`);
-  const results = await uploadPayloads(payloads);
+  // 6. Filter: only upload stores whose data changed
+  const changed: StorePayload[] = [];
+  const skipped: string[] = [];
+  const newHashes = { ...hashes };
+
+  for (const payload of scraped) {
+    if (payload.specials.length === 0) continue; // never overwrite with empty
+    const h = hashSpecials(payload.specials);
+    if (!FORCE && hashes[payload.storeId] === h) {
+      skipped.push(payload.storeName);
+    } else {
+      newHashes[payload.storeId] = h;
+      changed.push(payload);
+    }
+  }
+
+  if (skipped.length > 0) {
+    console.log(`\n⏭  Unchanged (skipping): ${skipped.join(', ')}`);
+  }
+
+  if (changed.length === 0) {
+    console.log('✅ All specials unchanged — nothing to upload.');
+    return;
+  }
+
+  console.log(`\n⬆️  Uploading ${changed.length} changed store(s)...`);
+  const results = await uploadPayloads(changed);
+
+  saveHashes(newHashes);
 
   console.log('\n✅ Done:');
   for (const [store, count] of Object.entries(results)) {
