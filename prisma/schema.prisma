@@ -387,6 +387,22 @@ model BroadcastRecipient {
 }
 
 // ============================================
+// СКИДКИ МАГАЗИНОВ (Store Specials)
+// ============================================
+// Пополняется скрейпером (GitHub Actions) через POST /api/update-specials.
+// Читается через GET /api/specials и SMS-хэндлером.
+// Один магазин = одна запись; `items` — JSON-массив { name, price, oldPrice, category }.
+model StoreSpecials {
+  storeId    String   @id                // соответствует Store.id в lib/specials.ts
+  items      Json                        // Special[]
+  scrapedAt  DateTime                    // когда скрейпер снял данные
+  validUntil DateTime?                   // если флаер имеет срок действия (например watsonsale weekly)
+  updatedAt  DateTime @updatedAt
+
+  @@index([scrapedAt])
+}
+
+// ============================================
 // КЭШ СИСТЕМНЫХ МЕТРИК (System Cache)
 // ============================================
 // Простое key/value-хранилище для значений, которые

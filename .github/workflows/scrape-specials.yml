@@ -1,0 +1,43 @@
+name: Scrape specials
+
+on:
+  schedule:
+    # Daily at 10:00 UTC = 06:00 America/New_York (EDT) / 05:00 (EST).
+    # Runs before the user's morning so fresh data is ready.
+    - cron: '0 10 * * *'
+  workflow_dispatch:
+    inputs:
+      store_ids:
+        description: 'Space-separated store IDs to refresh (leave empty for all)'
+        required: false
+        default: ''
+
+concurrency:
+  group: scrape-specials
+  cancel-in-progress: false
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      APP_URL: ${{ secrets.APP_URL }}
+      SCRAPER_SECRET: ${{ secrets.SCRAPER_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Install pdftotext (poppler-utils)
+        run: sudo apt-get update && sudo apt-get install -y poppler-utils
+
+      - name: Run scraper
+        run: npx tsx scripts/scrape-specials.ts ${{ inputs.store_ids }}

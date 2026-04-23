@@ -9,7 +9,7 @@ import { isShabbatWithBuffer } from '@/lib/shabbat'
 import { getOrCreateUser, isUserBlocked, blockUser, unblockUser, getUserDefaultZip, setUserDefaultZip } from '@/lib/users'
 import { searchBusinesses, searchBusinessesExpanded, searchBusinessesFuzzy, recordLeads } from '@/lib/businesses'
 import { normalizeCategory, normalizeArea, normalizeCity, detectLanguage, matchKeywordToCategory } from '@/lib/fuzzy'
-import { getAllStores, getStoreByIndex, getStoresByArea, getStoresByZip, getAreaByZip, fetchStoreSpecials, formatSpecialsForSMS, formatStoreListForSMS, Store } from '@/lib/specials'
+import { getAllStores, getStoreByIndex, getStoresByArea, getStoresByZip, getAreaByZip, getStoreById, fetchStoreSpecials, formatSpecialsForSMS, formatStoreListForSMS, formatStoreInfoForSMS, Store } from '@/lib/specials'
 import { parseWorkCommand, parseJobCommand, parseHireCommand, registerWorker, saveWorkerDescription, postJob, saveJobDescription, renewWorker, stopWorker, searchWorkers, JOBS_HELP, parseFreeformJobPost, postFreeformJob } from '@/lib/workers'
 import { fastParse } from '@/lib/fast-parser'
 import { handleJobsMenu, hasActiveJobsSession, handleJobZipEntry, JOBS_MAIN_MENU } from '@/lib/jobs-menu'
@@ -391,6 +391,38 @@ export async function POST(request: NextRequest) {
       return createTwiMLResponse(jobDesc)
     }
 
+    // ── Check for A/H (address/hours) follow-up to a specials detail ──
+    const trimmedUpper = trimmed.toUpperCase()
+    if (trimmedUpper === 'A' || trimmedUpper === 'ADDRESS' || trimmedUpper === 'H' || trimmedUpper === 'HOURS') {
+      const recentDetail = await prisma.query.findFirst({
+        where: {
+          userId: user.id,
+          rawMessage: { startsWith: '__SPECIALS_DETAIL__' },
+          createdAt: { gte: new Date(Date.now() - 10 * 60 * 1000) },
+        },
+        orderBy: { createdAt: 'desc' },
+      })
+      if (recentDetail) {
+        const storeId = recentDetail.rawMessage.split('__')[2]
+        const store = storeId ? getStoreById(storeId) : null
+        if (store) {
+          const field = (trimmedUpper === 'A' || trimmedUpper === 'ADDRESS') ? 'address' : 'hours'
+          const responseText = formatStoreInfoForSMS(store, field)
+          await prisma.query.create({
+            data: {
+              userId: user.id,
+              rawMessage: body,
+              parsedCategory: `specials_${field}`,
+              parsedIntent: 'SEARCH',
+              responseText,
+              processedAt: new Date(),
+            }
+          })
+          return createTwiMLResponse(responseText)
+        }
+      }
+    }
+
     // ── Check for active specials session (DB-based for serverless) ──
     const num = parseInt(trimmed)
     if (num >= 1 && num <= 20) {
@@ -413,7 +445,8 @@ export async function POST(request: NextRequest) {
           await prisma.query.create({
             data: {
               userId: user.id,
-              rawMessage: body,
+              // Embed storeId so a follow-up A/H reply can find this store
+              rawMessage: `__SPECIALS_DETAIL__${store.id}__${body}`,
               parsedCategory: 'specials',
               parsedIntent: 'SEARCH',
               responseText,

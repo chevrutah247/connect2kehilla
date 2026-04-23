@@ -9,7 +9,8 @@
     "start": "next start",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
-    "import": "tsx scripts/import-businesses.ts"
+    "import": "tsx scripts/import-businesses.ts",
+    "scrape:specials": "tsx scripts/scrape-specials.ts"
   },
   "dependencies": {
     "@hebcal/core": "^6.3.1",
@@ -30,6 +31,7 @@
     "@types/react": "^18.2.0",
     "autoprefixer": "^10.4.0",
     "dotenv": "^17.4.1",
+    "playwright": "^1.58.2",
     "postcss": "^8.4.0",
     "prisma": "^5.6.0",
     "tailwindcss": "^3.3.0",
