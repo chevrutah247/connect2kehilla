@@ -34,8 +34,17 @@ const STORES: Store[] = [
   { id: 'koshertown', name: 'KosherTown', apiBase: 'https://koshertown.com/api', webUrl: 'https://koshertown.com/brooklyn', area: 'Crown Heights', zips: ['11213', '11225', '11238'] },
   { id: 'empire', name: 'Empire Kosher', apiBase: 'https://empirekoshersupermarket.com/api', webUrl: 'https://empirekoshersupermarket.com/empire', area: 'Crown Heights', zips: ['11213', '11225', '11238'] },
   { id: 'kosherfamily', name: 'Kosher Family', apiBase: 'https://kosherfamily.com/api', webUrl: 'https://kosherfamily.com/Brooklyn-Crown-Heights', area: 'Crown Heights', zips: ['11213', '11225', '11238'] },
+  { id: 'kahans', name: "Kahan's Superette", apiBase: null, scrapeUrl: 'https://www.kahanskosher.com/specials', webUrl: 'https://www.kahanskosher.com/specials', area: 'Crown Heights', zips: ['11213', '11225', '11238'] },
+  // Flatbush / Midwood
+  { id: 'mountainfruit', name: 'Mountain Fruit', apiBase: 'https://shopmountainfruit.com/api', webUrl: 'https://shopmountainfruit.com/Brooklyn-Midwood-BoroPark/category/specials', area: 'Flatbush', zips: ['11230', '11229', '11218'] },
+  { id: 'glattmart', name: 'Glatt Mart', apiBase: null, scrapeUrl: 'https://www.glattmart.com/specials', webUrl: 'https://www.glattmart.com/specials', area: 'Flatbush', zips: ['11230', '11229'] },
+  { id: 'moishas', name: "Moisha's Discount", apiBase: null, scrapeUrl: 'https://watsonsale.com/supermarkets/moishas/', webUrl: 'https://moishas.com/specials', area: 'Flatbush', zips: ['11230', '11229', '11218'] },
   // Borough Park
   { id: 'breadberry', name: 'Breadberry', apiBase: 'https://breadberry.com/api', webUrl: 'https://breadberry.com/Brooklyn', area: 'Borough Park', zips: ['11204', '11219', '11218', '11230'] },
+  { id: 'goldbergs', name: "Goldberg's Freshmarket", apiBase: null, scrapeUrl: 'https://watsonsale.com/supermarkets/goldbergs-supermarket/', webUrl: 'https://watsonsale.com/supermarkets/goldbergs-supermarket/', area: 'Borough Park', zips: ['11204', '11219'] },
+  { id: 'krm', name: 'KRM Kollel Supermarket', apiBase: null, scrapeUrl: 'https://watsonsale.com/supermarkets/krm-kollel-supermarket/', webUrl: 'https://watsonsale.com/supermarkets/krm-kollel-supermarket/', area: 'Borough Park', zips: ['11218', '11219'] },
+  // Williamsburg (additional)
+  { id: 'foodoo', name: 'Foodoo Kosher', apiBase: null, scrapeUrl: 'https://www.foodookosher.com/specials', webUrl: 'https://www.foodookosher.com/specials', area: 'Williamsburg', zips: ['11206', '11211'] },
 ];
 
 // ZIP → area name mapping (for quick lookup)

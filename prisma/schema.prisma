@@ -387,6 +387,27 @@ model BroadcastRecipient {
 }
 
 // ============================================
+// СКИДКИ МАГАЗИНОВ (Store Specials)
+// ============================================
+model StoreSpecial {
+  id          String   @id @default(cuid())
+  storeId     String                        // e.g. "kahans", "koshertown"
+  storeName   String
+  area        String?
+  name        String                        // product name
+  price       String
+  oldPrice    String?
+  category    String?
+  scrapedAt   DateTime @default(now())
+  expiresAt   DateTime                      // scrapedAt + 8 days
+
+  @@index([storeId])
+  @@index([area])
+  @@index([expiresAt])
+  @@index([scrapedAt])
+}
+
+// ============================================
 // КЭШ СИСТЕМНЫХ МЕТРИК (System Cache)
 // ============================================
 // Простое key/value-хранилище для значений, которые
