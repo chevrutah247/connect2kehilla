@@ -78,9 +78,10 @@ async function fetchMcgStore(store: typeof MCG_STORES[number]): Promise<StorePay
 // ── watsonsale.com PDF stores ─────────────────────────────────────────────────
 
 const WATSONSALE_STORES = [
-  { id: 'moishas',   name: "Moisha's Discount",     area: 'Flatbush',     slug: 'moishas' },
-  { id: 'goldbergs', name: "Goldberg's Freshmarket", area: 'Borough Park', slug: 'goldbergs-supermarket' },
-  { id: 'krm',       name: 'KRM Kollel Supermarket', area: 'Borough Park', slug: 'krm-kollel-supermarket' },
+  { id: 'moishas',       name: "Moisha's Discount",     area: 'Flatbush',     slug: 'moishas' },
+  { id: 'goldbergs',     name: "Goldberg's Freshmarket", area: 'Borough Park', slug: 'goldbergs-supermarket' },
+  { id: 'krm',           name: 'KRM Kollel Supermarket', area: 'Borough Park', slug: 'krm-kollel-supermarket' },
+  { id: 'circus_fruits', name: 'Circus Fruits',          area: 'Borough Park', slug: 'circus-fruits' },
 ];
 
 function parsePdfText(text: string): Special[] {
@@ -322,7 +323,8 @@ async function scrapeFoodoo(): Promise<StorePayload | null> {
 // We navigate with stealth browser, then parse page text — same format as Kahan's.
 
 const MCG_BROWSER_STORES = [
-  { id: 'hatzlacha', name: 'Hatzlacha Kosher', area: 'Williamsburg', url: 'https://www.hatzlachakosher.com/specials' },
+  { id: 'hatzlacha', name: 'Hatzlacha Kosher',           area: 'Williamsburg', url: 'https://www.hatzlachakosher.com/specials' },
+  { id: 'foodex',    name: 'Foodex Kosher Supermarket', area: 'Lakewood',     url: 'https://www.foodexsupermarket.com/specials' },
   // Foodoo has its own API — handled by scrapeFoodoo()
 ];
 
@@ -390,6 +392,50 @@ async function scrapeMcgBrowserStore(store: typeof MCG_BROWSER_STORES[number]): 
     return null;
   } finally {
     await browser.close();
+  }
+}
+
+// ── Shopify stores (Satmar Meats BP) ─────────────────────────────────────────
+// Shopify exposes a public /collections/<handle>/products.json endpoint —
+// no auth, no Cloudflare, just fetch + map.
+
+const SHOPIFY_STORES = [
+  { id: 'satmar_bp', name: 'Satmar Meats (Boro Park)', area: 'Borough Park',
+    origin: 'https://satmarmeatsbp.com', collection: 'specials' },
+];
+
+async function fetchShopifyStore(store: typeof SHOPIFY_STORES[number]): Promise<StorePayload | null> {
+  try {
+    const url = `${store.origin}/collections/${store.collection}/products.json?limit=250`;
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; C2K-Scraper/1.0)',
+        'Accept': 'application/json',
+      },
+      signal: AbortSignal.timeout(20000),
+    });
+    if (!res.ok) return null;
+    const data: any = await res.json();
+    const specials: Special[] = (data.products ?? []).map((p: any) => {
+      const v = (p.variants && p.variants[0]) || {};
+      return {
+        name: p.title ?? '',
+        price: v.price ? `$${v.price}` : '',
+        oldPrice: v.compare_at_price ? `$${v.compare_at_price}` : null,
+        category: p.product_type ?? '',
+      };
+    }).filter((s: Special) => s.name && s.price);
+    if (specials.length === 0) return null;
+    return {
+      storeId: store.id,
+      storeName: store.name,
+      area: store.area,
+      specials,
+      scrapedAt: new Date().toISOString(),
+    };
+  } catch (e) {
+    console.error(`  ⚠️  Shopify fetch failed for ${store.name}:`, (e as Error).message);
+    return null;
   }
 }
 
@@ -500,6 +546,13 @@ async function main() {
   console.log('\n🌐 Scraping Foodoo...');
   const foodoo = await scrapeFoodoo();
   if (foodoo) { console.log(`  ✅ Foodoo: ${foodoo.specials.length} items`); scraped.push(foodoo); }
+
+  // 6. Shopify stores (Satmar Meats BP — parallel)
+  console.log('\n🛒 Fetching Shopify stores...');
+  const shopifyResults = await Promise.all(SHOPIFY_STORES.map(fetchShopifyStore));
+  for (const r of shopifyResults) {
+    if (r) { console.log(`  ✅ ${r.storeName}: ${r.specials.length} items`); scraped.push(r); }
+  }
 
   if (scraped.length === 0) {
     console.log('\n⚠️  No data scraped. Nothing to upload.');

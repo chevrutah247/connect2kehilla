@@ -11,6 +11,10 @@ export interface Store {
   webUrl: string;
   area: string;
   zips: string[]; // ZIP codes for this area
+  // Contact info — surfaced by SMS A/H replies and GET /api/specials.
+  address?: string;
+  phone?: string;
+  hours?: string;
 }
 
 export interface Special {
@@ -22,7 +26,7 @@ export interface Special {
 
 // All stores with area/ZIP mapping
 const STORES: Store[] = [
-  // Williamsburg
+  // ── Williamsburg ────────────────────────────────────────────────────────
   { id: 'rosemary', name: 'Rosemary Kosher', apiBase: 'https://rosemarykosher.com/api', webUrl: 'https://rosemarykosher.com/Rosemary', area: 'Williamsburg', zips: ['11205', '11206', '11211', '11249'] },
   { id: 'pomppeople', name: 'Pom People', apiBase: null, webUrl: 'https://thepompeopleonline.com', area: 'Williamsburg', zips: ['11205', '11206', '11211', '11249'] },
   { id: 'southside', name: 'Southside Kosher', apiBase: null, webUrl: 'https://www.southsidekosher.com', area: 'Williamsburg', zips: ['11205', '11206', '11211', '11249'] },
@@ -30,21 +34,67 @@ const STORES: Store[] = [
   { id: 'kosherdepot', name: 'The Kosher Depot', apiBase: null, webUrl: 'http://www.thekosherdepot.com', area: 'Williamsburg', zips: ['11205', '11206', '11211', '11249'] },
   { id: 'chestnut', name: 'Chestnut Supermarket', apiBase: null, scrapeUrl: 'https://chestnutsupermarket.com/sale', webUrl: 'https://chestnutsupermarket.com/sale', area: 'Williamsburg', zips: ['11205', '11206', '11211', '11249'] },
   { id: 'hatzlacha', name: 'Hatzlacha Kosher', apiBase: null, scrapeUrl: 'https://www.hatzlachakosher.com/specials', webUrl: 'https://www.hatzlachakosher.com/specials', area: 'Williamsburg', zips: ['11205', '11206', '11211', '11249'] },
-  // Crown Heights
+  { id: 'foodoo', name: 'Foodoo Kosher', apiBase: null, scrapeUrl: 'https://www.foodookosher.com/specials', webUrl: 'https://www.foodookosher.com/specials', area: 'Williamsburg', zips: ['11206', '11211'],
+    address: '249 Wallabout St, Brooklyn, NY 11206',
+    phone: '(718) 384-2000',
+    hours: 'Sun–Tue 8AM–11PM • Wed–Thu 8AM–midnight • Fri 8AM until 2h before candle-lighting • Sat closed' },
+  { id: 'satmar_wb', name: 'Satmar Meats (Williamsburg)', apiBase: null, webUrl: 'https://www.satmarmeatsw.com/', area: 'Williamsburg', zips: ['11211'],
+    address: '823 Bedford Ave, Brooklyn, NY 11211',
+    phone: '(718) 963-1100',
+    hours: 'Mon–Thu 9AM–9PM • Fri 9AM–2:30PM • Sat closed • Sun 12PM–9PM' },
+
+  // ── Crown Heights ───────────────────────────────────────────────────────
   { id: 'koshertown', name: 'KosherTown', apiBase: 'https://koshertown.com/api', webUrl: 'https://koshertown.com/brooklyn', area: 'Crown Heights', zips: ['11213', '11225', '11238'] },
   { id: 'empire', name: 'Empire Kosher', apiBase: 'https://empirekoshersupermarket.com/api', webUrl: 'https://empirekoshersupermarket.com/empire', area: 'Crown Heights', zips: ['11213', '11225', '11238'] },
   { id: 'kosherfamily', name: 'Kosher Family', apiBase: 'https://kosherfamily.com/api', webUrl: 'https://kosherfamily.com/Brooklyn-Crown-Heights', area: 'Crown Heights', zips: ['11213', '11225', '11238'] },
-  { id: 'kahans', name: "Kahan's Superette", apiBase: null, scrapeUrl: 'https://www.kahanskosher.com/specials', webUrl: 'https://www.kahanskosher.com/specials', area: 'Crown Heights', zips: ['11213', '11225', '11238'] },
-  // Flatbush / Midwood
-  { id: 'mountainfruit', name: 'Mountain Fruit', apiBase: 'https://shopmountainfruit.com/api', webUrl: 'https://shopmountainfruit.com/Brooklyn-Midwood-BoroPark/category/specials', area: 'Flatbush', zips: ['11230', '11229', '11218'] },
-  { id: 'glattmart', name: 'Glatt Mart', apiBase: null, scrapeUrl: 'https://www.glattmart.com/specials', webUrl: 'https://www.glattmart.com/specials', area: 'Flatbush', zips: ['11230', '11229'] },
-  { id: 'moishas', name: "Moisha's Discount", apiBase: null, scrapeUrl: 'https://watsonsale.com/supermarkets/moishas/', webUrl: 'https://moishas.com/specials', area: 'Flatbush', zips: ['11230', '11229', '11218'] },
-  // Borough Park
+  { id: 'kahans', name: "Kahan's Superette", apiBase: null, scrapeUrl: 'https://www.kahanskosher.com/specials', webUrl: 'https://www.kahanskosher.com/specials', area: 'Crown Heights', zips: ['11213', '11225', '11238'],
+    address: '317 Kingston Ave, Brooklyn, NY 11213',
+    phone: '(718) 756-2999',
+    hours: 'Sun–Wed 7:30AM–11PM • Thu 7:30AM–midnight • Fri until 2h before Shabbos • Motzai Shabbos 1h after Shabbos–midnight' },
+  { id: 'kleins_ch', name: "Klein's Grocery", apiBase: null, webUrl: 'https://kleinsfoodmarket.com/', area: 'Crown Heights', zips: ['11225', '11213', '11238'],
+    address: '504 Empire Blvd, Brooklyn, NY 11225',
+    phone: '(718) 493-9045',
+    hours: 'Sun 8AM–7PM • Mon–Tue 8AM–8PM • Wed 8AM–9PM • Thu 8AM–10PM • Fri 8AM–4PM • Sat closed' },
+
+  // ── Flatbush / Midwood ──────────────────────────────────────────────────
+  { id: 'mountainfruit', name: 'Mountain Fruit', apiBase: 'https://shopmountainfruit.com/api', webUrl: 'https://shopmountainfruit.com/Brooklyn-Midwood-BoroPark/category/specials', area: 'Flatbush', zips: ['11230', '11229', '11218'],
+    address: '1523 Avenue M, Brooklyn, NY 11230',
+    phone: '(718) 998-3333',
+    hours: 'Mon–Wed 7AM–10PM • Thu 7AM–midnight • Fri 7AM–6PM • Sat closed • Sun 7AM–10PM' },
+  { id: 'glattmart', name: 'Glatt Mart', apiBase: null, scrapeUrl: 'https://www.glattmart.com/specials', webUrl: 'https://www.glattmart.com/specials', area: 'Flatbush', zips: ['11230', '11229'],
+    address: '1205 Avenue M, Brooklyn, NY 11230',
+    phone: '(718) 338-4040',
+    hours: 'Mon–Tue 7AM–8PM • Wed 7AM–10PM • Thu 7AM–11PM • Fri 7AM–5PM • Sat closed • Sun 8AM–7PM' },
+  { id: 'moishas', name: "Moisha's Discount", apiBase: null, scrapeUrl: 'https://watsonsale.com/supermarkets/moishas/', webUrl: 'https://moishas.com/specials', area: 'Flatbush', zips: ['11230', '11229', '11218'],
+    address: '325 Avenue M, Brooklyn, NY 11230',
+    phone: '(718) 336-7563',
+    hours: 'Sun 8AM–8PM • Mon–Tue 7AM–8PM • Wed 7AM–11PM • Thu 7AM–midnight • Fri 7AM–4PM • Sat closed' },
+
+  // ── Borough Park ────────────────────────────────────────────────────────
   { id: 'breadberry', name: 'Breadberry', apiBase: 'https://breadberry.com/api', webUrl: 'https://breadberry.com/Brooklyn', area: 'Borough Park', zips: ['11204', '11219', '11218', '11230'] },
-  { id: 'goldbergs', name: "Goldberg's Freshmarket", apiBase: null, scrapeUrl: 'https://watsonsale.com/supermarkets/goldbergs-supermarket/', webUrl: 'https://watsonsale.com/supermarkets/goldbergs-supermarket/', area: 'Borough Park', zips: ['11204', '11219'] },
+  { id: 'goldbergs', name: "Goldberg's Freshmarket", apiBase: null, scrapeUrl: 'https://watsonsale.com/supermarkets/goldbergs-supermarket/', webUrl: 'https://watsonsale.com/supermarkets/goldbergs-supermarket/', area: 'Borough Park', zips: ['11204', '11219'],
+    address: '5025 18th Ave, Brooklyn, NY 11204',
+    phone: '(718) 435-7177',
+    hours: 'Mon–Thu 24h • Fri midnight–3PM • Sat 9:30PM–midnight • Sun 24h' },
   { id: 'krm', name: 'KRM Kollel Supermarket', apiBase: null, scrapeUrl: 'https://watsonsale.com/supermarkets/krm-kollel-supermarket/', webUrl: 'https://watsonsale.com/supermarkets/krm-kollel-supermarket/', area: 'Borough Park', zips: ['11218', '11219'] },
-  // Williamsburg (additional)
-  { id: 'foodoo', name: 'Foodoo Kosher', apiBase: null, scrapeUrl: 'https://www.foodookosher.com/specials', webUrl: 'https://www.foodookosher.com/specials', area: 'Williamsburg', zips: ['11206', '11211'] },
+  { id: 'circus_fruits', name: 'Circus Fruits', apiBase: null, scrapeUrl: 'https://watsonsale.com/supermarkets/circus-fruits/', webUrl: 'https://circusfruits.com/weekly-specials', area: 'Borough Park', zips: ['11219'],
+    address: '5915 Ft Hamilton Pkwy, Brooklyn, NY 11219',
+    phone: '(718) 436-2100',
+    hours: 'Open 24/7' },
+  { id: 'three_guys', name: 'Three Guys From Brooklyn', apiBase: null, webUrl: 'https://www.3guysfrombrooklyn.com/', area: 'Borough Park', zips: ['11219'],
+    address: '6502 Ft Hamilton Pkwy, Brooklyn, NY 11219',
+    phone: '(718) 748-8340',
+    hours: 'Open 24/7' },
+  { id: 'satmar_bp', name: 'Satmar Meats (Boro Park)', apiBase: null, scrapeUrl: 'https://satmarmeatsbp.com/collections/specials', webUrl: 'https://satmarmeatsbp.com/collections/specials', area: 'Borough Park', zips: ['11219'],
+    address: '5301 New Utrecht Ave, Brooklyn, NY 11219',
+    phone: '(718) 435-8200',
+    hours: 'Mon–Wed 8AM–8:30PM • Thu 9AM–8:30PM • Fri 8AM–2PM • Sat closed • Sun 9AM–8:30PM' },
+
+  // ── Lakewood, NJ ────────────────────────────────────────────────────────
+  { id: 'foodex', name: 'Foodex Kosher Supermarket', apiBase: null, scrapeUrl: 'https://www.foodexsupermarket.com/specials', webUrl: 'https://www.foodexsupermarket.com/specials', area: 'Lakewood', zips: ['08701'],
+    address: '407 Princeton Ave, Lakewood, NJ 08701',
+    phone: '(732) 364-3300',
+    hours: 'Sun–Tue 8AM–11PM • Wed 8AM–11PM • Thu 8AM–midnight • Fri 8AM–7PM • Sat closed' },
 ];
 
 // ZIP → area name mapping (for quick lookup)
@@ -75,6 +125,10 @@ export function getStoreByIndex(index: number, storeList?: Store[]): Store | nul
   const list = storeList || STORES;
   if (index < 0 || index >= list.length) return null;
   return list[index];
+}
+
+export function getStoreById(id: string): Store | null {
+  return STORES.find(s => s.id === id) || null;
 }
 
 export function formatStoreListForSMS(storeList?: Store[], areaLabel?: string): string {
@@ -211,12 +265,23 @@ export async function prefetchAllSpecials(): Promise<Record<string, number>> {
   return results;
 }
 
+// Footer suffix that invites A (address) / H (hours) follow-up for stores
+// that have contact info on file. Joined with "\n" onto the main response.
+function infoFooterFor(store: Store): string {
+  const bits: string[] = [];
+  if (store.address || store.phone) bits.push('A=Address');
+  if (store.hours) bits.push('H=Hours');
+  return bits.length ? `\nReply ${bits.join(' • ')}` : '';
+}
+
 export function formatSpecialsForSMS(store: Store, specials: Special[]): string {
+  const infoLine = infoFooterFor(store);
+
   if (specials.length === 0) {
-    if (!store.apiBase && store.webUrl) {
-      return `🏷 ${store.name}\nVisit their website for specials:\n${store.webUrl}\n\nReply SPECIALS for store list`;
-    }
-    return `🏷 ${store.name}\nNo specials available right now.\n\nReply SPECIALS for store list`;
+    const base = (!store.apiBase && store.webUrl)
+      ? `🏷 ${store.name}\nVisit their website for specials:\n${store.webUrl}`
+      : `🏷 ${store.name}\nNo specials available right now.`;
+    return `${base}${infoLine}\n\nReply SPECIALS for store list`;
   }
 
   // Sort by discount (items with oldPrice first)
@@ -227,7 +292,7 @@ export function formatSpecialsForSMS(store: Store, specials: Special[]): string 
   });
 
   const header = `🏷 ${store.name} Specials (${specials.length} items):\n\n`;
-  const footer = `\n\nReply SPECIALS for store list`;
+  const footer = `${infoLine}\n\nReply SPECIALS for store list`;
   const maxLen = 1500 - header.length - footer.length;
 
   let body = '';
@@ -247,4 +312,20 @@ export function formatSpecialsForSMS(store: Store, specials: Special[]): string 
   }
 
   return header + body.trim() + footer;
+}
+
+// Response for A (address) or H (hours) follow-up after viewing a store's specials.
+export function formatStoreInfoForSMS(store: Store, field: 'address' | 'hours'): string {
+  if (field === 'address') {
+    const parts = [`📍 ${store.name}`];
+    if (store.address) parts.push(store.address);
+    if (store.phone) parts.push(store.phone);
+    if (!store.address && !store.phone) parts.push('Address on file not available.');
+    return parts.join('\n') + `\n\nReply SPECIALS for store list`;
+  }
+  // hours
+  const parts = [`🕐 ${store.name} — Hours`];
+  parts.push(store.hours || 'Call store to confirm hours.');
+  if (store.phone) parts.push(store.phone);
+  return parts.join('\n') + `\n\nReply SPECIALS for store list`;
 }
