@@ -43,6 +43,7 @@ const MCG_STORES = [
   { id: 'rosemary',   name: 'Rosemary Kosher',   area: 'Williamsburg',  apiBase: 'https://rosemarykosher.com/api' },
   { id: 'mountainfruit',name:'Mountain Fruit',    area: 'Flatbush',      apiBase: 'https://shopmountainfruit.com/api' },
   { id: 'breadberry',  name: 'Breadberry',        area: 'Borough Park',  apiBase: 'https://breadberry.com/api' },
+  { id: 'six60one',   name: 'Six 60 One (Kosher on Amsterdam)', area: 'Manhattan', apiBase: 'https://six60one.com/api' },
 ];
 
 async function fetchMcgStore(store: typeof MCG_STORES[number]): Promise<StorePayload | null> {
@@ -78,10 +79,13 @@ async function fetchMcgStore(store: typeof MCG_STORES[number]): Promise<StorePay
 // ── watsonsale.com PDF stores ─────────────────────────────────────────────────
 
 const WATSONSALE_STORES = [
-  { id: 'moishas',       name: "Moisha's Discount",     area: 'Flatbush',     slug: 'moishas' },
-  { id: 'goldbergs',     name: "Goldberg's Freshmarket", area: 'Borough Park', slug: 'goldbergs-supermarket' },
-  { id: 'krm',           name: 'KRM Kollel Supermarket', area: 'Borough Park', slug: 'krm-kollel-supermarket' },
-  { id: 'circus_fruits', name: 'Circus Fruits',          area: 'Borough Park', slug: 'circus-fruits' },
+  { id: 'moishas',          name: "Moisha's Discount",     area: 'Flatbush',     slug: 'moishas' },
+  { id: 'goldbergs',        name: "Goldberg's Freshmarket", area: 'Borough Park', slug: 'goldbergs-supermarket' },
+  { id: 'krm',              name: 'KRM Kollel Supermarket', area: 'Borough Park', slug: 'krm-kollel-supermarket' },
+  { id: 'circus_fruits',    name: 'Circus Fruits',          area: 'Borough Park', slug: 'circus-fruits' },
+  { id: 'super_13',         name: 'Super 13 Supermarket',   area: 'Borough Park', slug: 'super-13-supermarket' },
+  { id: 'gourmet_glatt_bp', name: 'Gourmet Glatt (Boro Park)', area: 'Borough Park', slug: 'gourmet-glatt' },
+  { id: 'kosher_palace',    name: 'Kosher Palace Supermarket', area: 'Flatbush', slug: 'kosher-palace' },
 ];
 
 function parsePdfText(text: string): Special[] {

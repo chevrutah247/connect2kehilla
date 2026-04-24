@@ -55,6 +55,9 @@ const STORES: Store[] = [
     address: '504 Empire Blvd, Brooklyn, NY 11225',
     phone: '(718) 493-9045',
     hours: 'Sun 8AM–7PM • Mon–Tue 8AM–8PM • Wed 8AM–9PM • Thu 8AM–10PM • Fri 8AM–4PM • Sat closed' },
+  { id: 'kol_tuv_ch', name: 'Kol Tuv Supermarket (Crown Heights)', apiBase: null, webUrl: 'https://www.koltuvgrocery.com/products/store-specials', area: 'Crown Heights', zips: ['11225', '11213'],
+    address: '409 Kingston Avenue, Brooklyn, NY 11225',
+    phone: '(718) 953-4440' },
 
   // ── Flatbush / Midwood ──────────────────────────────────────────────────
   { id: 'mountainfruit', name: 'Mountain Fruit', apiBase: 'https://shopmountainfruit.com/api', webUrl: 'https://shopmountainfruit.com/Brooklyn-Midwood-BoroPark/category/specials', area: 'Flatbush', zips: ['11230', '11229', '11218'],
@@ -89,6 +92,45 @@ const STORES: Store[] = [
     address: '5301 New Utrecht Ave, Brooklyn, NY 11219',
     phone: '(718) 435-8200',
     hours: 'Mon–Wed 8AM–8:30PM • Thu 9AM–8:30PM • Fri 8AM–2PM • Sat closed • Sun 9AM–8:30PM' },
+  { id: 'super_13', name: 'Super 13 Supermarket', apiBase: null, scrapeUrl: 'https://watsonsale.com/supermarkets/super-13-supermarket/', webUrl: 'https://watsonsale.com/supermarkets/super-13-supermarket/', area: 'Borough Park', zips: ['11218', '11219'],
+    address: '5214 13th Avenue, Brooklyn, NY 11219',
+    phone: '(718) 633-1600',
+    hours: 'Sun–Wed 8AM–1AM • Thu 8AM–1:30AM • Fri 8:30AM–5AM • Sat closed' },
+  { id: 'gourmet_glatt_bp', name: 'Gourmet Glatt (Boro Park)', apiBase: null, scrapeUrl: 'https://watsonsale.com/supermarkets/gourmet-glatt/', webUrl: 'https://watsonsale.com/supermarkets/gourmet-glatt/', area: 'Borough Park', zips: ['11218', '11219'],
+    address: '1274 39th Street, Brooklyn, NY 11219',
+    phone: '(718) 437-3000',
+    hours: 'Mon–Tue 7:30AM–9PM • Wed 7AM–midnight • Thu 7AM–1AM • Fri 7AM–2AM • Sat closed • Sun 7:30AM–9PM' },
+  { id: 'kol_tuv_bp', name: 'Kol Tuv Grocery (Boro Park)', apiBase: null, webUrl: 'https://www.koltuvgrocery.com/products/store-specials', area: 'Borough Park', zips: ['11218', '11219'],
+    address: '1507 40th Street, Brooklyn, NY 11218',
+    phone: '(718) 437-4997' },
+
+  // ── Flatbush / Gravesend (additional) ───────────────────────────────────
+  { id: 'kosher_palace', name: 'Kosher Palace Supermarket', apiBase: null, scrapeUrl: 'https://watsonsale.com/supermarkets/kosher-palace/', webUrl: 'https://watsonsale.com/supermarkets/kosher-palace/', area: 'Flatbush', zips: ['11229', '11223', '11230'],
+    address: '2818 Avenue U, Brooklyn, NY 11229',
+    phone: '(718) 743-1900',
+    hours: 'Mon–Tue 7AM–7PM • Wed 7AM–8PM • Thu 7AM–10PM • Fri 7AM–6PM • Sat closed • Sun 8AM–7PM' },
+  { id: 'ouris_brooklyn', name: "Ouri's Market (Gravesend)", apiBase: null, webUrl: 'https://ourismarket.com/', area: 'Flatbush', zips: ['11223', '11229'],
+    address: '427 Avenue U, Brooklyn, NY 11223',
+    phone: '(718) 645-0020' },
+
+  // ── Manhattan ───────────────────────────────────────────────────────────
+  { id: 'ouris_ues', name: "Ouri's Market (Upper East Side)", apiBase: null, webUrl: 'https://ourismarket.com/', area: 'Manhattan', zips: ['10065', '10028', '10021', '10075'],
+    address: '1160 Third Avenue, New York, NY 10065',
+    phone: '(212) 794-9500' },
+  { id: 'tomers', name: "Tomer's Gourmet Market", apiBase: null, webUrl: 'https://www.yelp.com/biz/tomer-s-gourmet-market-new-york', area: 'Manhattan', zips: ['10028', '10065', '10021', '10075'],
+    address: '1201 Lexington Avenue, New York, NY 10028',
+    phone: '(212) 961-1933' },
+  { id: 'six60one', name: 'Six 60 One (Kosher on Amsterdam)', apiBase: 'https://six60one.com/api', webUrl: 'https://six60one.com/New-York-City/category/specials', area: 'Manhattan', zips: ['10024', '10025', '10023'],
+    address: '661 Amsterdam Avenue, New York, NY 10025',
+    phone: '(212) 222-6332' },
+  { id: 'kmp', name: 'The Kosher Marketplace', apiBase: null, webUrl: 'https://thekmp.com/', area: 'Manhattan', zips: ['10024', '10025', '10023'],
+    address: '2442 Broadway, New York, NY 10024',
+    phone: '(212) 580-6378' },
+
+  // ── Deal, NJ ────────────────────────────────────────────────────────────
+  { id: 'ouris_deal', name: "Ouri's Market (Deal, NJ)", apiBase: null, webUrl: 'https://ourismarket.com/', area: 'Deal', zips: ['07723'],
+    address: '266 Norwood Avenue, Deal, NJ 07723',
+    phone: '(732) 517-0785' },
 
   // ── Lakewood, NJ ────────────────────────────────────────────────────────
   { id: 'foodex', name: 'Foodex Kosher Supermarket', apiBase: null, scrapeUrl: 'https://www.foodexsupermarket.com/specials', webUrl: 'https://www.foodexsupermarket.com/specials', area: 'Lakewood', zips: ['08701'],

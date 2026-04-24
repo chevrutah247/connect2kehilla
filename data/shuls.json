@@ -1,5 +1,42 @@
 [
   {
+    "id": "chabad-midtown-manhattan",
+    "name": "Chabad of Midtown Manhattan",
+    "aliases": ["chabad midtown", "midtown chabad", "509 fifth"],
+    "address": "509 Fifth Avenue, New York, NY",
+    "zipCode": "10017",
+    "area": "Manhattan",
+    "contact": null,
+    "phone": null,
+    "email": null,
+    "website": "chabadmidtown.com",
+    "amenities": [],
+    "schedule": {
+      "shacharis": [
+        { "days": "Monday-Friday", "time": "07:45 AM" },
+        { "days": "Sunday", "time": "08:30 AM" }
+      ],
+      "mincha": [
+        { "days": "Monday-Thursday", "time": "01:45 PM" },
+        { "days": "Monday-Thursday", "time": "06:45 PM" },
+        { "days": "Friday", "time": "06:45 PM" },
+        { "days": "Shabbat", "time": "1 hour before end of Shabbat" }
+      ],
+      "maariv": [
+        { "days": "Monday-Thursday", "time": "07:00 PM" },
+        { "days": "Friday (Kabbalat Shabbat & Maariv)", "time": "07:00 PM" },
+        { "days": "Shabbat", "time": "at conclusion of Shabbat" }
+      ],
+      "shabbat_shacharis": [
+        { "days": "Shabbat", "time": "10:00 AM" }
+      ],
+      "torah_reading": [
+        { "days": "Shabbat", "time": "11:00 AM" }
+      ]
+    },
+    "notes": "Candle lighting available on the 4th floor at NYC candle lighting time. Reserve the Umud for Yahrtzeit in advance."
+  },
+  {
     "id": "sterling-street-shul",
     "name": "Sterling Street Shul",
     "aliases": ["sterling", "sterling shul", "sterling minyan"],
