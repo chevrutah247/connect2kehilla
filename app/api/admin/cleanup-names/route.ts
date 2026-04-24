@@ -1,11 +1,15 @@
 // Admin one-off: чистим мусор в поле Business.name
 //
-// Что убираем (консервативно — только явные артефакты JBD-импорта):
-//   1) Ведущий "1 " (единица + пробел) — артефакт JBD ("1 ADLER" → "ADLER")
-//      Только literal "1 ", не любые цифры — иначе ломает "13th Ave", "5 Star Photo",
-//      "11219 Plumbing" и т.п.
-//   2) Множественные пробелы в середине → один пробел
-//   3) Leading/trailing whitespace
+// Что убираем:
+//   1) Для RESIDENTIAL записей (categories содержит 'residential'):
+//      Ведущий "<digits> " (любые цифры + пробел) — артефакт JBD-импорта,
+//      где r.title содержал family-size "1"/"3"/"6"/... ("3 Anshel BABAD" → "Anshel BABAD").
+//      Безопасно: в residential-именах цифра в начале никогда не легитимна.
+//   2) Для BUSINESS записей (default):
+//      Только literal "1 " — консервативно, чтобы не сломать "13th Ave Home Center",
+//      "5 Star Photo", "11219 Plumbing" и т.п.
+//   3) Множественные пробелы в середине → один пробел
+//   4) Leading/trailing whitespace
 //
 // Точки/запятые в именах НЕ трогаем (по запросу — "1 . COLEMAN" → ". COLEMAN").
 //
@@ -38,17 +42,29 @@ function checkAuth(request: NextRequest): boolean {
 // КОНСЕРВАТИВНО: режем ТОЛЬКО явные JBD-артефакты, не трогаем легитимные
 // названия типа "13th Ave Home Center", "5 Star Photo", "11219 Plumbing".
 // ============================================
-function cleanName(raw: string): { clean: string; applied: string[] } {
+function cleanName(raw: string, categories: string[] = []): { clean: string; applied: string[] } {
   let s = raw
   const applied: string[] = []
+  const isResidential = categories.includes('residential')
 
-  // 1) Ведущий литеральный "1 " (единица + пробел) — артефакт JBD-импорта,
-  //    где r.title содержал "1" как индекс/family-size. Пример: "1 ADLER" → "ADLER".
-  //    Только literal "1 " — другие цифры не трогаем (могут быть частью названия).
+  // 1) Ведущий цифровой префикс — артефакт JBD-импорта, где r.title
+  //    содержал family-size ("1 ADLER", "3 Anshel BABAD", "6 Fishel MORGENSTERN").
+  //    Для residential: снимаем ЛЮБЫЕ цифры + пробел — безопасно, в именах людей
+  //    цифровой префикс никогда не легитимен.
+  //    Для business: только literal "1 " — консервативно (не ломаем "13th Ave",
+  //    "5 Star Photo", "11219 Plumbing").
   //    Применяется многократно для случаев "1 1 NAME" (повторный артефакт).
-  while (s.startsWith('1 ')) {
-    s = s.slice(2)
-    if (!applied.includes('one-prefix')) applied.push('one-prefix')
+  if (isResidential) {
+    // Strip any leading digits + single space, repeat for "3 1 NAME" edge cases.
+    while (/^\d+\s/.test(s)) {
+      s = s.replace(/^\d+\s/, '')
+      if (!applied.includes('digit-prefix')) applied.push('digit-prefix')
+    }
+  } else {
+    while (s.startsWith('1 ')) {
+      s = s.slice(2)
+      if (!applied.includes('one-prefix')) applied.push('one-prefix')
+    }
   }
 
   // 2) Множественные пробелы внутри → один
@@ -78,9 +94,10 @@ export async function GET(request: NextRequest) {
   const dry = request.nextUrl.searchParams.get('dry') === '1'
 
   // Загружаем ВСЕ имена (без пагинации — операция one-off,
-  // в базе пара десятков тысяч записей, влезет в память)
+  // в базе пара десятков тысяч записей, влезет в память).
+  // categories нужен чтобы применять агрессивную digit-strip только к residential.
   const rows = await prisma.business.findMany({
-    select: { id: true, name: true },
+    select: { id: true, name: true, categories: true },
   })
 
   let changedCount = 0
@@ -89,7 +106,7 @@ export async function GET(request: NextRequest) {
   const updates: Array<{ id: string; name: string }> = []
 
   for (const row of rows) {
-    const { clean, applied } = cleanName(row.name)
+    const { clean, applied } = cleanName(row.name, row.categories)
     if (clean !== row.name && clean.length > 0) {
       changedCount++
       for (const rule of applied) {
