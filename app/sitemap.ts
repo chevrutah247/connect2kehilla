@@ -14,6 +14,8 @@ const RESEARCH_ARTICLES = [
   'why-the-kosher-phone-market-grows',
   'digital-ghetto-paradox',
   'psychology-of-disconnection',
+  'digital-second-class-citizen',
+  'economy-of-trust',
   'sms-vs-apps-psychology',
   'haredi-economic-potential',
 ]
