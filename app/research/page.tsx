@@ -121,6 +121,26 @@ const ARTICLES: ArticleMeta[] = [
     readingTime: '5 min read',
     category: 'Market & Opportunity',
   },
+  {
+    slug: 'digital-second-class-citizen',
+    title: 'The Digital Second-Class Citizen',
+    subtitle: 'Why government digitization threatens the kosher phone user',
+    abstract:
+      'When healthcare portals, tax filings, and license renewals go online-only, kosher-phone users are forced into "tech-smuggling" just to access the public services they\u2019re entitled to. SMS gateways are the missing accessibility layer.',
+    publishedAt: '2026-04-25',
+    readingTime: '5 min read',
+    category: 'Market & Opportunity',
+  },
+  {
+    slug: 'economy-of-trust',
+    title: 'The Economy of Trust',
+    subtitle: 'How SMS verification replaces the "Google search"',
+    abstract:
+      'A smartphone user Googles a contractor before hiring them. A kosher-phone user can\u2019t — and that asymmetry is being exploited. The same handset that protects the soul should also protect the wallet, via vetted directories and instant SMS hashgacha verification.',
+    publishedAt: '2026-04-25',
+    readingTime: '5 min read',
+    category: 'Market & Opportunity',
+  },
 ]
 
 const CATEGORY_META: Record<ArticleMeta['category'], { label: string; pill: string; tagline: string }> = {
@@ -206,7 +226,7 @@ export default function ResearchHubPage() {
             Editorial research on the world&apos;s last large offline-first audience.
           </h1>
           <p className="mt-5 text-lg md:text-xl text-gray-700 max-w-3xl leading-relaxed">
-            Ten in-depth pieces by{' '}
+            Twelve in-depth pieces by{' '}
             <Link href="#author" className="text-emerald-700 font-semibold hover:underline">
               Levi Dombrovsky
             </Link>{' '}
@@ -219,7 +239,7 @@ export default function ResearchHubPage() {
         <div className="bg-gray-50 border-t border-gray-200">
           <div className="max-w-5xl mx-auto px-4 py-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-center text-sm">
             <div>
-              <p className="text-2xl font-black text-gray-900">10</p>
+              <p className="text-2xl font-black text-gray-900">12</p>
               <p className="text-gray-600 text-xs uppercase tracking-wide">Articles</p>
             </div>
             <div>
