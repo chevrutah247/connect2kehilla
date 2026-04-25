@@ -7,7 +7,7 @@ import { detectHelpCommand } from '@/lib/help-commands'
 import { parseQuery } from '@/lib/openai'
 import { isShabbatWithBuffer } from '@/lib/shabbat'
 import { getOrCreateUser, isUserBlocked, blockUser, unblockUser, getUserDefaultZip, setUserDefaultZip } from '@/lib/users'
-import { searchBusinesses, searchBusinessesExpanded, searchBusinessesFuzzy, recordLeads } from '@/lib/businesses'
+import { searchBusinesses, searchBusinessesExpanded, searchBusinessesFuzzy, recordLeads, getRestaurantCountsByNeighborhood, isRestaurantQuery } from '@/lib/businesses'
 import { normalizeCategory, normalizeArea, normalizeCity, detectLanguage, matchKeywordToCategory } from '@/lib/fuzzy'
 import { getAllStores, getStoreByIndex, getStoresByArea, getStoresByZip, getAreaByZip, getStoreById, fetchStoreSpecials, formatSpecialsForSMS, formatStoreListForSMS, formatStoreInfoForSMS, Store } from '@/lib/specials'
 import { parseWorkCommand, parseJobCommand, parseHireCommand, registerWorker, saveWorkerDescription, postJob, saveJobDescription, renewWorker, stopWorker, searchWorkers, JOBS_HELP, parseFreeformJobPost, postFreeformJob } from '@/lib/workers'
@@ -860,10 +860,25 @@ async function handleSearchInner(
     ))
   }
 
+  // Build restaurant-area footer if this looks like a restaurant query and we have a ZIP
+  let footer: string | undefined
+  if (zipCode && isRestaurantQuery(parsed.category, parsed.businessName, rawMessage)) {
+    const breakdown = await getRestaurantCountsByNeighborhood(zipCode)
+    if (breakdown) {
+      const otherZips = breakdown.counts.filter(c => c.zip !== zipCode && c.count > 0)
+      if (otherZips.length > 0) {
+        footer = `🍽 More restaurants in ${breakdown.neighborhood}:\n`
+          + otherZips.map(c => `   ${c.zip} — ${c.count} place${c.count === 1 ? '' : 's'}`).join('\n')
+          + `\nReply with the ZIP to see them.`
+      }
+    }
+  }
+
   // Форматируем ответ
   return formatBusinessResponse(
     businesses,
-    parsed.category || parsed.businessName || 'results'
+    parsed.category || parsed.businessName || 'results',
+    footer ? { footer } : undefined,
   )
 }
 

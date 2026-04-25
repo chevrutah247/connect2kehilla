@@ -32,9 +32,44 @@ export async function sendSMS(to: string, body: string): Promise<boolean> {
 // ============================================
 // Форматирование ответа с бизнесами
 // ============================================
+
+// Hashgacha tag → display label. Anything not in this map shows the raw tag
+// (e.g. "vaad-foo" if a future agency is added without this map being updated).
+const HASHGACHA_LABELS: Record<string, string> = {
+  'cert:ou':                'OU',
+  'cert:star-k':            'Star-K',
+  'cert:star-d':            'Star-D',
+  'cert:ok':                'OK',
+  'cert:kof-k':             'Kof-K',
+  'cert:beis-din-ch':       'Beis Din of Crown Heights (CHK)',
+  'cert:vaad-queens':       'Vaad Queens',
+  'cert:vaad-5tfr':         'Vaad of Five Towns',
+  'cert:crc-chicago':       'cRc Chicago',
+  'cert:crc-williamsburg':  'CRC (Central Rabbinical Congress, Williamsburg)',
+}
+
+export function formatHashgacha(categories: string[] | null | undefined): string | null {
+  if (!categories || categories.length === 0) return null
+  const certs = categories
+    .filter(c => c.startsWith('cert:'))
+    .map(c => HASHGACHA_LABELS[c] ?? c.replace(/^cert:/, '').toUpperCase())
+  if (certs.length === 0) return null
+  return certs.join(' • ')
+}
+
+interface FormatBizParams {
+  name: string
+  phone: string
+  area?: string | null
+  address?: string | null
+  website?: string | null
+  categories?: string[] | null
+}
+
 export function formatBusinessResponse(
-  businesses: Array<{ name: string; phone: string; area?: string | null; address?: string | null; website?: string | null }>,
-  category: string
+  businesses: FormatBizParams[],
+  category: string,
+  options?: { footer?: string },
 ): string {
   if (businesses.length === 0) {
     return `Sorry, we couldn't find any ${category} in your area. Try a different ZIP code or category.`
@@ -46,17 +81,24 @@ export function formatBusinessResponse(
     response += `${index + 1}. ${biz.name}\n`
     response += `   📞 ${biz.phone}\n`
     if (biz.address) {
-      // Truncate very long addresses (some have multiple locations separated by ;)
       const addr = biz.address.length > 80 ? biz.address.slice(0, 77) + '...' : biz.address
       response += `   📍 ${addr}\n`
     } else if (biz.area) {
       response += `   📍 ${biz.area}\n`
+    }
+    const hashgacha = formatHashgacha(biz.categories)
+    if (hashgacha) {
+      response += `   ✡ ${hashgacha}\n`
     }
     if (biz.website) {
       response += `   🌐 ${biz.website}\n`
     }
     response += '\n'
   })
+
+  if (options?.footer) {
+    response += options.footer + '\n\n'
+  }
 
   response += '💡 Tell them Connect2Kehilla sent you!\n'
   response += 'Reply MENU for options, STOP to opt out.'
