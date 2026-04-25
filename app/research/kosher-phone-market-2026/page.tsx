@@ -20,6 +20,39 @@ export const metadata: Metadata = {
   },
 }
 
+const REPORT_SCHEMA = {
+  '@context': 'https://schema.org',
+  '@type': 'Report',
+  '@id': `https://www.connect2kehilla.com/research/${SLUG}#report`,
+  name: TITLE,
+  alternateName: 'Connect2Kehilla Market Research Report — April 2026',
+  abstract: ABSTRACT,
+  description: ABSTRACT,
+  reportNumber: 'C2K-MR-2026-04',
+  datePublished: '2026-04-01',
+  inLanguage: 'en-US',
+  about: [
+    { '@type': 'Thing', name: 'Kosher phone' },
+    { '@type': 'Thing', name: 'Haredi (ultra-Orthodox) Judaism' },
+    { '@type': 'Thing', name: 'Jewish demographics' },
+    { '@type': 'Thing', name: 'SMS information services' },
+  ],
+  author: {
+    '@type': 'Person',
+    name: 'Levi Dombrovsky',
+    jobTitle: 'Market Research Lead, Connect2Kehilla',
+  },
+  publisher: {
+    '@type': 'Organization',
+    '@id': 'https://www.connect2kehilla.com/#organization',
+    name: 'Connect2Kehilla',
+  },
+  isPartOf: {
+    '@type': 'WebPage',
+    '@id': `https://www.connect2kehilla.com/research/${SLUG}`,
+  },
+}
+
 export default function Page() {
   return (
     <ArticleLayout
@@ -30,6 +63,10 @@ export default function Page() {
       publishedAt="2026-04-01"
       readingTime="14 min read"
     >
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(REPORT_SCHEMA) }}
+      />
       <h2>1. Executive Summary</h2>
       <p>
         This report analyzes the global Jewish population, the Haredi (ultra-Orthodox) community,

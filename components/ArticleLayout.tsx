@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import WhitepaperDownload from './WhitepaperDownload'
 
 interface Props {
   title: string
@@ -108,6 +109,8 @@ export default function ArticleLayout({ title, subtitle, abstract, publishedAt, 
         </div>
 
         <footer className="mt-16 pt-8 border-t border-gray-200">
+          <WhitepaperDownload variant="inline" source={`article:${slug}`} />
+
           <div className="flex items-start gap-4 mb-8">
             <div className="w-14 h-14 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-xl">
               LD
