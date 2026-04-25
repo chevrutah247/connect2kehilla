@@ -3,7 +3,14 @@ import type { MetadataRoute } from 'next'
 const baseUrl = 'https://www.connect2kehilla.com'
 
 // Static lastModified — avoid changing every build (confuses crawlers)
-const LAST_MOD = new Date('2026-04-18')
+const LAST_MOD = new Date('2026-04-25')
+
+const RESEARCH_ARTICLES = [
+  'kosher-phone-market-2026',
+  'evolution-of-kosher-tech',
+  'sms-vs-apps-psychology',
+  'haredi-economic-potential',
+]
 
 const AREAS = [
   'williamsburg', 'crown-heights', 'boro-park', 'flatbush',
@@ -21,7 +28,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/add-service`,  lastModified: LAST_MOD, changeFrequency: 'yearly', priority: 0.7 },
     { url: `${baseUrl}/privacy`,    lastModified: LAST_MOD, changeFrequency: 'yearly',  priority: 0.3 },
     { url: `${baseUrl}/terms`,      lastModified: LAST_MOD, changeFrequency: 'yearly',  priority: 0.3 },
+    { url: `${baseUrl}/services`,   lastModified: LAST_MOD, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${baseUrl}/research`,   lastModified: LAST_MOD, changeFrequency: 'monthly', priority: 0.85 },
+    { url: `${baseUrl}/glossary`,   lastModified: LAST_MOD, changeFrequency: 'monthly', priority: 0.7 },
   ]
+
+  const researchPages: MetadataRoute.Sitemap = RESEARCH_ARTICLES.map(slug => ({
+    url: `${baseUrl}/research/${slug}`,
+    lastModified: LAST_MOD,
+    changeFrequency: 'monthly' as const,
+    priority: 0.8,
+  }))
 
   const areaPages: MetadataRoute.Sitemap = AREAS.map(area => ({
     url: `${baseUrl}/${area}`,
@@ -30,5 +47,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.85,
   }))
 
-  return [...staticPages, ...areaPages]
+  return [...staticPages, ...researchPages, ...areaPages]
 }
