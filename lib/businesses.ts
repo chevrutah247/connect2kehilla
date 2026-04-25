@@ -437,3 +437,91 @@ export async function getBusinessesForNotification(): Promise<Array<{
     }
   })
 }
+
+// ============================================
+// Neighborhood ZIP groupings — used to suggest nearby ZIPs when a restaurant
+// search returns thin results in a single ZIP. Each ZIP belongs to exactly
+// one group (the primary kosher neighborhood it sits in).
+// ============================================
+export const NEIGHBORHOOD_ZIPS: Record<string, string[]> = {
+  'Williamsburg':   ['11205', '11206', '11211', '11237', '11249'],
+  'Crown Heights':  ['11213', '11225', '11238', '11203'],
+  'Borough Park':   ['11204', '11218', '11219'],
+  'Flatbush':       ['11210', '11218', '11229', '11230'],
+  'Five Towns':     ['11096', '11516', '11559', '11598', '11691'],
+  'Lakewood':       ['08701'],
+  'Monsey':         ['10952', '10970', '10977'],
+  'Kiryas Joel':    ['10950'],
+  'Inwood':         ['11096'],
+}
+
+const ZIP_TO_NEIGHBORHOOD: Record<string, string> = (() => {
+  const m: Record<string, string> = {}
+  for (const [n, zips] of Object.entries(NEIGHBORHOOD_ZIPS)) {
+    for (const z of zips) {
+      if (!m[z]) m[z] = n
+    }
+  }
+  return m
+})()
+
+export function neighborhoodForZip(zip: string): string | null {
+  return ZIP_TO_NEIGHBORHOOD[zip] ?? null
+}
+
+// Categories that count as "food / restaurant / cafe" for the purpose of
+// neighbor-ZIP counts. Kept broad so granola variants (sushi, pizza,
+// dairy, meat, bakery, etc.) all roll up.
+const FOOD_CATEGORIES = [
+  'restaurant', 'eatery', 'takeout', 'take-out',
+  'cafe', 'pizza', 'sushi', 'japanese',
+  'dairy', 'meat', 'bakery', 'butcher', 'caterer',
+  'icecream', 'confectionary', 'deli',
+]
+
+export interface ZipCount {
+  zip: string
+  count: number
+}
+
+/**
+ * For a given ZIP, count active food/restaurant businesses in each ZIP of
+ * the same neighborhood. Returns an array sorted by count desc, with the
+ * caller's own ZIP included so they can see their starting point.
+ */
+export async function getRestaurantCountsByNeighborhood(zip: string): Promise<{ neighborhood: string; counts: ZipCount[] } | null> {
+  const neighborhood = neighborhoodForZip(zip)
+  if (!neighborhood) return null
+  const zips = NEIGHBORHOOD_ZIPS[neighborhood]
+  if (!zips) return null
+
+  const rows = await prisma.business.groupBy({
+    by: ['zipCode'],
+    where: {
+      isActive: true,
+      approvalStatus: 'APPROVED' as const,
+      zipCode: { in: zips },
+      categories: { hasSome: FOOD_CATEGORIES },
+    },
+    _count: { _all: true },
+  })
+
+  const byZip = new Map<string, number>()
+  for (const r of rows) {
+    if (r.zipCode) byZip.set(r.zipCode, r._count._all)
+  }
+  const counts: ZipCount[] = zips.map(z => ({ zip: z, count: byZip.get(z) ?? 0 }))
+  counts.sort((a, b) => b.count - a.count)
+  return { neighborhood, counts }
+}
+
+export function isRestaurantQuery(category: string | null | undefined, businessName: string | null | undefined, raw?: string): boolean {
+  const c = (category ?? '').toLowerCase()
+  if (FOOD_CATEGORIES.includes(c)) return true
+  const allText = `${c} ${businessName ?? ''} ${raw ?? ''}`.toLowerCase()
+  // ASCII keywords with word-boundary
+  if (/\b(restaurant|kosher restaurant|cafe|coffee shop|pizza|sushi|bakery|deli|delicatessen|takeout|take[- ]out|kosher food|burger|grill|kitchen|caterer|catering)\b/.test(allText)) return true
+  // Cyrillic keywords — \b doesn't bound Cyrillic in default JS regex, so match without it
+  if (/(ресторан|ресторан[ыоав]|кафе|пицц|сушими|суши|пекарн|бекери|кошер ресторан|закусоч)/.test(allText)) return true
+  return false
+}
