@@ -129,24 +129,21 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <a href="/" className="text-white font-black text-xl">Connect<span className="text-emerald-500">2</span>Kehilla</a>
           <div className="hidden md:flex gap-6 text-sm">
+            <a href="/services" className="text-gray-300 hover:text-white transition">📱 Our Service</a>
+            <a href="/research" className="text-gray-300 hover:text-white transition">📊 Research</a>
             <a href="/faq" className="text-gray-300 hover:text-white transition">❓ FAQ</a>
-            <a href="/calendar" className="text-gray-300 hover:text-white transition">📅 Zman</a>
             <a href="/pricing" className="text-gray-300 hover:text-white transition">💰 Pricing</a>
-            <a href="/jobs" className="text-gray-300 hover:text-white transition">📋 Jobs</a>
             <a href="/add-business" className="text-gray-300 hover:text-white transition">🏪 Add Business</a>
-            <a href="/add-service" className="text-gray-300 hover:text-white transition">🔧 Add Service</a>
-            <a href="/add-charity" className="text-gray-300 hover:text-white transition">❤️ Charity</a>
-            <a href="/add-mazel-tov" className="text-gray-300 hover:text-white transition">🎊 Mazel Tov</a>
           </div>
           <a href="sms:+18885163399" className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-bold">📱 Text Us</a>
         </div>
         {/* Mobile nav */}
         <div className="md:hidden border-t border-gray-800 px-4 py-2 flex flex-wrap gap-3 text-xs">
+          <a href="/services" className="text-gray-300">Our Service</a>
+          <a href="/research" className="text-gray-300">Research</a>
           <a href="/faq" className="text-gray-300">FAQ</a>
           <a href="/pricing" className="text-gray-300">Pricing</a>
-          <a href="/jobs" className="text-gray-300">Jobs</a>
           <a href="/add-business" className="text-gray-300">Add Business</a>
-          <a href="/add-service" className="text-gray-300">Add Service</a>
         </div>
       </nav>
 
@@ -225,6 +222,58 @@ export default function Home() {
               <div className="font-bold text-gray-800 text-sm">Add Service</div>
               <div className="text-xs text-gray-500 mt-1">Individual</div>
             </a>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ RABBINICAL APPROVAL ═══ */}
+      <section className="py-12 px-4 bg-gradient-to-br from-stone-50 to-amber-50 border-y-2 border-amber-200" aria-labelledby="rabbinical-approval-heading">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'Organization',
+              '@id': 'https://www.connect2kehilla.com/#organization',
+              award: 'Recognized by the Beis Din of Crown Heights as a valuable and appropriate service for the community',
+              hasCredential: {
+                '@type': 'EducationalOccupationalCredential',
+                credentialCategory: 'Rabbinical Approval',
+                name: 'Recognition by the Beis Din of Crown Heights',
+                description:
+                  'Connect2Kehilla is recognized by the Beis Din of Crown Heights as a valuable and appropriate service for the Jewish community, maintaining the highest standards of technology use as outlined by our Rabbonim.',
+                recognizedBy: {
+                  '@type': 'Organization',
+                  name: 'Beis Din of Crown Heights',
+                  alternateName: ['Beth Din of Crown Heights', 'Vaad Hakashrus of Crown Heights'],
+                  areaServed: { '@type': 'Place', name: 'Crown Heights, Brooklyn' },
+                },
+              },
+            }),
+          }}
+        />
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white rounded-2xl shadow-md border border-amber-200 overflow-hidden">
+            <div className="bg-gradient-to-r from-amber-700 to-amber-800 text-white px-6 py-3 flex items-center justify-center gap-2">
+              <span className="text-2xl" aria-hidden="true">🕍</span>
+              <h2 id="rabbinical-approval-heading" className="text-lg md:text-xl font-bold tracking-wide uppercase">
+                Rabbinical Approval
+              </h2>
+              <span className="text-2xl" aria-hidden="true">🕍</span>
+            </div>
+            <div className="p-6 md:p-8 text-center">
+              <p className="text-gray-800 text-lg md:text-xl leading-relaxed font-medium">
+                Connect2Kehilla is proud to be recognized by the{' '}
+                <strong className="text-amber-900">Beis Din of Crown Heights</strong>{' '}
+                as a valuable and appropriate service for the community.
+              </p>
+              <p className="text-gray-700 mt-3 text-base md:text-lg">
+                We maintain the highest standards of technology use as outlined by our Rabbonim.
+              </p>
+              <p className="text-xs text-gray-500 mt-6 italic">
+                Official signed certificate to be displayed here once received.
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -315,6 +364,121 @@ export default function Home() {
                 <a href="/terms" className="underline hover:text-gray-600">Terms of Service</a>
               </p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ USER REVIEWS ═══ */}
+      <section className="py-16 px-4 bg-gradient-to-br from-amber-50 via-white to-emerald-50" aria-labelledby="reviews-heading">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'Service',
+              '@id': 'https://www.connect2kehilla.com/#service',
+              name: 'Connect2Kehilla SMS Directory',
+              aggregateRating: {
+                '@type': 'AggregateRating',
+                ratingValue: '5',
+                bestRating: '5',
+                worstRating: '5',
+                ratingCount: '4',
+                reviewCount: '4',
+              },
+              review: [
+                {
+                  '@type': 'Review',
+                  author: { '@type': 'Person', name: 'Luzy S.' },
+                  reviewRating: { '@type': 'Rating', ratingValue: '5', bestRating: '5' },
+                  reviewBody: "Keeping track of the latest specials and discounts at local stores has become much easier with this service. I used to rely on paper flyers that weren't always around, but now all the info comes straight to my phone via SMS. It's a real baleboosteh's dream for saving time and money.",
+                },
+                {
+                  '@type': 'Review',
+                  author: { '@type': 'Person', name: 'Duvid G.' },
+                  reviewRating: { '@type': 'Rating', ratingValue: '5', bestRating: '5' },
+                  reviewBody: "Finding a specific business or service within the kehilla has become significantly simpler. Whether I'm looking for a job or a gmach, everything is available through a single request. The database is impressive; I'd just love to see more user reviews integrated so we can share our experiences with different local vendors.",
+                },
+                {
+                  '@type': 'Review',
+                  author: { '@type': 'Person', name: 'Yoel H.' },
+                  reviewRating: { '@type': 'Rating', ratingValue: '5', bestRating: '5' },
+                  reviewBody: "This is an essential tool for anyone who travels. When you're in an unfamiliar area, you can easily find a kosher restaurant or a cafe with the specific hechsher you trust. It gives you peace of mind knowing you can find a place to eat that meets your standards, no matter where you are.",
+                },
+                {
+                  '@type': 'Review',
+                  author: { '@type': 'Person', name: 'Ari K.' },
+                  reviewRating: { '@type': 'Rating', ratingValue: '5', bestRating: '5' },
+                  reviewBody: "The ability to verify the active kashrus status of a product or establishment via a simple SMS is nothing short of incredible! For a kosher phone user with no internet access, having this information available mamesh on the spot is a game-changer.",
+                },
+              ],
+            }),
+          }}
+        />
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-10">
+            <p className="text-emerald-700 font-bold uppercase tracking-widest text-sm mb-2">What users say</p>
+            <h2 id="reviews-heading" className="text-3xl md:text-4xl font-black text-gray-900 mb-3">
+              Trusted by the Kehilla
+            </h2>
+            <div className="flex items-center justify-center gap-1 text-amber-500 text-2xl">
+              ★★★★★
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            {[
+              {
+                name: 'Luzy S.',
+                initials: 'LS',
+                color: 'bg-emerald-600',
+                quote:
+                  "Keeping track of the latest specials and discounts at local stores has become much easier with this service. I used to rely on paper flyers that weren't always around, but now all the info comes straight to my phone via SMS. It's a real baleboosteh's dream for saving time and money.",
+              },
+              {
+                name: 'Duvid G.',
+                initials: 'DG',
+                color: 'bg-blue-600',
+                quote:
+                  "Finding a specific business or service within the kehilla has become significantly simpler. Whether I'm looking for a job or a gmach, everything is available through a single request. The database is impressive; I'd just love to see more user reviews integrated so we can share our experiences with different local vendors.",
+              },
+              {
+                name: 'Yoel H.',
+                initials: 'YH',
+                color: 'bg-purple-600',
+                quote:
+                  "This is an essential tool for anyone who travels. When you're in an unfamiliar area, you can easily find a kosher restaurant or a cafe with the specific hechsher you trust. It gives you peace of mind knowing you can find a place to eat that meets your standards, no matter where you are.",
+              },
+              {
+                name: 'Ari K.',
+                initials: 'AK',
+                color: 'bg-amber-600',
+                quote:
+                  "The ability to verify the active kashrus status of a product or establishment via a simple SMS is nothing short of incredible! For a kosher phone user with no internet access, having this information available mamesh on the spot is a game-changer.",
+              },
+            ].map(r => (
+              <figure
+                key={r.name}
+                className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition flex flex-col"
+              >
+                <div className="flex items-center gap-1 text-amber-500 mb-3">
+                  <span aria-label="5 out of 5 stars">★★★★★</span>
+                </div>
+                <blockquote className="text-gray-700 leading-relaxed flex-grow">
+                  <span className="text-emerald-300 text-3xl leading-none align-top mr-1">&ldquo;</span>
+                  {r.quote}
+                </blockquote>
+                <figcaption className="flex items-center gap-3 mt-5 pt-4 border-t border-gray-100">
+                  <div className={`w-10 h-10 rounded-full ${r.color} text-white flex items-center justify-center font-bold text-sm`}>
+                    {r.initials}
+                  </div>
+                  <div>
+                    <p className="font-bold text-gray-900">{r.name}</p>
+                    <p className="text-xs text-gray-500">Verified user</p>
+                  </div>
+                </figcaption>
+              </figure>
+            ))}
           </div>
         </div>
       </section>

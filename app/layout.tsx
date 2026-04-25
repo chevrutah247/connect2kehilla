@@ -99,13 +99,27 @@ export default function RootLayout({
                   name: 'Connect2Kehilla',
                   alternateName: ['C2K', 'Connect 2 Kehilla'],
                   url: 'https://www.connect2kehilla.com',
-                  description: 'SMS-based business directory for the Jewish community. 18,000+ verified kosher businesses accessible from any phone.',
+                  description: 'SMS-based business directory for the Jewish community. 18,000+ verified kosher businesses accessible from any phone. Recognized by the Beis Din of Crown Heights as a valuable and appropriate service for the community.',
                   email: 'list@connect2kehilla.com',
                   logo: {
                     '@type': 'ImageObject',
                     url: 'https://www.connect2kehilla.com/favicon.png',
                   },
                   sameAs: [],
+                  award: 'Recognized by the Beis Din of Crown Heights as a valuable and appropriate service for the community',
+                  hasCredential: {
+                    '@type': 'EducationalOccupationalCredential',
+                    credentialCategory: 'Rabbinical Approval',
+                    name: 'Recognition by the Beis Din of Crown Heights',
+                    description:
+                      'Connect2Kehilla is recognized by the Beis Din of Crown Heights as a valuable and appropriate service for the Jewish community, maintaining the highest standards of technology use as outlined by our Rabbonim.',
+                    recognizedBy: {
+                      '@type': 'Organization',
+                      name: 'Beis Din of Crown Heights',
+                      alternateName: ['Beth Din of Crown Heights', 'Vaad Hakashrus of Crown Heights'],
+                      areaServed: { '@type': 'Place', name: 'Crown Heights, Brooklyn' },
+                    },
+                  },
                   contactPoint: [
                     {
                       '@type': 'ContactPoint',
@@ -268,6 +282,14 @@ export default function RootLayout({
                   acceptedAnswer: {
                     '@type': 'Answer',
                     text: 'English, Hebrew (עברית), and Yiddish (אידיש). Search queries work in all three languages.',
+                  },
+                },
+                {
+                  '@type': 'Question',
+                  name: 'Is Connect2Kehilla approved by Rabbonim?',
+                  acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: 'Yes. Connect2Kehilla is proud to be recognized by the Beis Din of Crown Heights as a valuable and appropriate service for the community. We maintain the highest standards of technology use as outlined by our Rabbonim.',
                   },
                 },
               ],
