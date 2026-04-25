@@ -114,9 +114,14 @@ export default function ArticleLayout({ title, subtitle, abstract, publishedAt, 
           <WhitepaperDownload variant="inline" source={`article:${slug}`} />
 
           <div className="flex items-start gap-4 mb-8 bg-gray-50 border border-gray-200 rounded-2xl p-6">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-600 to-emerald-800 text-white flex items-center justify-center font-bold text-xl flex-shrink-0">
-              LD
-            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/levi-dombrovsky.jpg"
+              alt="Levi Dombrovsky, Founder of Connect2Kehilla"
+              width={64}
+              height={64}
+              className="w-16 h-16 rounded-full object-cover flex-shrink-0 border-2 border-emerald-600"
+            />
             <div>
               <p className="font-bold text-gray-900 text-lg">{AUTHOR.name}</p>
               <p className="text-sm text-emerald-700 font-semibold">{AUTHOR.jobTitle}</p>

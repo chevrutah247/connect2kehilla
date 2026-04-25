@@ -181,7 +181,7 @@ export default function ResearchHubPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }} />
 
       <nav className="bg-gray-900 border-b border-gray-800 sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link href="/" className="text-white font-black text-xl">
             Connect<span className="text-emerald-500">2</span>Kehilla
           </Link>
@@ -203,11 +203,10 @@ export default function ResearchHubPage() {
             <p className="hidden md:block text-gray-500 italic">Vol. I, No. 1 &middot; April 2026</p>
           </div>
           <h1 className="text-4xl md:text-6xl font-black text-gray-900 leading-[1.05] tracking-tight">
-            Editorial research on the world&apos;s last large<br className="hidden md:block" />{' '}
-            offline-first audience.
+            Editorial research on the world&apos;s last large offline-first audience.
           </h1>
           <p className="mt-5 text-lg md:text-xl text-gray-700 max-w-3xl leading-relaxed">
-            Eight in-depth pieces by{' '}
+            Ten in-depth pieces by{' '}
             <Link href="#author" className="text-emerald-700 font-semibold hover:underline">
               Levi Dombrovsky
             </Link>{' '}
@@ -336,13 +335,18 @@ export default function ResearchHubPage() {
 
       {/* ── About the author ─────────────────────────────────────────── */}
       <section id="author" className="bg-gray-900 text-white py-16 px-4 border-t-4 border-emerald-500">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <p className="text-emerald-400 font-bold uppercase tracking-widest text-xs mb-3">About the author</p>
           <div className="grid md:grid-cols-3 gap-8">
             <div className="md:col-span-1 flex flex-col items-center md:items-start">
-              <div className="w-32 h-32 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-white font-black text-5xl mb-4 shadow-2xl">
-                LD
-              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/levi-dombrovsky.jpg"
+                alt="Levi Dombrovsky, Founder of Connect2Kehilla"
+                width={144}
+                height={144}
+                className="w-36 h-36 rounded-full object-cover mb-4 shadow-2xl border-4 border-emerald-500"
+              />
               <p className="text-2xl font-black text-white">Levi Dombrovsky</p>
               <p className="text-emerald-300 font-semibold text-sm">Founder, Connect2Kehilla</p>
               <p className="text-gray-400 text-xs mt-1">📍 Crown Heights, Brooklyn</p>

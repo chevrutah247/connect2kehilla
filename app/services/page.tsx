@@ -40,13 +40,31 @@ const GROUPS: Group[] = [
           'Type a service or business name plus a ZIP or neighborhood. The AI parses your request and returns up to 5 matches with phone numbers and addresses.',
         examples: [
           'plumber 11213',
-          'kosher restaurant Crown Heights',
           'electrician 11225',
           'dentist Williamsburg',
+          'pharmacy Crown Heights',
           'Lemofet Glass',
         ],
         related: [{ label: 'Add your business →', href: '/add-business' }],
         detailHelp: 'Text: SEARCH ? for in-message help',
+      },
+      {
+        cmd: 'RESTAURANT',
+        title: 'Find a kosher restaurant near you',
+        desc:
+          'Search for kosher restaurants, cafes, pizza shops, sushi spots, bakeries, takeout, caterers, and more — by ZIP code or neighborhood. Results include phone, address, and (where available) the hashgacha (kashrus certification: OU, Star-K, OK, Vaad Queens, Vaad 5T, CHK, etc.).',
+        alias: ['RESTAURANTS', 'KOSHER FOOD', 'EAT'],
+        examples: [
+          'restaurant 11213',
+          'kosher restaurant near me',
+          'pizza 11225',
+          'sushi Crown Heights',
+          'dairy restaurant Monsey',
+          'cafe Boro Park',
+          'meat restaurant Five Towns',
+        ],
+        related: [{ label: 'Browse certified restaurants by hashgacha →', href: '/glossary#hashgacha' }],
+        detailHelp: 'Text: RESTAURANT ? for in-message help. Tip — say what kind of food (dairy, meat, pareve, sushi, pizza) plus your area for the most relevant results.',
       },
       {
         cmd: 'A / H',
