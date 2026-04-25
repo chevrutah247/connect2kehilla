@@ -7,7 +7,13 @@ const LAST_MOD = new Date('2026-04-25')
 
 const RESEARCH_ARTICLES = [
   'kosher-phone-market-2026',
+  'what-is-a-kosher-phone',
+  'why-kosher-phones-exist',
   'evolution-of-kosher-tech',
+  'why-the-kosher-phone-market-matters',
+  'why-the-kosher-phone-market-grows',
+  'digital-ghetto-paradox',
+  'psychology-of-disconnection',
   'sms-vs-apps-psychology',
   'haredi-economic-potential',
 ]

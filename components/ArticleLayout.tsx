@@ -14,7 +14,9 @@ interface Props {
 const AUTHOR = {
   name: 'Levi Dombrovsky',
   url: 'https://www.connect2kehilla.com/research',
-  jobTitle: 'Market Research Lead, Connect2Kehilla',
+  jobTitle: 'Founder, Connect2Kehilla',
+  location: 'Crown Heights, Brooklyn',
+  bio: 'Levi Dombrovsky is the founder of Connect2Kehilla, a free SMS-based community information service for the Jewish community. He works at the intersection of Haredi demographics, kosher technology, and offline-first infrastructure — building services for the 1.7+ million people whose phones don\u2019t run apps.',
 }
 
 export default function ArticleLayout({ title, subtitle, abstract, publishedAt, readingTime, slug, children }: Props) {
@@ -111,16 +113,23 @@ export default function ArticleLayout({ title, subtitle, abstract, publishedAt, 
         <footer className="mt-16 pt-8 border-t border-gray-200">
           <WhitepaperDownload variant="inline" source={`article:${slug}`} />
 
-          <div className="flex items-start gap-4 mb-8">
-            <div className="w-14 h-14 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-xl">
+          <div className="flex items-start gap-4 mb-8 bg-gray-50 border border-gray-200 rounded-2xl p-6">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-600 to-emerald-800 text-white flex items-center justify-center font-bold text-xl flex-shrink-0">
               LD
             </div>
             <div>
-              <p className="font-bold text-gray-900">{AUTHOR.name}</p>
-              <p className="text-sm text-gray-600">{AUTHOR.jobTitle}</p>
-              <p className="text-sm text-gray-500 mt-1">
-                Researches the intersection of Haredi demographics and offline-first technology.
-              </p>
+              <p className="font-bold text-gray-900 text-lg">{AUTHOR.name}</p>
+              <p className="text-sm text-emerald-700 font-semibold">{AUTHOR.jobTitle}</p>
+              <p className="text-xs text-gray-500 mb-2">📍 {AUTHOR.location}</p>
+              <p className="text-sm text-gray-700 leading-relaxed">{AUTHOR.bio}</p>
+              <div className="flex flex-wrap gap-x-4 mt-3 text-sm">
+                <Link href="/research" className="text-emerald-700 hover:underline font-semibold">
+                  All articles →
+                </Link>
+                <a href="mailto:list@connect2kehilla.com" className="text-emerald-700 hover:underline font-semibold">
+                  Contact →
+                </a>
+              </div>
             </div>
           </div>
 
