@@ -31,6 +31,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/services`,   lastModified: LAST_MOD, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${baseUrl}/research`,   lastModified: LAST_MOD, changeFrequency: 'monthly', priority: 0.85 },
     { url: `${baseUrl}/glossary`,   lastModified: LAST_MOD, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${baseUrl}/investors`,  lastModified: LAST_MOD, changeFrequency: 'monthly', priority: 0.85 },
   ]
 
   const researchPages: MetadataRoute.Sitemap = RESEARCH_ARTICLES.map(slug => ({

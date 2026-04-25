@@ -3,6 +3,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import WhitepaperDownload from '@/components/WhitepaperDownload'
 
 // SMS conversation that plays on the phone mockup
 const SMS_CONVERSATION = [
@@ -131,6 +132,7 @@ export default function Home() {
           <div className="hidden md:flex gap-6 text-sm">
             <a href="/services" className="text-gray-300 hover:text-white transition">📱 Our Service</a>
             <a href="/research" className="text-gray-300 hover:text-white transition">📊 Research</a>
+            <a href="/investors" className="text-gray-300 hover:text-white transition">💼 For Investors</a>
             <a href="/faq" className="text-gray-300 hover:text-white transition">❓ FAQ</a>
             <a href="/pricing" className="text-gray-300 hover:text-white transition">💰 Pricing</a>
             <a href="/add-business" className="text-gray-300 hover:text-white transition">🏪 Add Business</a>
@@ -141,6 +143,7 @@ export default function Home() {
         <div className="md:hidden border-t border-gray-800 px-4 py-2 flex flex-wrap gap-3 text-xs">
           <a href="/services" className="text-gray-300">Our Service</a>
           <a href="/research" className="text-gray-300">Research</a>
+          <a href="/investors" className="text-gray-300">Investors</a>
           <a href="/faq" className="text-gray-300">FAQ</a>
           <a href="/pricing" className="text-gray-300">Pricing</a>
           <a href="/add-business" className="text-gray-300">Add Business</a>
@@ -367,6 +370,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* ═══ WHITE PAPER DOWNLOAD ═══ */}
+      <WhitepaperDownload variant="banner" source="homepage" />
 
       {/* ═══ USER REVIEWS ═══ */}
       <section className="py-16 px-4 bg-gradient-to-br from-amber-50 via-white to-emerald-50" aria-labelledby="reviews-heading">
